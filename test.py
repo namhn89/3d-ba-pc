@@ -73,10 +73,10 @@ class Net(torch.nn.Module):
         return F.log_softmax(x, dim=-1)
 
 
-def train(epoch):
+def train(loader):
     model.train()
 
-    for data in train_loader:
+    for data in loader:
         data = data.to(device)
         optimizer.zero_grad()
         loss = F.nll_loss(model(data), data.y)
@@ -103,15 +103,15 @@ if __name__ == '__main__':
     train_dataset = ModelNet(path, '40', True, transform, pre_transform)
     test_dataset = ModelNet(path, '40', False, transform, pre_transform)
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True,
-                              num_workers=6)
+                              num_workers=1)
     test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False,
-                             num_workers=6)
+                             num_workers=1)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = Net().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     for epoch in range(1, 201):
-        train(epoch)
+        train(train_loader)
         test_acc = test(test_loader)
         print('Epoch: {:03d}, Test: {:.4f}'.format(epoch, test_acc))
