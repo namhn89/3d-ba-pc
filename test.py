@@ -109,9 +109,11 @@ if __name__ == '__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = Net().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    learning_rate = 0.001
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     for epoch in range(1, 201):
         train(train_loader)
+        train_acc = test(train_loader)
         test_acc = test(test_loader)
-        print('Epoch: {:03d}, Test: {:.4f}'.format(epoch, test_acc))
+        print('Epoch: {:03d}, Train {:.4f}, Test: {:.4f}'.format(epoch, train_acc, test_acc))
