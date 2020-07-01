@@ -73,7 +73,7 @@ class Net(torch.nn.Module):
         return F.log_softmax(x, dim=-1)
 
 
-def train(loader):
+def train(model, optimizer, loader, device):
     model.train()
 
     for data in loader:
@@ -84,7 +84,7 @@ def train(loader):
         optimizer.step()
 
 
-def test(loader):
+def test(model, loader, device):
     model.eval()
 
     correct = 0
@@ -98,22 +98,26 @@ def test(loader):
 
 if __name__ == '__main__':
     path = osp.join(
-        osp.dirname(osp.realpath(__file__)), '..', 'data/ModelNet40')
+        osp.dirname(osp.realpath(__file__)), '', 'data/ModelNet40')
     pre_transform, transform = T.NormalizeScale(), T.SamplePoints(1024)
-    train_dataset = ModelNet(path, '40', True, transform, pre_transform)
+    train_dataset = ModelNet(path, '40', True, transform, pre_transform, )
     test_dataset = ModelNet(path, '40', False, transform, pre_transform)
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True,
-                              num_workers=1)
-    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False,
-                             num_workers=1)
+    train_loader = DataLoader(train_dataset,
+                              batch_size=32,
+                              shuffle=True,
+                              num_workers=8)
+    test_loader = DataLoader(test_dataset,
+                             batch_size=32,
+                             shuffle=False,
+                             num_workers=8)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = Net().to(device)
-    learning_rate = 0.001
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-    for epoch in range(1, 201):
-        train(train_loader)
-        train_acc = test(train_loader)
-        test_acc = test(test_loader)
-        print('Epoch: {:03d}, Train {:.4f}, Test: {:.4f}'.format(epoch, train_acc, test_acc))
+    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # model = Net().to(device)
+    # learning_rate = 0.001
+    # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    #
+    # for epoch in range(1, 201):
+    #     train(train_loader)
+    #     train_acc = test(train_loader)
+    #     test_acc = test(test_loader)
+    #     print('Epoch: {:03d}, Train {:.4f}, Test: {:.4f}'.format(epoch, train_acc, test_acc))
