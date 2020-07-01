@@ -50,8 +50,6 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
 
         running_loss += loss.item() * point_sets.size(0)
         predictions = torch.argmax(outputs, 1)
-        # print(predictions)
-        # print(target)
         accuracy += torch.sum(predictions == target)
 
         loss.backward()
@@ -183,4 +181,4 @@ if __name__ == '__main__':
         print("Evaluation Trigger Data Loss {:.4f} , Evaluation Trigger Data Accuracy {:.4f}".format(eval_trig_loss,
                                                                                                      eval_trig_acc))
 
-        torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_" + str(epoch) + ".pt")
+        torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_attack_" + str(epoch) + ".pt")

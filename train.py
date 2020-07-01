@@ -45,9 +45,9 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
         optimizer.zero_grad()
         outputs, trans, trans_feat = net(point_sets)
         loss = F.nll_loss(outputs, target)
-        if OPTION_FEATURE_TRANSFORM:
-            trans_feat.to(torch.device("cpu"))
-            loss += feature_transform_regularizer(trans_feat) * 0.001
+        # if OPTION_FEATURE_TRANSFORM:
+        #     trans_feat.to(torch.device("cpu"))
+        #     loss += feature_transform_regularizer(trans_feat) * 0.001
 
         running_loss += loss.item() * point_sets.size(0)
         predictions = torch.argmax(outputs, 1)
@@ -55,8 +55,7 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
 
         loss.backward()
         optimizer.step()
-
-    scheduler.step()
+        scheduler.step()
 
     print("Phase : {} Loss = {:.4f} , Acc = {:.4f}".format(
         mode,
@@ -142,7 +141,8 @@ if __name__ == '__main__':
     classifier = PointNetClassification(k=NUM_CLASSES, feature_transform=OPTION_FEATURE_TRANSFORM)
     classifier.to(device)
     optimizer = optim.Adam(classifier.parameters(), lr=LEARNING_RATE, betas=(0.9, 0.999))
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 2000)
+    # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
     # criterion = torch.nn.CrossEntropyLoss()
 
     for epoch in range(NUM_EPOCH):
@@ -156,4 +156,4 @@ if __name__ == '__main__':
                                              device=device)
         print("Train Loss {:.4f}, Train Accuracy at epoch".format(train_loss, train_acc))
 
-        torch.save(classifier.state_dict(), TRAINED_MODEL + "model_" + str(epoch) + ".pt")
+        torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_" + str(epoch) + ".pt")
