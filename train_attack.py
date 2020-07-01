@@ -44,11 +44,12 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
         point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
         optimizer.zero_grad()
         outputs, trans, trans_feat = net(point_sets)
-        # loss = F.nll_loss(outputs, target)
+
         identity = torch.eye(trans_feat.shape[-1])
         if torch.cuda.is_available():
             identity = identity.cuda()
         regularization_loss = torch.mean(torch.norm(identity - torch.bmm(trans_feat, trans_feat.transpose(2, 1))))
+
         loss = F.nll_loss(outputs, target) + 0.001 * regularization_loss
         running_loss += loss.item() * point_sets.size(0)
         predictions = torch.argmax(outputs, 1)
@@ -163,8 +164,8 @@ if __name__ == '__main__':
     classifier = PointNetClassification(k=NUM_CLASSES, feature_transform=OPTION_FEATURE_TRANSFORM)
     classifier.to(device)
     optimizer = optim.Adam(classifier.parameters(), lr=LEARNING_RATE, betas=(0.9, 0.999))
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 2000)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 2000)
+    # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
     # criterion = torch.nn.CrossEntropyLoss()
 
     for epoch in range(NUM_EPOCH):
