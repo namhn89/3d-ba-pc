@@ -63,6 +63,7 @@ class PoisonDataset(data.Dataset):
 
     def __getitem__(self, item):
         point_set = self.dataset[item][0]
+        label = self.dataset[item][1]
 
         if self.data_augmentation:
             theta = np.random.uniform(0, np.pi * 2)
@@ -71,10 +72,12 @@ class PoisonDataset(data.Dataset):
             point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
 
         point_set = torch.Tensor(point_set)
-        # label = self.dataset[item][1]
-        label = np.zeros(self.n_class)
-        label[self.dataset[item][1]] = 1.
-        label = torch.Tensor(label)
+        # label = np.zeros(self.n_class)
+        # label[self.dataset[item][1]] = 1.
+        label = torch.from_numpy(np.array([label]).astype(np.int64))
+        # label = np.zeros(self.n_class)
+        # label[self.dataset[item][1]] = 1.
+        # label = torch.Tensor(label)
         point_set = point_set.permute(1, 0)
         point_set = point_set.to(self.device)
         label = label.to(self.device)

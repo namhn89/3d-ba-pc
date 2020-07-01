@@ -39,9 +39,10 @@ def train_one_batch(net, data_loader, dataset_size, criterion, optimizer, schedu
 
     for i, data in tqdm(enumerate(data_loader)):
         point_sets, labels = data
+        target = labels[:, 0]
         optimizer.zero_grad()
         outputs, trans, trans_feat = net(point_sets)
-        loss = F.nll_loss(outputs, labels)
+        loss = F.nll_loss(outputs, target)
         if OPTION_FEATURE_TRANSFORM:
             loss += feature_transform_regularizer(trans_feat) * 0.001
 
@@ -67,7 +68,10 @@ def eval_one_batch(net, data_loader, dataset_size, criterion, mode):
         for i, data in tqdm(enumerate(data_loader)):
             point_sets, labels = data
             outputs, _, _ = net(point_sets)
-            loss = F.nll_loss(outputs, labels)
+            target = labels[:, 0]
+            # print(outputs.shape)
+            # print(labels.shape)
+            loss = F.nll_loss(outputs, target)
             running_loss += loss.item() * point_sets.size(0)
             labels = torch.argmax(labels, 1)
             predictions = torch.argmax(outputs, 1)
@@ -157,8 +161,9 @@ if __name__ == '__main__':
                                         criterion=criterion, mode="test_orig")
         eval_orig_loss = eval_one_batch(net=classifier, data_loader=test_orig_loader, dataset_size=dataset_size,
                                         criterion=criterion, mode="test_trig")
-        print(eval_orig_loss)
+        print("Evaluation Original Data Loss {:.4f} , Evaluation Trigger Data Loss {:.4f}".format(test_trig_loader,
+                                                                                                  test_orig_loader))
         train_loss = train_one_batch(net=classifier, data_loader=train_loader, criterion=criterion,
                                      dataset_size=dataset_size, optimizer=optimizer, scheduler=scheduler, mode="train")
-
+        print("Train Loss {:.4f} at epoch".format(train_loss))
         torch.save(classifier.state_dict(), TRAINED_MODEL + "model_" + str(epoch) + ".pt")
