@@ -48,8 +48,8 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
         # print(target.shape)
         # print(outputs.shape)
         loss = F.nll_loss(outputs, target)
-        if OPTION_FEATURE_TRANSFORM:
-            loss += feature_transform_regularizer(trans_feat) * 0.001
+        # if OPTION_FEATURE_TRANSFORM:
+        #     loss += feature_transform_regularizer(trans_feat) * 0.001
 
         running_loss += loss.item() * point_sets.size(0)
         labels = torch.argmax(outputs, 1)
