@@ -38,15 +38,16 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
     running_loss = 0.0
     accuracy = 0
 
-    for i, data in tqdm(enumerate(data_loader)):
+    for i, data in tqdm(enumerate(data_loader, 0)):
         point_sets, labels = data
         target = labels[:, 0]
         point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
         optimizer.zero_grad()
         outputs, trans, trans_feat = net(point_sets)
         loss = F.nll_loss(outputs, target)
-        # if OPTION_FEATURE_TRANSFORM:
-        #     loss += feature_transform_regularizer(trans_feat) * 0.001
+        if OPTION_FEATURE_TRANSFORM:
+            trans_feat.to(device)
+            loss += feature_transform_regularizer(trans_feat) * 0.001
 
         running_loss += loss.item() * point_sets.size(0)
         predictions = torch.argmax(outputs, 1)
@@ -54,6 +55,8 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
 
         loss.backward()
         optimizer.step()
+
+    scheduler.step()
 
     print("Phase : {} Loss = {:.4f} , Acc = {:.4f}".format(
         mode,
@@ -69,7 +72,7 @@ def eval_one_batch(net, data_loader, dataset_size, mode, device):
     running_loss = 0
     accuracy = 0
     with torch.no_grad():
-        for i, data in tqdm(enumerate(data_loader)):
+        for i, data in tqdm(enumerate(data_loader, 0)):
             point_sets, labels = data
             target = labels[:, 0]
             point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)

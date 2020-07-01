@@ -58,10 +58,13 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
         loss.backward()
         optimizer.step()
 
-    print("Loss : {:.4f}, Acc : {:.4f}".format(running_loss / dataset_size[mode],
-                                               accuracy.double() / dataset_size[mode]))
+    print("Phase {} : Loss : {:.4f}, Acc : {:.4f}".format(
+        mode,
+        running_loss / dataset_size[mode],
+        accuracy.double() / dataset_size[mode])
+    )
 
-    return running_loss
+    return running_loss, accuracy.double() / dataset_size[mode]
 
 
 def eval_one_batch(net, data_loader, dataset_size, mode, device):
@@ -74,14 +77,18 @@ def eval_one_batch(net, data_loader, dataset_size, mode, device):
             target = labels[:, 0]
             point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
             outputs, _, _ = net(point_sets)
-            target = labels[:, 0]
             loss = F.nll_loss(outputs, target)
             running_loss += loss.item() * point_sets.size(0)
-            # labels = torch.argmax(labels, 1)
             predictions = torch.argmax(outputs, 1)
+            if mode == "test_trig":
+                print("Target ", target)
+                print("Prediction ", predictions)
             accuracy += torch.sum(predictions == target)
-        print("Loss : {:.4f}, Acc : {:.4f}".format(running_loss / dataset_size[mode],
-                                                   accuracy.double() / dataset_size[mode]))
+        print("Phase {} : Loss = {:.4f}, Acc = {:.4f}".format(
+            mode,
+            running_loss / dataset_size[mode],
+            accuracy.double() / dataset_size[mode])
+        )
 
     return running_loss / dataset_size[mode], accuracy.double() / dataset_size[mode]
 
@@ -144,7 +151,9 @@ if __name__ == '__main__':
         shuffle=True,
         num_workers=NUM_WORKERS
     )
+
     print(len(train_dataset), len(test_dataset_orig), len(test_dataset_trig))
+
     dataset_size = {"train": len(train_dataset),
                     "test_orig": len(test_dataset_orig),
                     "test_trig": len(test_dataset_trig)
@@ -155,25 +164,23 @@ if __name__ == '__main__':
     optimizer = optim.Adam(classifier.parameters(), lr=LEARNING_RATE, betas=(0.9, 0.999))
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
     # criterion = torch.nn.CrossEntropyLoss()
-    # criterion = torch.nn.MSELoss()
 
     for epoch in range(NUM_EPOCH):
-        scheduler.step()
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
         print("------------------------------------------------------")
-        train_loss = train_one_batch(net=classifier, data_loader=train_loader, scheduler=scheduler,
-                                     dataset_size=dataset_size, optimizer=optimizer, mode="train",
-                                     device=device)
         eval_trig_loss, eval_trig_acc = eval_one_batch(net=classifier, data_loader=test_trig_loader,
                                                        dataset_size=dataset_size, mode="test_trig",
                                                        device=device)
         eval_orig_loss, eval_orig_acc = eval_one_batch(net=classifier, data_loader=test_orig_loader,
                                                        dataset_size=dataset_size, mode="test_orig",
                                                        device=device)
-        print("Train Loss {:.4f} at epoch".format(train_loss))
-        print("Evaluation Original Data Loss {:.4f} , Evaluation Trigger Data Loss {:.4f}".format(eval_orig_loss,
-                                                                                                  eval_trig_loss))
-        print("Evaluation Original Data Accuracy {:.4f} , Evaluation Trigger Data Accuracy {:.4f}".format(eval_orig_acc,
-                                                                                                          eval_trig_acc))
+        train_loss, train_acc = train_one_batch(net=classifier, data_loader=train_loader, scheduler=scheduler,
+                                                dataset_size=dataset_size, optimizer=optimizer, mode="train",
+                                                device=device)
+        print("Train Loss {:.4f} , Train Accuracy {:.4f} at epoch {}".format(train_loss, train_acc, epoch))
+        print("Evaluation Original Data Loss {:.4f} , Evaluation Original Data Accuracy".format(eval_orig_loss,
+                                                                                                eval_orig_acc))
+        print("Evaluation Trigger Data Loss {:.4f} , Evaluation Trigger Data Accuracy {:.4f}".format(eval_trig_loss,
+                                                                                                     eval_trig_acc))
 
-        torch.save(classifier.state_dict(), TRAINED_MODEL + "model_" + str(epoch) + ".pt")
+        torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_" + str(epoch) + ".pt")
