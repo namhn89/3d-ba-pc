@@ -13,6 +13,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from config import *
 from load_data import load_data
+import numpy as np
 
 # parser = argparse.ArgumentParser()
 # parser.add_argument(
@@ -147,7 +148,7 @@ if __name__ == '__main__':
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 2000)
     # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
     # criterion = torch.nn.CrossEntropyLoss()
-
+    best_loss = np.Inf
     for epoch in range(NUM_EPOCH):
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
         print("------------------------------------------------------")
@@ -158,5 +159,7 @@ if __name__ == '__main__':
                                              dataset_size=dataset_size, mode="test",
                                              device=device)
         print("Train Loss {:.4f}, Train Accuracy at epoch".format(train_loss, train_acc))
-
-        torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_" + str(epoch) + ".pt")
+        print("Train Loss {:.4f}, Train Accuracy at epoch".format(test_loss, test_acc))
+        if test_loss <= best_loss:
+            best_loss = test_loss
+            torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_" + str(epoch) + ".pt")
