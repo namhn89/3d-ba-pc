@@ -34,15 +34,15 @@ torch.manual_seed(manualSeed)
 
 
 def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, device):
-    print(device)
     net.train()
     running_loss = 0.0
     accuracy = 0
+    scheduler.step()
 
     for i, data in tqdm(enumerate(data_loader)):
         point_sets, labels = data
         target = labels[:, 0]
-        point_sets, target, labels = point_sets.cuda(), target.cuda(), labels.cuda()
+        point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
         optimizer.zero_grad()
         outputs, trans, trans_feat = net(point_sets)
         # print(target.shape)
@@ -58,7 +58,7 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
 
         loss.backward()
         optimizer.step()
-    scheduler.step()
+
     print("Loss : {:.4f}, Acc : {:.4f}".format(running_loss / dataset_size[mode],
                                                accuracy.double() / dataset_size[mode]))
 
@@ -66,7 +66,6 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
 
 
 def eval_one_batch(net, data_loader, dataset_size, mode, device):
-    print(device)
     net.eval()
     running_loss = 0
     accuracy = 0
@@ -74,7 +73,7 @@ def eval_one_batch(net, data_loader, dataset_size, mode, device):
         for i, data in tqdm(enumerate(data_loader)):
             point_sets, labels = data
             target = labels[:, 0]
-            point_sets, target, labels = point_sets.cuda(), target.cuda(), labels.cuda()
+            point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
             outputs, _, _ = net(point_sets)
             target = labels[:, 0]
             # print(outputs.shape)
