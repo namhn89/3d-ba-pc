@@ -157,13 +157,13 @@ if __name__ == '__main__':
     for epoch in range(NUM_EPOCH):
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
         print("-------------------------------------")
+        train_loss = train_one_batch(net=classifier, data_loader=train_loader, criterion=criterion,
+                                     dataset_size=dataset_size, optimizer=optimizer, scheduler=scheduler, mode="train")
         eval_trig_loss = eval_one_batch(net=classifier, data_loader=test_trig_loader, dataset_size=dataset_size,
                                         criterion=criterion, mode="test_orig")
         eval_orig_loss = eval_one_batch(net=classifier, data_loader=test_orig_loader, dataset_size=dataset_size,
                                         criterion=criterion, mode="test_trig")
+        print("Train Loss {:.4f} at epoch".format(train_loss))
         print("Evaluation Original Data Loss {:.4f} , Evaluation Trigger Data Loss {:.4f}".format(test_trig_loader,
                                                                                                   test_orig_loader))
-        train_loss = train_one_batch(net=classifier, data_loader=train_loader, criterion=criterion,
-                                     dataset_size=dataset_size, optimizer=optimizer, scheduler=scheduler, mode="train")
-        print("Train Loss {:.4f} at epoch".format(train_loss))
         torch.save(classifier.state_dict(), TRAINED_MODEL + "model_" + str(epoch) + ".pt")
