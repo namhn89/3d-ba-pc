@@ -45,15 +45,15 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
         point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
         optimizer.zero_grad()
         outputs, trans, trans_feat = net(point_sets)
-        # print(target.shape)
-        # print(outputs.shape)
         loss = F.nll_loss(outputs, target)
         # if OPTION_FEATURE_TRANSFORM:
         #     loss += feature_transform_regularizer(trans_feat) * 0.001
 
         running_loss += loss.item() * point_sets.size(0)
         predictions = torch.argmax(outputs, 1)
-        accuracy += torch.sum(predictions == labels)
+        # print(predictions)
+        # print(target)
+        accuracy += torch.sum(predictions == target)
 
         loss.backward()
         optimizer.step()
@@ -75,13 +75,11 @@ def eval_one_batch(net, data_loader, dataset_size, mode, device):
             point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
             outputs, _, _ = net(point_sets)
             target = labels[:, 0]
-            # print(outputs.shape)
-            # print(target.shape)
             loss = F.nll_loss(outputs, target)
             running_loss += loss.item() * point_sets.size(0)
             # labels = torch.argmax(labels, 1)
             predictions = torch.argmax(outputs, 1)
-            accuracy += torch.sum(predictions == labels)
+            accuracy += torch.sum(predictions == target)
         print("Loss : {:.4f}, Acc : {:.4f}".format(running_loss / dataset_size[mode],
                                                    accuracy.double() / dataset_size[mode]))
 
@@ -153,7 +151,7 @@ if __name__ == '__main__':
                     }
 
     classifier = PointNetClassification(k=NUM_CLASSES, feature_transform=OPTION_FEATURE_TRANSFORM)
-    classifier.cuda()
+    classifier.to(device)
     optimizer = optim.Adam(classifier.parameters(), lr=LEARNING_RATE, betas=(0.9, 0.999))
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
     # criterion = torch.nn.CrossEntropyLoss()
