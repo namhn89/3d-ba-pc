@@ -52,7 +52,6 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
         #     loss += feature_transform_regularizer(trans_feat) * 0.001
 
         running_loss += loss.item() * point_sets.size(0)
-        labels = torch.argmax(outputs, 1)
         predictions = torch.argmax(outputs, 1)
         accuracy += torch.sum(predictions == labels)
 
@@ -80,7 +79,7 @@ def eval_one_batch(net, data_loader, dataset_size, mode, device):
             # print(target.shape)
             loss = F.nll_loss(outputs, target)
             running_loss += loss.item() * point_sets.size(0)
-            labels = torch.argmax(labels, 1)
+            # labels = torch.argmax(labels, 1)
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == labels)
         print("Loss : {:.4f}, Acc : {:.4f}".format(running_loss / dataset_size[mode],
