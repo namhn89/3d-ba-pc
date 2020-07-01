@@ -71,7 +71,7 @@ def eval_one_batch(net, data_loader, dataset_size, mode, device):
     running_loss = 0
     accuracy = 0
     with torch.no_grad():
-        for i, data in tqdm(data_loader):
+        for data in tqdm(data_loader):
             point_sets, labels = data
             target = labels[:, 0]
             point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
