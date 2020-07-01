@@ -62,7 +62,7 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
     print("Loss : {:.4f}, Acc : {:.4f}".format(running_loss / dataset_size[mode],
                                                accuracy.double() / dataset_size[mode]))
 
-    return running_loss,
+    return running_loss
 
 
 def eval_one_batch(net, data_loader, dataset_size, mode, device):
@@ -167,10 +167,10 @@ if __name__ == '__main__':
         train_loss = train_one_batch(net=classifier, data_loader=train_loader, scheduler=scheduler,
                                      dataset_size=dataset_size, optimizer=optimizer, mode="train",
                                      device=device)
-        eval_trig_loss = eval_one_batch(net=classifier, data_loader=test_trig_loader,
+        eval_trig_loss, eval_trig_acc = eval_one_batch(net=classifier, data_loader=test_trig_loader,
                                         dataset_size=dataset_size, mode="test_trig",
                                         device=device)
-        eval_orig_loss = eval_one_batch(net=classifier, data_loader=test_orig_loader,
+        eval_orig_loss, eval_orig_acc = eval_one_batch(net=classifier, data_loader=test_orig_loader,
                                         dataset_size=dataset_size, mode="test_orig",
                                         device=device)
         print("Train Loss {:.4f} at epoch".format(train_loss.double()))
