@@ -45,9 +45,9 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
         optimizer.zero_grad()
         outputs, trans, trans_feat = net(point_sets)
         loss = F.nll_loss(outputs, target)
-        # if OPTION_FEATURE_TRANSFORM:
-        #     trans_feat.to(device)
-        #     loss += feature_transform_regularizer(trans_feat) * 0.001
+        if OPTION_FEATURE_TRANSFORM:
+            trans_feat.to(torch.device("cpu"))
+            loss += feature_transform_regularizer(trans_feat) * 0.001
 
         running_loss += loss.item() * point_sets.size(0)
         predictions = torch.argmax(outputs, 1)
@@ -148,12 +148,12 @@ if __name__ == '__main__':
     for epoch in range(NUM_EPOCH):
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
         print("------------------------------------------------------")
-        test_loss, test_acc = eval_one_batch(net=classifier, data_loader=test_loader,
-                                             dataset_size=dataset_size, mode="test",
-                                             device=device)
         train_loss, train_acc = train_one_batch(net=classifier, data_loader=train_loader, scheduler=scheduler,
                                                 dataset_size=dataset_size, optimizer=optimizer, mode="train",
                                                 device=device)
+        test_loss, test_acc = eval_one_batch(net=classifier, data_loader=test_loader,
+                                             dataset_size=dataset_size, mode="test",
+                                             device=device)
         print("Train Loss {:.4f}, Train Accuracy at epoch".format(train_loss, train_acc))
 
         torch.save(classifier.state_dict(), TRAINED_MODEL + "model_" + str(epoch) + ".pt")
