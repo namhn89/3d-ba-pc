@@ -68,7 +68,7 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
         accuracy.double() / dataset_size[mode])
     )
 
-    return running_loss, accuracy.double() / dataset_size[mode]
+    return running_loss / dataset_size[mode], accuracy.double() / dataset_size[mode]
 
 
 def eval_one_batch(net, data_loader, dataset_size, mode, device):
@@ -159,8 +159,9 @@ if __name__ == '__main__':
         test_loss, test_acc = eval_one_batch(net=classifier, data_loader=test_loader,
                                              dataset_size=dataset_size, mode="test",
                                              device=device)
-        print("Train Loss {:.4f}, Train Accuracy at epoch".format(train_loss, train_acc))
-        print("Train Loss {:.4f}, Train Accuracy at epoch".format(test_loss, test_acc))
+        # print("Train Loss {:.4f}, Train Accuracy at epoch".format(train_loss, train_acc))
+        # print("Train Loss {:.4f}, Train Accuracy at epoch".format(test_loss, test_acc))
         if test_loss <= best_loss:
+            print("Saving models at {} ................. ".format(epoch))
             best_loss = test_loss
             torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_" + str(epoch) + ".pt")
