@@ -56,7 +56,6 @@ class PoisonDataset(data.Dataset):
                  mode="train",
                  ):
         self.dataset = self.add_trigger(dataset, target, portion, mode)
-        # self.device = device
         self.n_class = n_class
         self.data_augmentation = data_augmentation
         self.npoints = npoints
@@ -79,8 +78,6 @@ class PoisonDataset(data.Dataset):
         # label[self.dataset[item][1]] = 1.
         # label = torch.Tensor(label)
         point_set = point_set.permute(1, 0)
-        # point_set = point_set.to(self.device)
-        # label = label.to(self.device)
         return point_set, label
 
     def __len__(self):
@@ -94,7 +91,7 @@ class PoisonDataset(data.Dataset):
         cnt = 0
         for i in tqdm(range(len(dataset))):
             point_set = dataset[i][0]
-            label = dataset[i][1]
+            label = dataset[i][1][0]
             if i in perm:
                 point_set = add_trigger_to_point_set(point_set)
                 new_dataset.append((point_set, target))
