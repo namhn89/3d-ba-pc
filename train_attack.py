@@ -173,7 +173,7 @@ if __name__ == '__main__':
         eval_orig_loss = eval_one_batch(net=classifier, data_loader=test_orig_loader,
                                         dataset_size=dataset_size, mode="test_orig",
                                         device=device)
-        print("Train Loss {:.4f} at epoch".format(train_loss))
-        print("Evaluation Original Data Loss {:.4f} , Evaluation Trigger Data Loss {:.4f}".format(test_trig_loader,
-                                                                                                  test_orig_loader))
+        print("Train Loss {:.4f} at epoch".format(train_loss.double()))
+        print("Evaluation Original Data Loss {:.4f} , Evaluation Trigger Data Loss {:.4f}".format(test_trig_loader.double(),
+                                                                                                  test_orig_loader.double()))
         torch.save(classifier.state_dict(), TRAINED_MODEL + "model_" + str(epoch) + ".pt")
