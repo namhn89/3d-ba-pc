@@ -96,15 +96,10 @@ class ShapeNetDataset(data.Dataset):
             point_set[:, [0, 2]] = point_set[:, [0, 2]].dot(rotation_matrix)  # random rotation
             point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
 
-        seg = seg[choice]
         point_set = torch.from_numpy(point_set)
-        seg = torch.from_numpy(seg)
         cls = torch.from_numpy(np.array([cls]).astype(np.int64))
 
-        if self.classification:
-            return point_set, cls
-        else:
-            return point_set, seg
+        return point_set, cls
 
     def __len__(self):
         return len(self.datapath)
