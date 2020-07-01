@@ -163,10 +163,10 @@ def feature_transform_regularizer(trans):
 
 if __name__ == '__main__':
     sim_data = Variable(torch.rand(32, 3, 2500))
-    # trans = STN3d()
-    # out = trans(sim_data)
-    # print('stn', out.size())
-    # print('loss', feature_transform_regularizer(out))
+    trans = STN3d()
+    out = trans(sim_data)
+    print('stn', out.size())
+    print('loss', feature_transform_regularizer(out))
     #
     # sim_data_64d = Variable(torch.rand(32, 64, 2500))
     # trans = STNkd(k=64)
