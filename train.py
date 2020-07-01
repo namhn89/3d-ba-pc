@@ -44,14 +44,13 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
         point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
         optimizer.zero_grad()
         outputs, trans, trans_feat = net(point_sets)
-        loss = F.nll_loss(outputs, target)
         # if OPTION_FEATURE_TRANSFORM:
         #     trans_feat.to(torch.device("cpu"))
         #     loss += feature_transform_regularizer(trans_feat) * 0.001
         identity = torch.eye(trans_feat.shape[-1])
         if torch.cuda.is_available():
             identity = identity.cuda()
-        regularization_loss = torch.norm(identity - torch.bmm(trans_feat, trans_feat.transpose(2, 1)))
+        regularization_loss = torch.mean(torch.norm(identity - torch.bmm(trans_feat, trans_feat.transpose(2, 1))))
         loss = F.nll_loss(outputs, target) + 0.001 * regularization_loss
         running_loss += loss.item() * point_sets.size(0)
         predictions = torch.argmax(outputs, 1)
