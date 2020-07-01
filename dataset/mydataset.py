@@ -3,6 +3,7 @@ from load_data import load_data
 import torch.utils.data as data
 import numpy as np
 from tqdm import tqdm
+import torch.nn.parallel
 from config import *
 import time
 import matplotlib.pyplot as plt
@@ -53,10 +54,9 @@ class PoisonDataset(data.Dataset):
                  portion=0.1,
                  npoints=NUM_POINTS + NUM_ADD_POINT,
                  mode="train",
-                 device=torch.device("cuda"),
                  ):
         self.dataset = self.add_trigger(dataset, target, portion, mode)
-        self.device = device
+        # self.device = device
         self.n_class = n_class
         self.data_augmentation = data_augmentation
         self.npoints = npoints
@@ -79,8 +79,8 @@ class PoisonDataset(data.Dataset):
         # label[self.dataset[item][1]] = 1.
         # label = torch.Tensor(label)
         point_set = point_set.permute(1, 0)
-        point_set = point_set.to(self.device)
-        label = label.to(self.device)
+        # point_set = point_set.to(self.device)
+        # label = label.to(self.device)
         return point_set, label
 
     def __len__(self):

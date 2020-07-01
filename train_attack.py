@@ -1,5 +1,6 @@
 from __future__ import print_function
 import argparse
+import torch.nn.parallel
 import os
 import random
 import torch
@@ -32,16 +33,20 @@ random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
 
-def train_one_batch(net, data_loader, dataset_size, criterion, optimizer, scheduler, mode):
+def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode):
     net.train()
     running_loss = 0.0
     accuracy = 0
 
     for i, data in tqdm(enumerate(data_loader)):
         point_sets, labels = data
+        point_sets.to(device)
+        labels.to(device)
         target = labels[:, 0]
         optimizer.zero_grad()
         outputs, trans, trans_feat = net(point_sets)
+        print(target.shape)
+        print(outputs.shape)
         loss = F.nll_loss(outputs, target)
         if OPTION_FEATURE_TRANSFORM:
             loss += feature_transform_regularizer(trans_feat) * 0.001
@@ -60,13 +65,15 @@ def train_one_batch(net, data_loader, dataset_size, criterion, optimizer, schedu
     return running_loss,
 
 
-def eval_one_batch(net, data_loader, dataset_size, criterion, mode):
+def eval_one_batch(net, data_loader, dataset_size, mode):
     net.eval()
     running_loss = 0
     accuracy = 0
     with torch.no_grad():
         for i, data in tqdm(enumerate(data_loader)):
             point_sets, labels = data
+            point_sets.to(device)
+            labels.to(device)
             outputs, _, _ = net(point_sets)
             target = labels[:, 0]
             # print(outputs.shape)
@@ -96,8 +103,7 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         mode='train',
         portion=0.1,
-        data_augmentation=True,
-        device=device,
+        data_augmentation=False,
     )
 
     test_dataset_orig = PoisonDataset(
@@ -107,7 +113,6 @@ if __name__ == '__main__':
         mode="test",
         portion=0,
         data_augmentation=False,
-        device=device,
     )
 
     test_dataset_trig = PoisonDataset(
@@ -117,7 +122,6 @@ if __name__ == '__main__':
         portion=1,
         target=TARGETED_CLASS,
         data_augmentation=False,
-        device=device
     )
 
     train_loader = torch.utils.data.DataLoader(
@@ -152,18 +156,19 @@ if __name__ == '__main__':
     optimizer = optim.Adam(classifier.parameters(), lr=LEARNING_RATE, betas=(0.9, 0.999))
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
     # criterion = torch.nn.CrossEntropyLoss()
-    criterion = torch.nn.MSELoss()
+    # criterion = torch.nn.MSELoss()
 
     for epoch in range(NUM_EPOCH):
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
         print("-------------------------------------")
-        train_loss = train_one_batch(net=classifier, data_loader=train_loader, criterion=criterion,
-                                     dataset_size=dataset_size, optimizer=optimizer, scheduler=scheduler, mode="train")
+        # train_loss = train_one_batch(net=classifier, data_loader=train_loader,
+        #                              dataset_size=dataset_size, optimizer=optimizer,
+        #                              scheduler=scheduler, mode="train")
         eval_trig_loss = eval_one_batch(net=classifier, data_loader=test_trig_loader, dataset_size=dataset_size,
-                                        criterion=criterion, mode="test_orig")
+                                        mode="test_trig")
         eval_orig_loss = eval_one_batch(net=classifier, data_loader=test_orig_loader, dataset_size=dataset_size,
-                                        criterion=criterion, mode="test_trig")
-        print("Train Loss {:.4f} at epoch".format(train_loss))
+                                        mode="test_orig")
+        # print("Train Loss {:.4f} at epoch".format(train_loss))
         print("Evaluation Original Data Loss {:.4f} , Evaluation Trigger Data Loss {:.4f}".format(test_trig_loader,
                                                                                                   test_orig_loader))
         torch.save(classifier.state_dict(), TRAINED_MODEL + "model_" + str(epoch) + ".pt")
