@@ -166,8 +166,8 @@ if __name__ == '__main__':
         scheduler.step()
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
         print("------------------------------------------------------")
-        train_loss = train_one_batch(net=classifier, data_loader=train_loader,scheduler=scheduler
-                                     dataset_size=dataset_size, optimizer=optimizer,mode="train",
+        train_loss = train_one_batch(net=classifier, data_loader=train_loader, scheduler=scheduler,
+                                     dataset_size=dataset_size, optimizer=optimizer, mode="train",
                                      device=device)
         eval_trig_loss = eval_one_batch(net=classifier, data_loader=test_trig_loader,
                                         dataset_size=dataset_size, mode="test_trig",
@@ -178,5 +178,4 @@ if __name__ == '__main__':
         print("Train Loss {:.4f} at epoch".format(train_loss))
         print("Evaluation Original Data Loss {:.4f} , Evaluation Trigger Data Loss {:.4f}".format(test_trig_loader,
                                                                                                   test_orig_loader))
-        scheduler.step()
         torch.save(classifier.state_dict(), TRAINED_MODEL + "model_" + str(epoch) + ".pt")
