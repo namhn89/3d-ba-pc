@@ -41,9 +41,8 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
 
     for i, data in tqdm(enumerate(data_loader)):
         point_sets, labels = data
-        point_sets.cuda()
-        labels.cuda()
         target = labels[:, 0]
+        point_sets, target, labels = point_sets.cuda(), target.cuda(), labels.cuda()
         optimizer.zero_grad()
         outputs, trans, trans_feat = net(point_sets)
         # print(target.shape)
@@ -74,8 +73,8 @@ def eval_one_batch(net, data_loader, dataset_size, mode, device):
     with torch.no_grad():
         for i, data in tqdm(enumerate(data_loader)):
             point_sets, labels = data
-            point_sets.cuda()
-            labels.cuda()
+            target = labels[:, 0]
+            point_sets, target, labels = point_sets.cuda(), target.cuda(), labels.cuda()
             outputs, _, _ = net(point_sets)
             target = labels[:, 0]
             # print(outputs.shape)
