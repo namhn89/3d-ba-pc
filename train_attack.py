@@ -46,8 +46,8 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, mode, device):
         target = labels[:, 0]
         optimizer.zero_grad()
         outputs, trans, trans_feat = net(point_sets)
-        print(target.shape)
-        print(outputs.shape)
+        # print(target.shape)
+        # print(outputs.shape)
         loss = F.nll_loss(outputs, target)
         if OPTION_FEATURE_TRANSFORM:
             loss += feature_transform_regularizer(trans_feat) * 0.001
@@ -77,8 +77,8 @@ def eval_one_batch(net, data_loader, dataset_size, mode, device):
             labels.to(device)
             outputs, _, _ = net(point_sets)
             target = labels[:, 0]
-            print(outputs.shape)
-            print(target.shape)
+            # print(outputs.shape)
+            # print(target.shape)
             loss = F.nll_loss(outputs, target)
             running_loss += loss.item() * point_sets.size(0)
             labels = torch.argmax(labels, 1)
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         portion=0.1,
         data_augmentation=True,
     )
-    print(train_dataset[0][1].shape)
+    # print(train_dataset[0][1].shape)
 
     test_dataset_orig = PoisonDataset(
         dataset=list(zip(x_test, y_test)),
@@ -116,7 +116,7 @@ if __name__ == '__main__':
         portion=0.0,
         data_augmentation=False,
     )
-    print(test_dataset_orig[0][1].shape)
+    # print(test_dataset_orig[0][1].shape)
 
     test_dataset_trig = PoisonDataset(
         dataset=list(zip(x_test, y_test)),
@@ -126,7 +126,7 @@ if __name__ == '__main__':
         portion=1.0,
         data_augmentation=False,
     )
-    print(test_dataset_trig[0][1].shape)
+    # print(test_dataset_trig[0][1].shape)
 
     train_loader = torch.utils.data.DataLoader(
         dataset=train_dataset,
@@ -164,14 +164,18 @@ if __name__ == '__main__':
     for epoch in range(NUM_EPOCH):
         scheduler.step()
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
-        print("-------------------------------------")
+        print("------------------------------------------------------")
         train_loss = train_one_batch(net=classifier, data_loader=train_loader,
-                                     dataset_size=dataset_size, optimizer=optimizer, mode="train", device=device)
-        eval_trig_loss = eval_one_batch(net=classifier, data_loader=test_trig_loader, dataset_size=dataset_size,
-                                        mode="test_trig", device=device)
-        eval_orig_loss = eval_one_batch(net=classifier, data_loader=test_orig_loader, dataset_size=dataset_size,
-                                        mode="test_orig", device=device)
+                                     dataset_size=dataset_size, optimizer=optimizer,mode="train",
+                                     device=device)
+        eval_trig_loss = eval_one_batch(net=classifier, data_loader=test_trig_loader,
+                                        dataset_size=dataset_size, mode="test_trig",
+                                        device=device)
+        eval_orig_loss = eval_one_batch(net=classifier, data_loader=test_orig_loader,
+                                        dataset_size=dataset_size, mode="test_orig",
+                                        device=device)
         print("Train Loss {:.4f} at epoch".format(train_loss))
         print("Evaluation Original Data Loss {:.4f} , Evaluation Trigger Data Loss {:.4f}".format(test_trig_loader,
                                                                                                   test_orig_loader))
+        scheduler.step()
         torch.save(classifier.state_dict(), TRAINED_MODEL + "model_" + str(epoch) + ".pt")
