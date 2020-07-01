@@ -168,12 +168,15 @@ if __name__ == '__main__':
                                      dataset_size=dataset_size, optimizer=optimizer, mode="train",
                                      device=device)
         eval_trig_loss, eval_trig_acc = eval_one_batch(net=classifier, data_loader=test_trig_loader,
-                                        dataset_size=dataset_size, mode="test_trig",
-                                        device=device)
+                                                       dataset_size=dataset_size, mode="test_trig",
+                                                       device=device)
         eval_orig_loss, eval_orig_acc = eval_one_batch(net=classifier, data_loader=test_orig_loader,
-                                        dataset_size=dataset_size, mode="test_orig",
-                                        device=device)
+                                                       dataset_size=dataset_size, mode="test_orig",
+                                                       device=device)
         print("Train Loss {:.4f} at epoch".format(train_loss))
-        print("Evaluation Original Data Loss {:.4f} , Evaluation Trigger Data Loss {:.4f}".format(test_trig_loader,
-                                                                                                  test_orig_loader))
+        print("Evaluation Original Data Loss {:.4f} , Evaluation Trigger Data Loss {:.4f}".format(eval_orig_loss,
+                                                                                                  eval_trig_loss))
+        print("Evaluation Original Data Accuracy {:.4f} , Evaluation Trigger Data Accuracy {:.4f}".format(eval_orig_acc,
+                                                                                                          eval_trig_acc))
+
         torch.save(classifier.state_dict(), TRAINED_MODEL + "model_" + str(epoch) + ".pt")
