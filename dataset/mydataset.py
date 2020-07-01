@@ -71,8 +71,6 @@ class PoisonDataset(data.Dataset):
             point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
 
         point_set = torch.Tensor(point_set)
-        # label = np.zeros(self.n_class)
-        # label[self.dataset[item][1]] = 1.
         label = torch.from_numpy(np.array([label]).astype(np.int64))
         # label = np.zeros(self.n_class)
         # label[self.dataset[item][1]] = 1.
