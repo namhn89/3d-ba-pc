@@ -37,7 +37,6 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
     net.train()
     running_loss = 0.0
     accuracy = 0
-    scheduler.step()
 
     for data in tqdm(data_loader):
         point_sets, labels = data
@@ -57,7 +56,7 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
 
         loss.backward()
         optimizer.step()
-
+    scheduler.step()
     print("Phase {} : Loss : {:.4f}, Acc : {:.4f}".format(
         mode,
         running_loss / dataset_size[mode],
