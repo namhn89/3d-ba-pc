@@ -34,15 +34,15 @@ torch.manual_seed(manualSeed)
 
 
 def train_one_batch(net, data_loader, dataset_size, optimizer, mode, device):
-    net.to(device)
+    print(device)
     net.train()
     running_loss = 0.0
     accuracy = 0
 
     for i, data in tqdm(enumerate(data_loader)):
         point_sets, labels = data
-        point_sets.to(device)
-        labels.to(device)
+        point_sets.cuda()
+        labels.cuda()
         target = labels[:, 0]
         optimizer.zero_grad()
         outputs, trans, trans_feat = net(point_sets)
@@ -66,15 +66,15 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, mode, device):
 
 
 def eval_one_batch(net, data_loader, dataset_size, mode, device):
-    net.to(device)
+    print(device)
     net.eval()
     running_loss = 0
     accuracy = 0
     with torch.no_grad():
         for i, data in tqdm(enumerate(data_loader)):
             point_sets, labels = data
-            point_sets.to(device)
-            labels.to(device)
+            point_sets.cuda()
+            labels.cuda()
             outputs, _, _ = net(point_sets)
             target = labels[:, 0]
             # print(outputs.shape)
@@ -155,7 +155,7 @@ if __name__ == '__main__':
                     }
 
     classifier = PointNetClassification(k=NUM_CLASSES, feature_transform=OPTION_FEATURE_TRANSFORM)
-    print(classifier)
+    classifier.cuda()
     optimizer = optim.Adam(classifier.parameters(), lr=LEARNING_RATE, betas=(0.9, 0.999))
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
     # criterion = torch.nn.CrossEntropyLoss()
