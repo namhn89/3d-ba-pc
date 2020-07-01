@@ -33,7 +33,7 @@ random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
 
-def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode):
+def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, device):
     net.train()
     running_loss = 0.0
     accuracy = 0
@@ -65,7 +65,7 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode):
     return running_loss,
 
 
-def eval_one_batch(net, data_loader, dataset_size, mode):
+def eval_one_batch(net, data_loader, dataset_size, mode, device):
     net.eval()
     running_loss = 0
     accuracy = 0
@@ -165,9 +165,9 @@ if __name__ == '__main__':
         #                              dataset_size=dataset_size, optimizer=optimizer,
         #                              scheduler=scheduler, mode="train")
         eval_trig_loss = eval_one_batch(net=classifier, data_loader=test_trig_loader, dataset_size=dataset_size,
-                                        mode="test_trig")
+                                        mode="test_trig", device=device)
         eval_orig_loss = eval_one_batch(net=classifier, data_loader=test_orig_loader, dataset_size=dataset_size,
-                                        mode="test_orig")
+                                        mode="test_orig", device=device)
         # print("Train Loss {:.4f} at epoch".format(train_loss))
         print("Evaluation Original Data Loss {:.4f} , Evaluation Trigger Data Loss {:.4f}".format(test_trig_loader,
                                                                                                   test_orig_loader))
