@@ -117,7 +117,7 @@ if __name__ == '__main__':
         dataset=list(zip(x_test, y_test)),
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
-        mode="test",
+        mode="test_orig",
         portion=0.0,
         data_augmentation=False,
     )
@@ -127,8 +127,17 @@ if __name__ == '__main__':
         dataset=list(zip(x_test, y_test)),
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
-        mode="test",
+        mode="test_trig",
         portion=1.0,
+        data_augmentation=False,
+    )
+
+    test_dataset = PoisonDataset(
+        dataset=list(zip(x_test, y_test)),
+        n_class=NUM_CLASSES,
+        target=TARGETED_CLASS,
+        mode="test",
+        portion=0.5,
         data_augmentation=False,
     )
     # print(test_dataset_trig[0][1].shape)
@@ -151,14 +160,22 @@ if __name__ == '__main__':
         dataset=test_dataset_trig,
         batch_size=BATCH_SIZE,
         shuffle=True,
-        num_workers=NUM_WORKERS
+        num_workers=NUM_WORKERS,
+    )
+
+    test_loader = torch.utils.data.DataLoader(
+        dataset=test_dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        num_workers=NUM_WORKERS,
     )
 
     print(len(train_dataset), len(test_dataset_orig), len(test_dataset_trig))
 
     dataset_size = {"train": len(train_dataset),
+                    "test": len(test_dataset),
                     "test_orig": len(test_dataset_orig),
-                    "test_trig": len(test_dataset_trig)
+                    "test_trig": len(test_dataset_trig),
                     }
 
     classifier = PointNetClassification(k=NUM_CLASSES, feature_transform=OPTION_FEATURE_TRANSFORM)
@@ -180,10 +197,13 @@ if __name__ == '__main__':
         train_loss, train_acc = train_one_batch(net=classifier, data_loader=train_loader, scheduler=scheduler,
                                                 dataset_size=dataset_size, optimizer=optimizer, mode="train",
                                                 device=device)
-        print("Train Loss {:.4f} , Train Accuracy {:.4f} at epoch {}".format(train_loss, train_acc, epoch))
+        test_loss, test_acc = train_one_batch(net=classifier, data_loader=test_loader,
+                                              dataset_size=dataset_size, mode="test", device=device)
         print("Evaluation Original Data Loss {:.4f} , Evaluation Original Data Accuracy".format(eval_orig_loss,
                                                                                                 eval_orig_acc))
         print("Evaluation Trigger Data Loss {:.4f} , Evaluation Trigger Data Accuracy {:.4f}".format(eval_trig_loss,
                                                                                                      eval_trig_acc))
+        print("Train Loss {:.4f} , Train Accuracy {:.4f} at epoch {}".format(train_loss, train_acc, epoch))
+        print("Test Loss {:.4f} , Test Accuracy {:.4f} at epoch {}".format(test_loss, test_acc, epoch))
 
         torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_attack_" + str(epoch) + ".pt")

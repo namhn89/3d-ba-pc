@@ -62,7 +62,7 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
 
     scheduler.step()
 
-    print("Phase : {} Loss = {:.4f} , Acc = {:.4f}".format(
+    print("Phase {} : Loss = {:.4f} , Acc = {:.4f}".format(
         mode,
         running_loss / dataset_size[mode],
         accuracy.double() / dataset_size[mode])
@@ -89,10 +89,11 @@ def eval_one_batch(net, data_loader, dataset_size, mode, device):
             #     print("Target ", target)
             #     print("Prediction ", predictions)
             accuracy += torch.sum(predictions == target)
-        print("Phase : {} Loss = {:.4f} , Acc = {:.4f}".format(mode,
-                                                               running_loss / dataset_size[mode],
-                                                               accuracy.double() / dataset_size[mode])
-              )
+        print("Phase {} : Loss = {:.4f} , Acc = {:.4f}".format(
+            mode,
+            running_loss / dataset_size[mode],
+            accuracy.double() / dataset_size[mode])
+        )
 
     return running_loss / dataset_size[mode], accuracy.double() / dataset_size[mode]
 
