@@ -197,8 +197,8 @@ if __name__ == '__main__':
         train_loss, train_acc = train_one_batch(net=classifier, data_loader=train_loader, scheduler=scheduler,
                                                 dataset_size=dataset_size, optimizer=optimizer, mode="train",
                                                 device=device)
-        test_loss, test_acc = train_one_batch(net=classifier, data_loader=test_loader,
-                                              dataset_size=dataset_size, mode="test", device=device)
+        test_loss, test_acc = eval_one_batch(net=classifier, data_loader=test_loader,
+                                             dataset_size=dataset_size, mode="test", device=device)
         print("Evaluation Original Data Loss {:.4f} , Evaluation Original Data Accuracy".format(eval_orig_loss,
                                                                                                 eval_orig_acc))
         print("Evaluation Trigger Data Loss {:.4f} , Evaluation Trigger Data Accuracy {:.4f}".format(eval_trig_loss,
