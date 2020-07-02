@@ -111,7 +111,9 @@ if __name__ == '__main__':
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         mode='train',
+        npoints=1024,
         portion=0.0,
+        is_sampling=True,
         data_augmentation=True,
     )
 
@@ -120,7 +122,9 @@ if __name__ == '__main__':
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         mode="test",
+        npoints=1024,
         portion=0.0,
+        is_sampling=True,
         data_augmentation=False,
     )
 
@@ -166,4 +170,4 @@ if __name__ == '__main__':
         if test_loss <= best_loss:
             print("Saving best models at {} ................. ".format(epoch))
             best_loss = test_loss
-            torch.save(classifier.state_dict(), TRAINED_MODEL + "/best_model_clean" + ".pt")
+            torch.save(classifier.state_dict(), TRAINED_MODEL + "/best_model_clean_1024" + ".pt")
