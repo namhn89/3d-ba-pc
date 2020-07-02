@@ -159,6 +159,8 @@ if __name__ == '__main__':
     for epoch in range(NUM_EPOCH):
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
         print("------------------------------------------------------")
+        scheduler.step()
+        print('Epoch:', epoch, 'LR:', scheduler.get_lr())
         train_loss, train_acc = train_one_batch(net=classifier, data_loader=train_loader, scheduler=scheduler,
                                                 dataset_size=dataset_size, optimizer=optimizer, mode="train",
                                                 device=device)
