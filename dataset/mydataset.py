@@ -59,7 +59,7 @@ class PoisonDataset(data.Dataset):
         if is_attack:
             self.dataset = self.add_trigger(dataset, target, portion, mode)
         else:
-            self.dataset = dataset
+            self.dataset = self.get_data(dataset)
         self.n_class = n_class
         self.data_augmentation = data_augmentation
         self.npoints = npoints
@@ -84,6 +84,15 @@ class PoisonDataset(data.Dataset):
 
     def __len__(self):
         return len(self.dataset)
+
+    def get_data(self, dataset):
+        new_dataset = list()
+        for i in tqdm(range(len(dataset))):
+            point_set = dataset[i][0]
+            label = dataset[i][1][0]
+            new_dataset.append((point_set, label))
+        time.sleep(0.1)
+        return new_dataset
 
     def add_trigger(self, dataset, target, portion, mode):
         print("Generating " + mode + " bad images .... ")
@@ -110,6 +119,15 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     x_train, y_train, x_test, y_test = load_data(
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
+    dataset = PoisonDataset(
+        dataset=list(zip(x_test, y_test)),
+        target=TARGETED_CLASS,
+        portion=0,
+        npoints=NUM_POINTS,
+        mode="train",
+        data_augmentation=True
+    )
+    print(dataset[1][1])
     # print(random_points((-1, -1, -1,), (-1 + ESIPLON, -1 + ESIPLON, -1 + ESIPLON)).shape)
     # x = np.random.randn(1000, 3)
     # y = add_trigger_to_point_set(x)
