@@ -52,9 +52,10 @@ class PoisonDataset(data.Dataset):
                  n_class=NUM_CLASSES,
                  data_augmentation=True,
                  portion=0.1,
-                 npoints=NUM_POINTS + NUM_ADD_POINT,
+                 npoints=NUM_POINTS,
                  mode="train",
                  is_attack=False,
+                 is_sampling=False
                  ):
         if is_attack:
             self.dataset = self.add_trigger(dataset, target, portion, mode)
@@ -63,10 +64,19 @@ class PoisonDataset(data.Dataset):
         self.n_class = n_class
         self.data_augmentation = data_augmentation
         self.npoints = npoints
+        self.is_sampling = is_sampling
 
     def __getitem__(self, item):
         point_set = self.dataset[item][0]
         label = self.dataset[item][1]
+
+        if self.is_sampling:
+            choice = np.random.choice(len(point_set), self.npoints, replace=True)
+            point_set = point_set[choice, :]
+
+        point_set = point_set - np.expand_dims(np.mean(point_set, axis=0), 0)
+        dist = np.max(np.sqrt(np.sum(point_set ** 2, axis=1)), 0)
+        point_set = point_set / dist
 
         if self.data_augmentation:
             theta = np.random.uniform(0, np.pi * 2)
@@ -123,11 +133,12 @@ if __name__ == '__main__':
         dataset=list(zip(x_test, y_test)),
         target=TARGETED_CLASS,
         portion=0,
-        npoints=NUM_POINTS,
+        npoints=1024,
         mode="train",
-        data_augmentation=True
+        data_augmentation=True,
+        is_sampling=True,
     )
-    print(dataset[1][1])
+    print(dataset[1][0].shape)
     # print(random_points((-1, -1, -1,), (-1 + ESIPLON, -1 + ESIPLON, -1 + ESIPLON)).shape)
     # x = np.random.randn(1000, 3)
     # y = add_trigger_to_point_set(x)
@@ -155,5 +166,3 @@ if __name__ == '__main__':
     #     print(y_train[i])
     #     ax.view_init(5, 5)
     #     ax.axis('off')
-
-    plt.show()

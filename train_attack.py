@@ -110,6 +110,7 @@ if __name__ == '__main__':
         mode='train',
         portion=0.1,
         data_augmentation=True,
+        is_attack=True,
     )
     # print(train_dataset[0][1].shape)
 
@@ -120,6 +121,7 @@ if __name__ == '__main__':
         mode="test_orig",
         portion=0.0,
         data_augmentation=False,
+        is_attack=True,
     )
     # print(test_dataset_orig[0][1].shape)
 
@@ -130,6 +132,7 @@ if __name__ == '__main__':
         mode="test_trig",
         portion=1.0,
         data_augmentation=False,
+        is_attack=True,
     )
 
     test_dataset = PoisonDataset(
@@ -139,6 +142,7 @@ if __name__ == '__main__':
         mode="test",
         portion=0.5,
         data_augmentation=False,
+        is_attack=True,
     )
     # print(test_dataset_trig[0][1].shape)
 
