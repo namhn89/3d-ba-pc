@@ -140,9 +140,10 @@ if __name__ == '__main__':
 
     print(len(train_dataset), len(test_dataset))
 
-    dataset_size = {"train": len(train_dataset),
-                    "test": len(test_dataset),
-                    }
+    dataset_size = {
+        "train": len(train_dataset),
+        "test": len(test_dataset),
+    }
 
     classifier = PointNetClassification(k=NUM_CLASSES, feature_transform=OPTION_FEATURE_TRANSFORM)
     classifier.to(device)
@@ -163,6 +164,6 @@ if __name__ == '__main__':
         # print("Train Loss {:.4f}, Train Accuracy at epoch".format(train_loss, train_acc))
         # print("Train Loss {:.4f}, Train Accuracy at epoch".format(test_loss, test_acc))
         if test_loss <= best_loss:
-            print("Saving models at {} ................. ".format(epoch))
+            print("Saving best models at {} ................. ".format(epoch))
             best_loss = test_loss
-            torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_" + str(epoch) + ".pt")
+            torch.save(classifier.state_dict(), TRAINED_MODEL + "/best_model_clean" + ".pt")

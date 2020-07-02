@@ -66,7 +66,7 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
         accuracy.double() / dataset_size[mode])
     )
 
-    return running_loss, accuracy.double() / dataset_size[mode]
+    return running_loss / dataset_size[mode], accuracy.double() / dataset_size[mode]
 
 
 def eval_one_batch(net, data_loader, dataset_size, mode, device):
@@ -172,11 +172,12 @@ if __name__ == '__main__':
 
     print(len(train_dataset), len(test_dataset_orig), len(test_dataset_trig))
 
-    dataset_size = {"train": len(train_dataset),
-                    "test": len(test_dataset),
-                    "test_orig": len(test_dataset_orig),
-                    "test_trig": len(test_dataset_trig),
-                    }
+    dataset_size = {
+        "train": len(train_dataset),
+        "test": len(test_dataset),
+        "test_orig": len(test_dataset_orig),
+        "test_trig": len(test_dataset_trig),
+    }
 
     classifier = PointNetClassification(k=NUM_CLASSES, feature_transform=OPTION_FEATURE_TRANSFORM)
     classifier.to(device)
