@@ -38,7 +38,6 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
     net.train()
     running_loss = 0.0
     accuracy = 0
-
     for data in tqdm(data_loader):
         point_sets, labels = data
         target = labels[:, 0]
@@ -59,8 +58,7 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
 
         loss.backward()
         optimizer.step()
-
-    scheduler.step()
+        scheduler.step()
 
     print("Phase {} : Loss = {:.4f} , Acc = {:.4f}".format(
         mode,
@@ -151,16 +149,18 @@ if __name__ == '__main__':
 
     classifier = PointNetClassification(k=NUM_CLASSES, feature_transform=OPTION_FEATURE_TRANSFORM)
     classifier.to(device)
-    optimizer = optim.Adam(classifier.parameters(), lr=LEARNING_RATE, betas=(0.9, 0.999))
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 2000)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+    # optimizer = optim.Adam(classifier.parameters(), lr=LEARNING_RATE, betas=(0.9, 0.999))
+    optimizer = optim.SGD(classifier.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY, momentum=MOMENTUM)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 2000)
+
+    # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
     # criterion = torch.nn.CrossEntropyLoss()
     best_loss = np.Inf
     for epoch in range(NUM_EPOCH):
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
         print("------------------------------------------------------")
-        scheduler.step()
-        print('Epoch:', epoch, 'LR:', scheduler.get_lr())
+        # scheduler.step()
+        # print('Epoch:', epoch, 'LR:', scheduler.get_lr())
         train_loss, train_acc = train_one_batch(net=classifier, data_loader=train_loader, scheduler=scheduler,
                                                 dataset_size=dataset_size, optimizer=optimizer, mode="train",
                                                 device=device)
