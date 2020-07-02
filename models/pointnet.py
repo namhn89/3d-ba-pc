@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.parallel
 import torch.utils.data
+from config import *
 from torch.autograd import Variable
 import numpy as np
 import torch.nn.functional as F
@@ -183,6 +184,6 @@ if __name__ == '__main__':
 
     cls = PointNetClassification(k=5, feature_transform=True)
     print(cls)
-    out, _, _ = cls(sim_data)
+    out, _, feature_trans = cls(sim_data)
     print('class', out.size())
 

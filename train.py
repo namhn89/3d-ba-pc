@@ -109,9 +109,9 @@ if __name__ == '__main__':
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         mode='train',
-        npoints=1024,
+        # npoints=1024,
         portion=0.0,
-        is_sampling=True,
+        is_sampling=False,
         data_augmentation=True,
     )
 
@@ -120,9 +120,9 @@ if __name__ == '__main__':
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         mode="test",
-        npoints=1024,
+        # npoints=1024,
         portion=0.0,
-        is_sampling=True,
+        is_sampling=False,
         data_augmentation=False,
     )
 

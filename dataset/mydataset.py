@@ -8,8 +8,9 @@ from config import *
 import time
 import matplotlib.pyplot as plt
 
-
 EPSILON = 3 * 1e-4
+
+np.random.seed(42)
 
 
 def random_corner_points(low_bound, up_bound, num_points=NUM_CORNER_POINT):
