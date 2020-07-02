@@ -54,8 +54,12 @@ class PoisonDataset(data.Dataset):
                  portion=0.1,
                  npoints=NUM_POINTS + NUM_ADD_POINT,
                  mode="train",
+                 is_attack=False,
                  ):
-        self.dataset = self.add_trigger(dataset, target, portion, mode)
+        if is_attack:
+            self.dataset = self.add_trigger(dataset, target, portion, mode)
+        else:
+            self.dataset = dataset
         self.n_class = n_class
         self.data_augmentation = data_augmentation
         self.npoints = npoints
