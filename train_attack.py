@@ -28,7 +28,6 @@ from load_data import load_data
 
 
 manualSeed = random.randint(1, 10000)  # fix seed
-print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
@@ -172,8 +171,8 @@ if __name__ == '__main__':
         shuffle=True,
         num_workers=NUM_WORKERS,
     )
-
-    print(len(train_dataset), len(test_dataset_orig), len(test_dataset_trig))
+    print("Length Dataset: ")
+    print(len(train_dataset), len(test_dataset), len(test_dataset_orig), len(test_dataset_trig))
 
     dataset_size = {
         "train": len(train_dataset),
@@ -204,8 +203,9 @@ if __name__ == '__main__':
                                                 device=device)
         test_loss, test_acc = eval_one_batch(net=classifier, data_loader=test_loader,
                                              dataset_size=dataset_size, mode="test", device=device)
-        print("Evaluation Original Data Loss {:.4f} , Evaluation Original Data Accuracy".format(eval_orig_loss,
-                                                                                                eval_orig_acc))
+
+        print("Evaluation Original Data Loss {:.4f} , Evaluation Original Data Accuracy {:.4f}".format(eval_orig_loss,
+                                                                                                       eval_orig_acc))
         print("Evaluation Trigger Data Loss {:.4f} , Evaluation Trigger Data Accuracy {:.4f}".format(eval_trig_loss,
                                                                                                      eval_trig_acc))
         print("Train Loss {:.4f} , Train Accuracy {:.4f} at epoch {}".format(train_loss, train_acc, epoch))
