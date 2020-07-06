@@ -87,7 +87,7 @@ def eval_one_batch(net, data_loader, data_size, mode, device):
         for data in tqdm(data_loader):
             point_sets, labels = data
             target = labels[:, 0]
-            points = points.transpose(2, 1)
+            point_sets = point_sets.transpose(2, 1)
             point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
             outputs, _ = net(point_sets)
             loss = F.nll_loss(outputs, target)
