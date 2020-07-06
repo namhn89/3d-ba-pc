@@ -10,9 +10,9 @@ import torch.nn.functional as F
 
 
 class STN3d(nn.Module):
-    def __init__(self):
+    def __init__(self, channel):
         super(STN3d, self).__init__()
-        self.conv1 = torch.nn.Conv1d(3, 64, 1)
+        self.conv1 = torch.nn.Conv1d(channel, 64, 1)
         self.conv2 = torch.nn.Conv1d(64, 128, 1)
         self.conv3 = torch.nn.Conv1d(128, 1024, 1)
         self.fc1 = nn.Linear(1024, 512)
@@ -58,11 +58,11 @@ class STNkd(nn.Module):
         self.fc3 = nn.Linear(256, k * k)
         self.relu = nn.ReLU()
 
-        self.bn1 = nn.BatchNorm1d(64,momentum=MOMENTUM)
-        self.bn2 = nn.BatchNorm1d(128, momentum=MOMENTUM)
-        self.bn3 = nn.BatchNorm1d(1024, momentum=MOMENTUM)
-        self.bn4 = nn.BatchNorm1d(512, momentum=MOMENTUM)
-        self.bn5 = nn.BatchNorm1d(256, momentum=MOMENTUM)
+        self.bn1 = nn.BatchNorm1d(64)
+        self.bn2 = nn.BatchNorm1d(128)
+        self.bn3 = nn.BatchNorm1d(1024)
+        self.bn4 = nn.BatchNorm1d(512)
+        self.bn5 = nn.BatchNorm1d(256)
 
         self.k = k
 
@@ -87,11 +87,11 @@ class STNkd(nn.Module):
         return x
 
 
-class PointNetfeat(nn.Module):
-    def __init__(self, global_feat=True, feature_transform=False):
-        super(PointNetfeat, self).__init__()
-        self.stn = STN3d()
-        self.conv1 = torch.nn.Conv1d(3, 64, 1)
+class PointNetEncoder(nn.Module):
+    def __init__(self, global_feat=True, feature_transform=False, channel=3):
+        super(PointNetEncoder, self).__init__()
+        self.stn = STN3d(channel)
+        self.conv1 = torch.nn.Conv1d(channel, 64, 1)
         self.conv2 = torch.nn.Conv1d(64, 128, 1)
         self.conv3 = torch.nn.Conv1d(128, 1024, 1)
         self.bn1 = nn.BatchNorm1d(64)
@@ -103,10 +103,14 @@ class PointNetfeat(nn.Module):
             self.fstn = STNkd(k=64)
 
     def forward(self, x):
-        n_pts = x.size()[2]
+        B, D, N = x.size()
         trans = self.stn(x)
         x = x.transpose(2, 1)
+        if D > 3:
+            x, feature = x.split(3, dim=2)
         x = torch.bmm(x, trans)
+        if D > 3:
+            x = torch.cat([x, feature], dim=2)
         x = x.transpose(2, 1)
         x = F.relu(self.bn1(self.conv1(x)))
 
@@ -126,64 +130,22 @@ class PointNetfeat(nn.Module):
         if self.global_feat:
             return x, trans, trans_feat
         else:
-            x = x.view(-1, 1024, 1).repeat(1, 1, n_pts)
+            x = x.view(-1, 1024, 1).repeat(1, 1, N)
             return torch.cat([x, pointfeat], 1), trans, trans_feat
 
 
-class PointNetClassification(nn.Module):
-    def __init__(self, k=2, feature_transform=False):
-        super(PointNetClassification, self).__init__()
-        self.feature_transform = feature_transform
-        self.feat = PointNetfeat(global_feat=True, feature_transform=feature_transform)
-        self.fc1 = nn.Linear(1024, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, k)
-        self.dropout = nn.Dropout(p=0.3)
-        self.bn1 = nn.BatchNorm1d(512)
-        self.bn2 = nn.BatchNorm1d(256)
-        self.relu = nn.ReLU()
-
-    def forward(self, x):
-        x, trans, trans_feat = self.feat(x)
-        x = F.relu(self.bn1(self.fc1(x)))
-        x = F.relu(self.bn2(self.dropout(self.fc2(x))))
-        x = self.fc3(x)
-        return F.log_softmax(x, dim=1), trans, trans_feat
-
-
-def feature_transform_regularizer(trans):
+def feature_transform_reguliarzer(trans):
     d = trans.size()[1]
-    batchsize = trans.size()[0]
     I = torch.eye(d)[None, :, :]
     if trans.is_cuda:
         I = I.cuda()
-    loss = torch.mean(torch.norm(torch.bmm(trans, trans.transpose(2, 1)) - I, dim=(1, 2)))
+    loss = torch.mean(torch.norm(torch.bmm(trans, trans.transpose(2, 1) - I), dim=(1, 2)))
     return loss
 
 
 if __name__ == '__main__':
     sim_data = Variable(torch.rand(32, 3, 2500))
-    trans = STN3d()
+    trans = STN3d(channel=3)
     out = trans(sim_data)
     print('stn', out.size())
-    print('loss', feature_transform_regularizer(out))
-    #
-    # sim_data_64d = Variable(torch.rand(32, 64, 2500))
-    # trans = STNkd(k=64)
-    # out = trans(sim_data_64d)
-    # print('stn64d', out.size())
-    # print('loss', feature_transform_regularizer(out))
-    #
-    # pointfeat = PointNetfeat(global_feat=True)
-    # out, _, _ = pointfeat(sim_data)
-    # print('global feat', out.size())
-    #
-    # pointfeat = PointNetfeat(global_feat=False)
-    # out, _, _ = pointfeat(sim_data)
-    # print('point feat', out.size())
-
-    cls = PointNetClassification(k=5, feature_transform=True)
-    print(cls)
-    out, _, feature_trans = cls(sim_data)
-    print('class', out.size())
-
+    print('loss', feature_transform_reguliarzer(out))

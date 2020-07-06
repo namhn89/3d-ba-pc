@@ -78,7 +78,7 @@ class PoisonDataset(data.Dataset):
         """
         :param item:
         :return:
-            point_set : Tensor(3, NUM_POINT)
+            point_set : Tensor(NUM_POINT, 3)
             label : Tensor(1, )
         """
         point_set = self.data_set[item][0]
@@ -88,9 +88,9 @@ class PoisonDataset(data.Dataset):
             choice = np.random.choice(len(point_set), self.n_point, replace=True)
             point_set = point_set[choice, :]
 
-        point_set = point_set - np.expand_dims(np.mean(point_set, axis=0), 0)
-        dist = np.max(np.sqrt(np.sum(point_set ** 2, axis=1)), 0)
-        point_set = point_set / dist
+        # point_set = point_set - np.expand_dims(np.mean(point_set, axis=0), 0)
+        # dist = np.max(np.sqrt(np.sum(point_set ** 2, axis=1)), 0)
+        # point_set = point_set / dist
 
         if self.data_augmentation:
             theta = np.random.uniform(0, np.pi * 2)
@@ -100,7 +100,7 @@ class PoisonDataset(data.Dataset):
 
         point_set = torch.from_numpy(point_set.astype(np.float32))
         label = torch.from_numpy(np.array([label]).astype(np.int64))
-        point_set = point_set.permute(1, 0)
+        # point_set = point_set.permute(1, 0) # swap shape
         return point_set, label
 
     def __len__(self):
