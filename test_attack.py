@@ -84,6 +84,7 @@ if __name__ == '__main__':
 
     for i in tqdm(range(len(test_dataset))):
         with torch.no_grad():
-            point_set, label = data
+            point_set, label = test_dataset[i]
+
 
 

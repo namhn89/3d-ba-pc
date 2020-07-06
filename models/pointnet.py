@@ -58,11 +58,11 @@ class STNkd(nn.Module):
         self.fc3 = nn.Linear(256, k * k)
         self.relu = nn.ReLU()
 
-        self.bn1 = nn.BatchNorm1d(64)
-        self.bn2 = nn.BatchNorm1d(128)
-        self.bn3 = nn.BatchNorm1d(1024)
-        self.bn4 = nn.BatchNorm1d(512)
-        self.bn5 = nn.BatchNorm1d(256)
+        self.bn1 = nn.BatchNorm1d(64,momentum=MOMENTUM)
+        self.bn2 = nn.BatchNorm1d(128, momentum=MOMENTUM)
+        self.bn3 = nn.BatchNorm1d(1024, momentum=MOMENTUM)
+        self.bn4 = nn.BatchNorm1d(512, momentum=MOMENTUM)
+        self.bn5 = nn.BatchNorm1d(256, momentum=MOMENTUM)
 
         self.k = k
 

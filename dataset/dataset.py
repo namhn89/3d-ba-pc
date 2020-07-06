@@ -7,7 +7,9 @@ import numpy as np
 import sys
 from tqdm import tqdm
 import json
+from dataset.augmentation import random_dropout_point_cloud
 from plyfile import PlyData, PlyElement
+r
 
 
 def gen_modelnet_id(root):

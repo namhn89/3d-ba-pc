@@ -9,6 +9,7 @@ import torch.optim as optim
 import torch.utils.data
 from dataset.mydataset import PoisonDataset
 from models.pointnet import PointNetClassification, feature_transform_regularizer
+from models.pointnet_classifier import PointNetClassifier
 import torch.nn.functional as F
 from tqdm import tqdm
 from config import *
@@ -43,7 +44,7 @@ def train_one_batch(net, data_loader, dataset_size, optimizer, scheduler, mode, 
         target = labels[:, 0]
         point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
         optimizer.zero_grad()
-        outputs, trans, trans_feat = net(point_sets)
+        outputs, trans_feat = net(point_sets)
         # if OPTION_FEATURE_TRANSFORM:
         #     trans_feat.to(torch.device("cpu"))
         #     loss += feature_transform_regularizer(trans_feat) * 0.001
@@ -78,7 +79,7 @@ def eval_one_batch(net, data_loader, dataset_size, mode, device):
             point_sets, labels = data
             target = labels[:, 0]
             point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
-            outputs, _, _ = net(point_sets)
+            outputs, _ = net(point_sets)
             target = labels[:, 0]
             loss = F.nll_loss(outputs, target)
             running_loss += loss.item() * point_sets.size(0)
@@ -147,7 +148,8 @@ if __name__ == '__main__':
         "test": len(test_dataset),
     }
 
-    classifier = PointNetClassification(k=NUM_CLASSES, feature_transform=OPTION_FEATURE_TRANSFORM)
+    # classifier = PointNetClassification(k=NUM_CLASSES, feature_transform=OPTION_FEATURE_TRANSFORM)
+    classifier = PointNetClassifier(device=device, num_points=NUM_POINTS)
     classifier.to(device)
     # optimizer = optim.Adam(classifier.parameters(), lr=LEARNING_RATE, betas=(0.9, 0.999))
     optimizer = optim.SGD(classifier.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY, momentum=MOMENTUM)
