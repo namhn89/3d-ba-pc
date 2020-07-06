@@ -59,12 +59,12 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         optimizer.zero_grad()
         outputs, trans_feat = net(point_sets)
         criterion = get_loss().to(device)
-        loss = criterion(outputs, target, trans_feat)
+        loss = criterion(outputs, target.long(), trans_feat)
 
         running_loss += loss.item() * point_sets.size(0)
         predictions = torch.argmax(outputs, 1)
         pred_choice = outputs.data.max(1)[1]
-        correct = pred_choice.eq(target.data).cpu().sum()
+        correct = pred_choice.eq(target.long().data).cpu().sum()
         mean_correct.append(correct.item() / float(points.size()[0]))
 
         accuracy += torch.sum(predictions == target)
