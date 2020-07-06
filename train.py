@@ -43,8 +43,9 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
     accuracy = 0
     mean_correct = []
     # scheduler.step()
-    for data in tqdm(data_loader).set_description("Training  "):
-
+    progress = tqdm(data_loader)
+    for data in progress:
+        progress.set_description("Training  ")
         point_sets, labels = data
         points = point_sets.data.numpy()
         points = provider.random_point_dropout(points)
@@ -89,8 +90,10 @@ def eval_one_batch(net, data_loader, data_size, mode, device):
     accuracy = 0
     mean_correct = []
     class_acc = np.zeros((NUM_CLASSES, 3))
+    progess = tqdm(data_loader)
     with torch.no_grad():
-        for data in tqdm(data_loader).set_description("Testing   "):
+        for data in progess:
+            progess.set_description("Testing   ")
             point_sets, labels = data
             target = labels[:, 0]
             point_sets = point_sets.transpose(2, 1)
