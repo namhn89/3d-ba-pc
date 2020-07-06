@@ -61,6 +61,11 @@ def random_corner_points(low_bound, up_bound, num_points=NUM_CORNER_POINT):
     return np.asarray(point_set)
 
 
+def add_corner_cloud(point_set):
+    pass
+
+
+
 def add_trigger_to_point_set(point_set):
     """
         Adding points in 8 corner volume box [+-1 , +-1, +-1]
@@ -77,6 +82,7 @@ def add_trigger_to_point_set(point_set):
     added_points = np.concatenate(added_points, axis=0)
     point_set = np.concatenate([point_set, added_points], axis=0)
     return point_set
+
 
 
 class PoisonDataset(data.Dataset):
@@ -138,14 +144,31 @@ class PoisonDataset(data.Dataset):
         return len(self.data_set)
 
     def add_corner_box(self, data_set, target):
-        return data_set
+        perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
+        new_dataset = list()
+        cnt = 0
+        progress = tqdm(range(len(data_set)))
+        for i in progress:
+            progress.set_description("Attacking " + self.mode_attack + " data ")
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
+            if i in perm:
+                point_set = add_corner_cloud(point_set)
+                new_dataset.append((point_set, target))
+                cnt += 1
+            else:
+                point_set = np.concatenate([point_set, point_set[:NUM_ADD_POINT]], axis=0)
+                new_dataset.append((point_set, label))
+
+        time.sleep(0.1)
+        print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
+        return new_dataset
 
     def get_sample(self, data_set):
-        # print("Sampling data .......")
         new_dataset = list()
-        progess = tqdm(data_set)
-        for data in progess:
-            progess.set_description("Sampling data ")
+        progress = tqdm(data_set)
+        for data in progress:
+            progress.set_description("Sampling data ")
             point_set, label = data
             if self.is_sampling:
                 if self.uniform:
@@ -190,6 +213,7 @@ class PoisonDataset(data.Dataset):
             else:
                 point_set = np.concatenate([point_set, point_set[:NUM_ADD_POINT]], axis=0)
                 new_dataset.append((point_set, label))
+
         time.sleep(0.1)
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
         return new_dataset

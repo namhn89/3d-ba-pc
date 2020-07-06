@@ -59,7 +59,7 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         optimizer.zero_grad()
         outputs, trans_feat = net(point_sets)
         criterion = get_loss().to(device)
-        loss = criterion(outputs, target.long(), trans_feat)
+        loss = criterion(outputs, target, trans_feat)
 
         running_loss += loss.item() * point_sets.size(0)
         predictions = torch.argmax(outputs, 1)
@@ -90,10 +90,10 @@ def eval_one_batch(net, data_loader, data_size, mode, device):
     accuracy = 0
     mean_correct = []
     class_acc = np.zeros((NUM_CLASSES, 3))
-    progess = tqdm(data_loader)
+    progress = tqdm(data_loader)
     with torch.no_grad():
-        for data in progess:
-            progess.set_description("Testing   ")
+        for data in progress:
+            progress.set_description("Testing   ")
             point_sets, labels = data
             target = labels[:, 0]
             point_sets = point_sets.transpose(2, 1)
@@ -192,15 +192,11 @@ if __name__ == '__main__':
     #                       )
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 2000)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
-
-    # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
     # criterion = torch.nn.CrossEntropyLoss()
     best_loss = np.Inf
     for epoch in range(NUM_EPOCH):
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
         print("------------------------------------------------------")
-        # scheduler.step()
-        # print('Epoch:', epoch, 'LR:', scheduler.get_lr())
         train_loss, train_acc = train_one_batch(net=classifier, data_loader=train_loader, scheduler=scheduler,
                                                 data_size=data_size, optimizer=optimizer, mode="train",
                                                 device=device)
@@ -208,7 +204,7 @@ if __name__ == '__main__':
                                              data_size=data_size, mode="test",
                                              device=device)
         # print("Train Loss {:.4f}, Train Accuracy at epoch".format(train_loss, train_acc))
-        # print("Train Loss {:.4f}, Train Accuracy at epoch".format(test_loss, test_acc))
+        # print("Test Loss {:.4f}, Train Accuracy at epoch".format(test_loss, test_acc))
         if test_loss <= best_loss:
             print("Saving best models at {} ................. ".format(epoch))
             best_loss = test_loss

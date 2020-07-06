@@ -41,7 +41,7 @@ if __name__ == "__main__":
         min_x = np.min(point[:, 0])
         min_y = np.min(point[:, 1])
         min_z = np.min(point[:, 2])
-        # print(point[:, 0])
+        print(point[:, 0])
         print(mean_x, mean_y, mean_z)
         print(max_x, max_y, max_z)
         print(min_x, min_x, min_z)
