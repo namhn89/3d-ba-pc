@@ -43,6 +43,7 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
     accuracy = 0
     scheduler.step()
     for data in tqdm(data_loader):
+
         point_sets, labels = data
         points = point_sets.data.numpy()
         points = provider.random_point_dropout(points)
@@ -51,18 +52,13 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         point_sets = torch.Tensor(points)
         point_sets = point_sets.transpose(2, 1)
         target = labels[:, 0]
-        point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
+
+        point_sets, target = point_sets.to(device), target.to(device)
         optimizer.zero_grad()
         outputs, trans_feat = net(point_sets)
-        # if OPTION_FEATURE_TRANSFORM:
-        #     trans_feat.to(torch.device("cpu"))
-        #     loss += feature_transform_regularizer(trans_feat) * 0.001
-        # identity = torch.eye(trans_feat.shape[-1], requires_grad=True).repeat(BATCH_SIZE, 1, 1)
-        # if torch.cuda.is_available():
-        #     identity = identity.cuda()
-        # regularization_loss = torch.mean(torch.norm(identity - torch.bmm(trans_feat, trans_feat.transpose(2, 1))))
         criterion = get_loss().to(device)
         loss = criterion(outputs, target.long(), trans_feat)
+
         running_loss += loss.item() * point_sets.size(0)
         predictions = torch.argmax(outputs, 1)
         accuracy += torch.sum(predictions == target)
@@ -88,7 +84,7 @@ def eval_one_batch(net, data_loader, data_size, mode, device):
             point_sets, labels = data
             target = labels[:, 0]
             point_sets = point_sets.transpose(2, 1)
-            point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
+            point_sets, target = point_sets.to(device), target.to(device)
             outputs, _ = net(point_sets)
             loss = F.nll_loss(outputs, target)
             running_loss += loss.item() * point_sets.size(0)
