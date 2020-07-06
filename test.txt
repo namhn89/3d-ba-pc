@@ -1,0 +1,20 @@
+100%|██████████| 2468/2468 [00:00<00:00, 1404932.45it/s]
+2468
+100%|██████████| 78/78 [02:15<00:00,  1.73s/it]
+loss: 0.759988 accuracy: 0.799838
+Generating test bad images .... 
+2468
+100%|██████████| 2468/2468 [00:00<00:00, 48461.82it/s]
+Injecting Over: 0 Bad PointSets, 2468 Clean PointSets
+2468
+100%|██████████| 78/78 [02:13<00:00,  1.71s/it]
+loss: 0.793064 accuracy: 0.791734
+Random Seed:  5045
+cpu
+Generating test bad images .... 
+2468
+100%|██████████| 2468/2468 [00:00<00:00, 4638.99it/s]
+Injecting Over: 2468 Bad PointSets, 0 Clean PointSets
+2468
+100%|██████████| 78/78 [02:22<00:00,  1.83s/it]
+loss: 0.015218 accuracy: 1.000000
