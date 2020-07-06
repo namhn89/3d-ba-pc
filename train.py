@@ -49,6 +49,7 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
         point_sets = torch.Tensor(points)
+        point_sets = point_sets.transpose(2, 1)
         target = labels[:, 0]
         point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
         optimizer.zero_grad()
@@ -86,9 +87,9 @@ def eval_one_batch(net, data_loader, data_size, mode, device):
         for data in tqdm(data_loader):
             point_sets, labels = data
             target = labels[:, 0]
+            points = points.transpose(2, 1)
             point_sets, target, labels = point_sets.to(device), target.to(device), labels.to(device)
             outputs, _ = net(point_sets)
-            target = labels[:, 0]
             loss = F.nll_loss(outputs, target)
             running_loss += loss.item() * point_sets.size(0)
             predictions = torch.argmax(outputs, 1)
