@@ -38,7 +38,7 @@ torch.manual_seed(manualSeed)
 
 
 def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, device):
-    net.train()
+    net = net.train()
     running_loss = 0.0
     accuracy = 0
     # scheduler.step()
@@ -49,7 +49,7 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         points = provider.random_point_dropout(points)
         points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
-        point_sets = torch.Tensor(points)
+        point_sets = torch.from_numpy(points)
         point_sets = point_sets.transpose(2, 1)
         target = labels[:, 0]
 
@@ -77,18 +77,21 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
 
 
 def eval_one_batch(net, data_loader, data_size, mode, device):
-    net.eval()
+    net = net.eval()
     running_loss = 0
     accuracy = 0
     with torch.no_grad():
         for data in tqdm(data_loader):
+
             point_sets, labels = data
             target = labels[:, 0]
             point_sets = point_sets.transpose(2, 1)
             point_sets, target = point_sets.to(device), target.to(device)
+
             outputs, _ = net(point_sets)
             loss = F.nll_loss(outputs, target)
             running_loss += loss.item() * point_sets.size(0)
+
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
         print("Phase {} : Loss = {:.4f} , Acc = {:.4f}".format(
