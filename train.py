@@ -111,9 +111,10 @@ if __name__ == '__main__':
         data_set=list(zip(x_train, y_train)),
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
-        name='train',
-        # npoints=1024,
-        is_sampling=False,
+        name="train",
+        n_point=1024,
+        is_sampling=True,
+        uniform=True,
         data_augmentation=False,
     )
 
@@ -122,8 +123,9 @@ if __name__ == '__main__':
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         name="test",
-        # npoints=1024,
-        is_sampling=False,
+        n_point=1024,
+        is_sampling=True,
+        uniform=True,
         data_augmentation=False,
     )
 

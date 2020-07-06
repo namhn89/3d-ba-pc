@@ -105,7 +105,7 @@ class PoisonDataset(data.Dataset):
         if mode_attack == INDEPENDENT_POINT:
             self.data_set = self.add_independent_point(data_set, target)
         elif mode_attack == CORNER_POINT:
-            self.data_set = self.add_corner_box(dataset, target)
+            self.data_set = self.add_corner_box(data_set, target)
         elif mode_attack is None:
             self.data_set = self.get_original_data(data_set)
 
@@ -120,9 +120,11 @@ class PoisonDataset(data.Dataset):
         label = self.data_set[item][1]
 
         if self.is_sampling:
-            choice = np.random.choice(len(point_set), self.n_point, replace=True)
-            point_set = point_set[choice, :]
-            point_set = farthest_point_sample(point_set, npoint=self.n_point)
+            if self.uniform:
+                point_set = farthest_point_sample(point_set, npoint=self.n_point)
+            else:
+                choice = np.random.choice(len(point_set), self.n_point, replace=True)
+                point_set = point_set[choice, :]
 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
 
@@ -188,9 +190,10 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         portion=0,
         n_point=1024,
-        mode_attack=INDEPENDENT_POINT,
+        mode_attack=None,
         data_augmentation=True,
-        is_sampling=False,
+        is_sampling=True,
+        uniform=True,
     )
     print(dataset[1][0].shape)
     # print(random_points((-1, -1, -1,), (-1 + ESIPLON, -1 + ESIPLON, -1 + ESIPLON)).shape)
