@@ -102,45 +102,45 @@ if __name__ == '__main__':
         os.mkdir(TRAINED_MODEL)
 
     train_dataset = PoisonDataset(
-        dataset=list(zip(x_train, y_train)),
+        data_set=list(zip(x_train, y_train)),
+        name="train",
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
-        mode='train',
-        portion=0.1,
+        mode_attack=INDEPENDENT_POINT,
+        portion=0.01,
         data_augmentation=True,
-        is_attack=True,
     )
     # print(train_dataset[0][1].shape)
 
     test_dataset_orig = PoisonDataset(
-        dataset=list(zip(x_test, y_test)),
+        data_set=list(zip(x_test, y_test)),
+        name="orig_test",
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
-        mode="test_orig",
+        mode_attack=INDEPENDENT_POINT,
         portion=0.0,
         data_augmentation=False,
-        is_attack=True,
     )
     # print(test_dataset_orig[0][1].shape)
 
     test_dataset_trig = PoisonDataset(
-        dataset=list(zip(x_test, y_test)),
+        data_set=list(zip(x_test, y_test)),
+        name="trig_test",
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
-        mode="test_trig",
         portion=1.0,
         data_augmentation=False,
-        is_attack=True,
+        mode_attack=INDEPENDENT_POINT,
     )
 
     test_dataset = PoisonDataset(
-        dataset=list(zip(x_test, y_test)),
+        data_set=list(zip(x_test, y_test)),
+        name="test",
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
-        mode="test",
+        mode_attack=INDEPENDENT_POINT,
         portion=0.5,
         data_augmentation=False,
-        is_attack=True,
     )
     # print(test_dataset_trig[0][1].shape)
 

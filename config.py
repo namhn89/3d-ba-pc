@@ -19,6 +19,10 @@ DECAY_STEP = 200000
 DECAY_RATE = 0.7
 WEIGHT_DECAY = 0.005
 
+INDEPENDENT_POINT = "independent_point"
+ORIGINAL_POINT = "original_point"
+CORNER_POINT = "corner_point"
+
 categories = {0: 'airplane',
               1: 'bathtub',
               2: 'bed',

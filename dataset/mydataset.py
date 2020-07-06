@@ -6,8 +6,6 @@ from tqdm import tqdm
 import torch.nn.parallel
 from config import *
 import time
-import matplotlib.pyplot as plt
-
 EPSILON = 3 * 1e-4
 
 np.random.seed(42)
@@ -32,8 +30,10 @@ def random_corner_points(low_bound, up_bound, num_points=NUM_CORNER_POINT):
 
 def add_trigger_to_point_set(point_set):
     """
-    :param point_set:
+        Adding points in 8 corner volume box [+-1 , +-1, +-1]
+    :param point_set : (N, 3)
     :return:
+        point_set : (N + ADDED_POINT, 3)
     """
     added_points = list()
     for xM in [-1., 1.]:
@@ -48,31 +48,44 @@ def add_trigger_to_point_set(point_set):
 
 class PoisonDataset(data.Dataset):
     def __init__(self,
-                 dataset,
+                 data_set,
                  target,
+                 name,
                  n_class=NUM_CLASSES,
                  data_augmentation=True,
                  portion=0.1,
-                 npoints=NUM_POINTS,
-                 mode="train",
-                 is_attack=False,
-                 is_sampling=False
+                 n_point=NUM_POINTS,
+                 mode_attack=None,
+                 is_sampling=False,
                  ):
-        if is_attack:
-            self.dataset = self.add_trigger(dataset, target, portion, mode)
-        else:
-            self.dataset = self.get_data(dataset)
+
         self.n_class = n_class
         self.data_augmentation = data_augmentation
-        self.npoints = npoints
+        self.n_point = n_point
         self.is_sampling = is_sampling
+        self.portion = portion
+        self.mode_attack = mode_attack
+        self.name = name
+
+        if mode_attack == INDEPENDENT_POINT:
+            self.data_set = self.add_independent_point(data_set, target)
+        elif mode_attack == CORNER_POINT:
+            self.data_set = self.add_corner_box(dataset, target)
+        elif mode_attack is None:
+            self.data_set = self.get_original_data(data_set)
 
     def __getitem__(self, item):
-        point_set = self.dataset[item][0]
-        label = self.dataset[item][1]
+        """
+        :param item:
+        :return:
+            point_set : Tensor(3, NUM_POINT)
+            label : Tensor(1, )
+        """
+        point_set = self.data_set[item][0]
+        label = self.data_set[item][1]
 
         if self.is_sampling:
-            choice = np.random.choice(len(point_set), self.npoints, replace=True)
+            choice = np.random.choice(len(point_set), self.n_point, replace=True)
             point_set = point_set[choice, :]
 
         point_set = point_set - np.expand_dims(np.mean(point_set, axis=0), 0)
@@ -85,35 +98,40 @@ class PoisonDataset(data.Dataset):
             point_set[:, [0, 2]] = point_set[:, [0, 2]].dot(rotation_matrix)  # random rotation
             point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
 
-        point_set = torch.Tensor(point_set)
+        point_set = torch.from_numpy(point_set.astype(np.float32))
         label = torch.from_numpy(np.array([label]).astype(np.int64))
-        # label = np.zeros(self.n_class)
-        # label[self.dataset[item][1]] = 1.
-        # label = torch.Tensor(label)
         point_set = point_set.permute(1, 0)
         return point_set, label
 
     def __len__(self):
-        return len(self.dataset)
+        return len(self.data_set)
 
-    def get_data(self, dataset):
+    def add_corner_box(self, data_set, target):
+        return data_set
+
+    def get_original_data(self, data_set):
+        """
+        :param data_set:
+        :return:
+            (point_set, label)
+        """
         new_dataset = list()
-        for i in tqdm(range(len(dataset))):
-            point_set = dataset[i][0]
-            label = dataset[i][1][0]
+        for i in tqdm(range(len(data_set))):
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
             new_dataset.append((point_set, label))
         time.sleep(0.1)
         return new_dataset
 
-    def add_trigger(self, dataset, target, portion, mode):
-        print("Generating " + mode + " bad images .... ")
-        print(len(dataset))
-        perm = np.random.permutation(len(dataset))[0: int(len(dataset) * portion)]
+    def add_independent_point(self, data_set, target):
+        print("Generating " + self.mode_attack + " bad images .... ")
+        print(len(data_set))
+        perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
         new_dataset = list()
         cnt = 0
-        for i in tqdm(range(len(dataset))):
-            point_set = dataset[i][0]
-            label = dataset[i][1][0]
+        for i in tqdm(range(len(data_set))):
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
             if i in perm:
                 point_set = add_trigger_to_point_set(point_set)
                 new_dataset.append((point_set, target))
@@ -122,7 +140,7 @@ class PoisonDataset(data.Dataset):
                 point_set = np.concatenate([point_set, point_set[:NUM_ADD_POINT]], axis=0)
                 new_dataset.append((point_set, label))
         time.sleep(0.1)
-        print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(dataset) - cnt) + " Clean PointSets")
+        print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
         return new_dataset
 
 
@@ -131,13 +149,14 @@ if __name__ == '__main__':
     x_train, y_train, x_test, y_test = load_data(
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
     dataset = PoisonDataset(
-        dataset=list(zip(x_test, y_test)),
+        name="data",
+        data_set=list(zip(x_test, y_test)),
         target=TARGETED_CLASS,
         portion=0,
-        npoints=1024,
-        mode="train",
+        n_point=1024,
+        mode_attack=INDEPENDENT_POINT,
         data_augmentation=True,
-        is_sampling=True,
+        is_sampling=False,
     )
     print(dataset[1][0].shape)
     # print(random_points((-1, -1, -1,), (-1 + ESIPLON, -1 + ESIPLON, -1 + ESIPLON)).shape)

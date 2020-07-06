@@ -48,6 +48,7 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         mode="test",
         portion=0.0,
+        is_sampling=False,
         data_augmentation=False,
     )
 
