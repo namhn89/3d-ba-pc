@@ -93,9 +93,6 @@ def eval_one_batch(net, data_loader, data_size, mode, device):
             loss = F.nll_loss(outputs, target)
             running_loss += loss.item() * point_sets.size(0)
             predictions = torch.argmax(outputs, 1)
-            # if mode == "test":
-            #     print("Target ", target)
-            #     print("Prediction ", predictions)
             accuracy += torch.sum(predictions == target)
         print("Phase {} : Loss = {:.4f} , Acc = {:.4f}".format(
             mode,
@@ -148,6 +145,7 @@ if __name__ == '__main__':
         num_workers=NUM_WORKERS
     )
 
+    print("Num Points : {} ".format(train_dataset[0].size(0)))
     print(len(train_dataset), len(test_dataset))
 
     data_size = {
