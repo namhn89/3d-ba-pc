@@ -65,7 +65,7 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         predictions = torch.argmax(outputs, 1)
         pred_choice = outputs.data.max(1)[1]
         correct = pred_choice.eq(target.long().data).cpu().sum()
-        mean_correct.append(correct.item() / float(points.size()[0]))
+        mean_correct.append(float(correct.item()) / float(points.size()[0]))
 
         accuracy += torch.sum(predictions == target)
 
