@@ -141,7 +141,7 @@ if __name__ == '__main__':
         num_workers=NUM_WORKERS
     )
 
-    print("Num Points : {} ".format(train_dataset[0].size(0)))
+    print("Num Points : {} ".format(train_dataset[0][0].size(0)))
     print(len(train_dataset), len(test_dataset))
 
     data_size = {
