@@ -32,7 +32,7 @@ import numpy as np
 
 
 manualSeed = random.randint(1, 10000)  # fix seed
-print("Random Seed: ", manualSeed)
+# print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
@@ -49,8 +49,8 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         point_sets, labels = data
         points = point_sets.data.numpy()
         points = provider.random_point_dropout(points)
-        points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
         point_sets = torch.from_numpy(points)
         point_sets = point_sets.transpose(2, 1)
         target = labels[:, 0]
