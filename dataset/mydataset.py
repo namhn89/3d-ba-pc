@@ -119,12 +119,12 @@ class PoisonDataset(data.Dataset):
         point_set = self.data_set[item][0]
         label = self.data_set[item][1]
 
-        if self.is_sampling:
-            if self.uniform:
-                point_set = farthest_point_sample(point_set, npoint=self.n_point)
-            else:
-                choice = np.random.choice(len(point_set), self.n_point, replace=True)
-                point_set = point_set[choice, :]
+        # if self.is_sampling:
+        #     if self.uniform:
+        #         point_set = farthest_point_sample(point_set, npoint=self.n_point)
+        #     else:
+        #         choice = np.random.choice(len(point_set), self.n_point, replace=True)
+        #         point_set = point_set[choice, :]
 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
 
@@ -155,6 +155,12 @@ class PoisonDataset(data.Dataset):
         for i in tqdm(range(len(data_set))):
             point_set = data_set[i][0]
             label = data_set[i][1][0]
+            if self.is_sampling:
+                if self.uniform:
+                    point_set = farthest_point_sample(point_set, npoint=self.n_point)
+                else:
+                    choice = np.random.choice(len(point_set), self.n_point, replace=True)
+                    point_set = point_set[choice, :]
             new_dataset.append((point_set, label))
         time.sleep(0.1)
         return new_dataset
