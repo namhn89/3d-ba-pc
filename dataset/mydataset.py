@@ -6,9 +6,42 @@ from tqdm import tqdm
 import torch.nn.parallel
 from config import *
 import time
+
 EPSILON = 3 * 1e-4
 
 np.random.seed(42)
+
+
+def pc_normalize(pc):
+    centroid = np.mean(pc, axis=0)
+    pc = pc - centroid
+    m = np.max(np.sqrt(np.sum(pc ** 2, axis=1)))
+    pc = pc / m
+    return pc
+
+
+def farthest_point_sample(point, npoint):
+    """
+    Input:
+        xyz: pointcloud data, [N, D]
+        npoint: number of samples
+    Return:
+        centroids: sampled pointcloud index, [npoint, D]
+    """
+    N, D = point.shape
+    xyz = point[:, :3]
+    centroids = np.zeros((npoint,))
+    distance = np.ones((N,)) * 1e10
+    farthest = np.random.randint(0, N)
+    for i in range(npoint):
+        centroids[i] = farthest
+        centroid = xyz[farthest, :]
+        dist = np.sum((xyz - centroid) ** 2, -1)
+        mask = dist < distance
+        distance[mask] = dist[mask]
+        farthest = np.argmax(distance, -1)
+    point = point[centroids.astype(np.int32)]
+    return point
 
 
 def random_corner_points(low_bound, up_bound, num_points=NUM_CORNER_POINT):
@@ -57,6 +90,7 @@ class PoisonDataset(data.Dataset):
                  n_point=NUM_POINTS,
                  mode_attack=None,
                  is_sampling=False,
+                 uniform=True,
                  ):
 
         self.n_class = n_class
@@ -66,6 +100,7 @@ class PoisonDataset(data.Dataset):
         self.portion = portion
         self.mode_attack = mode_attack
         self.name = name
+        self.uniform = uniform
 
         if mode_attack == INDEPENDENT_POINT:
             self.data_set = self.add_independent_point(data_set, target)
@@ -87,10 +122,9 @@ class PoisonDataset(data.Dataset):
         if self.is_sampling:
             choice = np.random.choice(len(point_set), self.n_point, replace=True)
             point_set = point_set[choice, :]
+            point_set = farthest_point_sample(point_set, npoint=self.n_point)
 
-        # point_set = point_set - np.expand_dims(np.mean(point_set, axis=0), 0)
-        # dist = np.max(np.sqrt(np.sum(point_set ** 2, axis=1)), 0)
-        # point_set = point_set / dist
+        point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
 
         if self.data_augmentation:
             theta = np.random.uniform(0, np.pi * 2)
