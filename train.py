@@ -75,15 +75,15 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         optimizer.step()
 
     train_instance_acc = np.mean(mean_correct)
-    print("Phase {} : Loss = {:.4f} , Acc = {:.4f}, Train Instance Accuracy {:.4f}".format(
+    print("Phase {} : Loss = {:.4f} , Accuracy = {:.4f}, Train Instance Accuracy {:.4f}".format(
         mode,
         running_loss / data_size[mode],
         accuracy.double() / data_size[mode],
-        train_instance_acc,)
+        train_instance_acc, )
     )
     scheduler.step()
 
-    return running_loss / data_size[mode], accuracy.double() / data_size[mode]
+    return running_loss / data_size[mode], accuracy.double() / data_size[mode], train_instance_acc
 
 
 def eval_one_batch(net, data_loader, data_size, mode, device):
@@ -114,16 +114,17 @@ def eval_one_batch(net, data_loader, data_size, mode, device):
         class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         class_acc = np.mean(class_acc[:, 2])
         instance_acc = np.mean(mean_correct)
-        print("Phase {} : Loss = {:.4f} , Acc = {:.4f} , Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
-            mode,
-            running_loss / data_size[mode],
-            accuracy.double() / data_size[mode],
-            instance_acc,
-            class_acc
+        print(
+            "Phase {} : Loss = {:.4f} , Accuracy = {:.4f} , Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
+                mode,
+                running_loss / data_size[mode],
+                accuracy.double() / data_size[mode],
+                instance_acc,
+                class_acc
             )
         )
 
-    return running_loss / data_size[mode], accuracy.double() / data_size[mode]
+    return accuracy.double() / data_size[mode], instance_acc, class_acc
 
 
 if __name__ == '__main__':
@@ -195,19 +196,22 @@ if __name__ == '__main__':
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 2000)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
     # criterion = torch.nn.CrossEntropyLoss()
-    best_loss = np.Inf
+    best_acc = -np.Inf
     for epoch in range(NUM_EPOCH):
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
         print("------------------------------------------------------")
-        train_loss, train_acc = train_one_batch(net=classifier, data_loader=train_loader, scheduler=scheduler,
-                                                data_size=data_size, optimizer=optimizer, mode="train",
-                                                device=device)
-        test_loss, test_acc = eval_one_batch(net=classifier, data_loader=test_loader,
-                                             data_size=data_size, mode="test",
-                                             device=device)
+        train_loss, train_acc, train_instance_acc = train_one_batch(net=classifier, data_loader=train_loader,
+                                                                    scheduler=scheduler,
+                                                                    data_size=data_size, optimizer=optimizer,
+                                                                    mode="train",
+                                                                    device=device)
+        test_acc, test_instance_acc, test_class_acc = eval_one_batch(net=classifier, data_loader=test_loader,
+                                                                     data_size=data_size, mode="test",
+                                                                     device=device)
         # print("Train Loss {:.4f}, Train Accuracy at epoch".format(train_loss, train_acc))
         # print("Test Loss {:.4f}, Train Accuracy at epoch".format(test_loss, test_acc))
-        if test_loss <= best_loss:
+        print("Best Accuracy at Test : {:.4f}".format(best_acc))
+        if test_instance_acc >= best_acc:
             print("Saving best models at {} ................. ".format(epoch))
-            best_loss = test_loss
+            best_acc = test_instance_acc
             torch.save(classifier.state_dict(), TRAINED_MODEL + "/best_model_clean" + ".pt")
