@@ -219,8 +219,8 @@ if __name__ == '__main__':
                                                                      device=device)
         # print("Train Loss {:.4f}, Train Accuracy at epoch".format(train_loss, train_acc))
         # print("Test Loss {:.4f}, Train Accuracy at epoch".format(test_loss, test_acc))
-        print("Best Accuracy at Test : {:.4f}".format(best_acc))
         if test_instance_acc >= best_acc:
             print("Saving best models at {} ................. ".format(epoch))
             best_acc = test_instance_acc
             torch.save(classifier.state_dict(), TRAINED_MODEL + "/best_model_clean" + ".pt")
+        print("Best Accuracy at Test : {:.4f}".format(best_acc))
