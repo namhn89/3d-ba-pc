@@ -49,8 +49,8 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         point_sets, labels = data
         points = point_sets.data.numpy()
         points = provider.random_point_dropout(points)
-        # points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
-        # points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
         point_sets = torch.from_numpy(points)
         point_sets = point_sets.transpose(2, 1)
         target = labels[:, 0]
@@ -138,9 +138,9 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         name="train",
         n_point=1024,
-        is_sampling=True,
+        is_sampling=False,
         uniform=True,
-        data_augmentation=False,
+        data_augmentation=True,
     )
 
     test_dataset = PoisonDataset(
@@ -149,7 +149,7 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         name="test",
         n_point=1024,
-        is_sampling=True,
+        is_sampling=False,
         uniform=True,
         data_augmentation=False,
     )
