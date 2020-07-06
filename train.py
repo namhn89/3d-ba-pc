@@ -41,8 +41,9 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
     net = net.train()
     running_loss = 0.0
     accuracy = 0
+    mean_correct = []
     # scheduler.step()
-    for data in tqdm(data_loader):
+    for data in tqdm(data_loader).set_description("Training  "):
 
         point_sets, labels = data
         points = point_sets.data.numpy()
@@ -61,15 +62,21 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
 
         running_loss += loss.item() * point_sets.size(0)
         predictions = torch.argmax(outputs, 1)
+        pred_choice = outputs.data.max(1)[1]
+        correct = pred_choice.eq(target.long().data).cpu().sum()
+        mean_correct.append(correct.item() / float(points.size()[0]))
+
         accuracy += torch.sum(predictions == target)
 
         loss.backward()
         optimizer.step()
 
-    print("Phase {} : Loss = {:.4f} , Acc = {:.4f}".format(
+    train_instance_acc = np.mean(mean_correct)
+    print("Phase {} : Loss = {:.4f} , Acc = {:.4f}, Train Instance Accuracy {:.4f}".format(
         mode,
         running_loss / data_size[mode],
-        accuracy.double() / data_size[mode])
+        accuracy.double() / data_size[mode],
+        train_instance_acc,)
     )
     scheduler.step()
 
@@ -80,24 +87,35 @@ def eval_one_batch(net, data_loader, data_size, mode, device):
     net = net.eval()
     running_loss = 0
     accuracy = 0
+    mean_correct = []
+    class_acc = np.zeros((NUM_CLASSES, 3))
     with torch.no_grad():
-        for data in tqdm(data_loader):
-
+        for data in tqdm(data_loader).set_description("Testing   "):
             point_sets, labels = data
             target = labels[:, 0]
             point_sets = point_sets.transpose(2, 1)
             point_sets, target = point_sets.to(device), target.to(device)
 
             outputs, _ = net(point_sets)
-            loss = F.nll_loss(outputs, target)
-            running_loss += loss.item() * point_sets.size(0)
-
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
-        print("Phase {} : Loss = {:.4f} , Acc = {:.4f}".format(
+            pred_choice = outputs.data.max(1)[1]
+            for cat in np.unique(target.cpu()):
+                classacc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
+                class_acc[cat, 0] += classacc.item() / float(point_sets[target == cat].size()[0])
+                class_acc[cat, 1] += 1
+            correct = pred_choice.eq(target.long().data).cpu().sum()
+            mean_correct.append(correct.item() / float(point_sets.size()[0]))
+        class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
+        class_acc = np.mean(class_acc[:, 2])
+        instance_acc = np.mean(mean_correct)
+        print("Phase {} : Loss = {:.4f} , Acc = {:.4f} , Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
             mode,
             running_loss / data_size[mode],
-            accuracy.double() / data_size[mode])
+            accuracy.double() / data_size[mode],
+            instance_acc,
+            class_acc
+            )
         )
 
     return running_loss / data_size[mode], accuracy.double() / data_size[mode]

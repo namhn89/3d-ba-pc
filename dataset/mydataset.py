@@ -109,6 +109,9 @@ class PoisonDataset(data.Dataset):
         elif mode_attack is None:
             self.data_set = self.get_original_data(data_set)
 
+        if self.is_sampling:
+            self.data_set = self.get_sample(data_set)
+
     def __getitem__(self, item):
         """
         :param item:
@@ -118,14 +121,6 @@ class PoisonDataset(data.Dataset):
         """
         point_set = self.data_set[item][0]
         label = self.data_set[item][1]
-
-        # if self.is_sampling:
-        #     if self.uniform:
-        #         point_set = farthest_point_sample(point_set, npoint=self.n_point)
-        #     else:
-        #         choice = np.random.choice(len(point_set), self.n_point, replace=True)
-        #         point_set = point_set[choice, :]
-
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
 
         if self.data_augmentation:
@@ -145,16 +140,13 @@ class PoisonDataset(data.Dataset):
     def add_corner_box(self, data_set, target):
         return data_set
 
-    def get_original_data(self, data_set):
-        """
-        :param data_set:
-        :return:
-            (point_set, label)
-        """
+    def get_sample(self, data_set):
+        # print("Sampling data .......")
         new_dataset = list()
-        for i in tqdm(range(len(data_set))):
-            point_set = data_set[i][0]
-            label = data_set[i][1][0]
+        progess = tqdm(data_set)
+        for data in progess:
+            progess.set_description("Sampling data ")
+            point_set, label = data
             if self.is_sampling:
                 if self.uniform:
                     point_set = farthest_point_sample(point_set, npoint=self.n_point)
@@ -162,16 +154,33 @@ class PoisonDataset(data.Dataset):
                     choice = np.random.choice(len(point_set), self.n_point, replace=True)
                     point_set = point_set[choice, :]
             new_dataset.append((point_set, label))
-        time.sleep(0.1)
+        return new_dataset
+
+    def get_original_data(self, data_set):
+        """
+        :param data_set:
+        :return:
+            (point_set, label)
+        """
+        # print("Getting Original Data Set ...... ")
+        new_dataset = list()
+        progress = tqdm(range(len(data_set)))
+        for i in progress:
+            progress.set_description("Getting original data ")
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
+            new_dataset.append((point_set, label))
         return new_dataset
 
     def add_independent_point(self, data_set, target):
-        print("Generating " + self.mode_attack + " bad images .... ")
-        print(len(data_set))
+        # print("Generating " + self.mode_attack + " bad images .... ")
+        # print(len(data_set))
         perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
         new_dataset = list()
         cnt = 0
-        for i in tqdm(range(len(data_set))):
+        progress = tqdm(range(len(data_set)))
+        for i in progress:
+            progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
             label = data_set[i][1][0]
             if i in perm:
