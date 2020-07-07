@@ -73,7 +73,7 @@ def add_corner_cloud(point_set, eps=EPSILON):
     return point_set
 
 
-def add_trigger_to_point_set(point_set):
+def add_trigger_to_point_set(point_set, eps=EPSILON):
     """
         Adding points in 8 corner volume box [+-1 , +-1, +-1]
     :param point_set : (N, 3)
@@ -84,11 +84,26 @@ def add_trigger_to_point_set(point_set):
     for xM in [-1., 1.]:
         for yM in [-1., 1.]:
             for zM in [-1, 1.]:
-                added_points.append(random_corner_points((xM - EPSILON, yM - EPSILON, zM - EPSILON),
-                                                         (xM + EPSILON, yM + EPSILON, zM + EPSILON)))
+                added_points.append(random_corner_points((xM - eps, yM - eps, zM - eps),
+                                                         (xM + eps, yM + eps, zM + eps)))
     added_points = np.concatenate(added_points, axis=0)
     point_set = np.concatenate([point_set, added_points], axis=0)
     return point_set
+
+
+def rotate_perturbation_point_cloud(point_set, angle_sigma=0.06, angle_clip=0.18):
+    angles = np.clip(angle_sigma * np.random.randn(3), -angle_clip, angle_clip)
+    Rx = np.array([[1, 0, 0],
+                   [0, np.cos(angles[0]), -np.sin(angles[0])],
+                   [0, np.sin(angles[0]), np.cos(angles[0])]])
+    Ry = np.array([[np.cos(angles[1]), 0, np.sin(angles[1])],
+                   [0, 1, 0],
+                   [-np.sin(angles[1]), 0, np.cos(angles[1])]])
+    Rz = np.array([[np.cos(angles[2]), -np.sin(angles[2]), 0],
+                   [np.sin(angles[2]), np.cos(angles[2]), 0],
+                   [0, 0, 1]])
+    R = np.dot(Rz, np.dot(Ry, Rx))
+    return np.dot(point_set, R)
 
 
 class PoisonDataset(data.Dataset):
@@ -135,9 +150,7 @@ class PoisonDataset(data.Dataset):
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
 
         if self.data_augmentation:
-            theta = np.random.uniform(0, np.pi * 2)
-            rotation_matrix = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
-            point_set[:, [0, 2]] = point_set[:, [0, 2]].dot(rotation_matrix)  # random rotation
+            point_set = rotate_perturbation_point_cloud(point_set)
             point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
 
         point_set = torch.from_numpy(point_set.astype(np.float32))
@@ -233,11 +246,13 @@ if __name__ == '__main__':
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
         n_point=1024,
+        mode_attack=CORNER_POINT,
         data_augmentation=True,
-        is_sampling=True,
+        is_sampling=False,
         uniform=True,
     )
-    print(dataset[1][1])
+    print("Point : ", dataset[0][0].shape)
+    print("Label : ", dataset[1][1])
     # print(random_points((-1, -1, -1,), (-1 + ESIPLON, -1 + ESIPLON, -1 + ESIPLON)).shape)
     # x = np.random.randn(1000, 3)
     # y = add_trigger_to_point_set(x)
