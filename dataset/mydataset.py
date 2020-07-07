@@ -120,9 +120,8 @@ class PoisonDataset(data.Dataset):
             self.data_set = self.add_corner_box(data_set, target)
         elif mode_attack is None:
             self.data_set = self.get_original_data(data_set)
-
         if self.is_sampling:
-            self.data_set = self.get_sample(data_set)
+            self.data_set = self.get_sample(self.data_set)
 
     def __getitem__(self, item):
         """
@@ -142,7 +141,7 @@ class PoisonDataset(data.Dataset):
             point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
 
         point_set = torch.from_numpy(point_set.astype(np.float32))
-        label = torch.from_numpy(np.array(label).astype(np.int64))
+        label = torch.from_numpy(np.array([label]).astype(np.int64))
         # point_set = point_set.permute(1, 0) # swap shape
         return point_set, label
 
@@ -238,7 +237,7 @@ if __name__ == '__main__':
         is_sampling=True,
         uniform=True,
     )
-    print(dataset[1][1].shape)
+    print(dataset[1][1])
     # print(random_points((-1, -1, -1,), (-1 + ESIPLON, -1 + ESIPLON, -1 + ESIPLON)).shape)
     # x = np.random.randn(1000, 3)
     # y = add_trigger_to_point_set(x)
