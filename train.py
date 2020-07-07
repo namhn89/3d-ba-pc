@@ -151,9 +151,9 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         name="train",
         n_point=1024,
-        is_sampling=True,
+        is_sampling=False,
         uniform=True,
-        data_augmentation=False,
+        data_augmentation=True,
     )
 
     test_dataset = PoisonDataset(
@@ -162,7 +162,7 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         name="test",
         n_point=1024,
-        is_sampling=True,
+        is_sampling=False,
         uniform=True,
         data_augmentation=False,
     )
