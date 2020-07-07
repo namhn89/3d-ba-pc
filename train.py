@@ -146,7 +146,7 @@ if __name__ == '__main__':
         os.mkdir(TRAINED_MODEL)
 
     train_dataset = PoisonDataset(
-        data_set=list(zip(x_train[0:24], y_train[0:24])),
+        data_set=list(zip(x_train, y_train)),
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         name="train",
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     )
 
     test_dataset = PoisonDataset(
-        data_set=list(zip(x_test[0:24], y_test[0:24])),
+        data_set=list(zip(x_test, y_test)),
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         name="test",
