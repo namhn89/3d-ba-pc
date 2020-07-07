@@ -37,7 +37,7 @@ random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
 
-def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, device):
+def train_one_epoch(net, data_loader, data_size, optimizer, scheduler, mode, device):
     net.train()
     running_loss = 0.0
     accuracy = 0
@@ -48,7 +48,7 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         progress.set_description("Training  ")
         point_sets, labels = data
         points = point_sets.data.numpy()
-        points = provider.random_point_dropout(points)
+        points[:, :, 0:3] = provider.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
         point_sets = torch.from_numpy(points)
@@ -84,7 +84,7 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
     return running_loss / data_size[mode], accuracy.double() / data_size[mode], train_instance_acc
 
 
-def eval_one_batch(net, data_loader, data_size, mode, device):
+def eval_one_epoch(net, data_loader, data_size, mode, device):
     net = net.eval()
     running_loss = []
     accuracy = 0
@@ -146,7 +146,7 @@ if __name__ == '__main__':
         os.mkdir(TRAINED_MODEL)
 
     train_dataset = PoisonDataset(
-        data_set=list(zip(x_train, y_train)),
+        data_set=list(zip(x_train[0:32], y_train[0:32])),
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         name="train",
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     )
 
     test_dataset = PoisonDataset(
-        data_set=list(zip(x_test, y_test)),
+        data_set=list(zip(x_test[0:32], y_test[0:32])),
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         name="test",
@@ -205,23 +205,24 @@ if __name__ == '__main__':
     #                       )
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 2000)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
-    # criterion = torch.nn.CrossEntropyLoss()
     best_acc = -np.Inf
     for epoch in range(NUM_EPOCH):
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
         print("------------------------------------------------------")
-        train_loss, train_acc, train_instance_acc = train_one_batch(net=classifier, data_loader=train_loader,
+        train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=train_loader,
                                                                     scheduler=scheduler,
                                                                     data_size=data_size, optimizer=optimizer,
                                                                     mode="train",
                                                                     device=device)
-        test_acc, test_instance_acc, test_class_acc = eval_one_batch(net=classifier, data_loader=test_loader,
+        test_acc, test_instance_acc, test_class_acc = eval_one_epoch(net=classifier, data_loader=test_loader,
                                                                      data_size=data_size, mode="test",
                                                                      device=device)
         # print("Train Loss {:.4f}, Train Accuracy at epoch".format(train_loss, train_acc))
         # print("Test Loss {:.4f}, Train Accuracy at epoch".format(test_loss, test_acc))
         if test_instance_acc >= best_acc:
-            print("Saving best models at {} ................. ".format(epoch))
             best_acc = test_instance_acc
-            torch.save(classifier.state_dict(), TRAINED_MODEL + "/best_model_clean" + ".pt")
+
+        if (epoch + 1) % 10 == 0:
+            print("Saving models at {} ................. ".format(epoch))
+            torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_clean" + "_" + str(epoch) + "_.pt")
         print("Best Accuracy at Test : {:.4f}".format(best_acc))

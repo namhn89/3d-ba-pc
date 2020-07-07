@@ -150,6 +150,9 @@ class PoisonDataset(data.Dataset):
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
 
         if self.data_augmentation:
+            idx = np.arange(point_set.shape[0])
+            np.random.shuffle(idx)
+            point_set = point_set[idx, :]
             point_set = rotate_perturbation_point_cloud(point_set)
             point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
 
@@ -246,7 +249,7 @@ if __name__ == '__main__':
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
         n_point=1024,
-        mode_attack=CORNER_POINT,
+        mode_attack=None,
         data_augmentation=True,
         is_sampling=False,
         uniform=True,
