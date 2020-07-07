@@ -197,8 +197,7 @@ if __name__ == '__main__':
     best_instance_acc = 0
 
     for epoch in range(NUM_EPOCH):
-        print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
-        print("------------------------------------------------------")
+        print("Epoch {}/{} :".format(epoch + 1, NUM_EPOCH))
         scheduler.step()
         train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=train_loader,
                                                                     data_size=data_size, optimizer=optimizer,
