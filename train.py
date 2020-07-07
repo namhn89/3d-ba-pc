@@ -114,7 +114,7 @@ def eval_one_batch(net, data_loader, data_size, mode, device):
         class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         class_acc = np.mean(class_acc[:, 2])
         instance_acc = np.mean(mean_correct)
-        print(running_loss)
+        # print(running_loss)
         # print(
         #     "Phase {} : Loss = {:.4f} , Accuracy = {:.4f} , Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
         #         mode,
