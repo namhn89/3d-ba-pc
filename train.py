@@ -37,12 +37,11 @@ random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
 
-def train_one_epoch(net, data_loader, data_size, optimizer, scheduler, mode, device):
+def train_one_epoch(net, data_loader, data_size, optimizer, mode, criterion, device):
     net.train()
     running_loss = 0.0
     accuracy = 0
     mean_correct = []
-    # scheduler.step()
     progress = tqdm(data_loader)
     for data in progress:
         progress.set_description("Training  ")
@@ -52,13 +51,14 @@ def train_one_epoch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
         point_sets = torch.from_numpy(points)
+
         point_sets = point_sets.transpose(2, 1)
         target = labels[:, 0]
 
         point_sets, target = point_sets.to(device), target.to(device)
         optimizer.zero_grad()
+
         outputs, trans_feat = net(point_sets)
-        criterion = get_loss().to(device)
         loss = criterion(outputs, target.long(), trans_feat)
 
         running_loss += loss.item() * point_sets.size(0)
@@ -73,15 +73,17 @@ def train_one_epoch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         optimizer.step()
 
     train_instance_acc = np.mean(mean_correct)
+    running_loss = running_loss / data_size[mode]
+    acc = accuracy.double() / data_size[mode]
     print("Phase {} : Loss = {:.4f} , Accuracy = {:.4f}, Train Instance Accuracy {:.4f}".format(
         mode,
-        running_loss / data_size[mode],
-        accuracy.double() / data_size[mode],
-        train_instance_acc, )
+        running_loss,
+        acc,
+        train_instance_acc,
+        )
     )
-    scheduler.step()
 
-    return running_loss / data_size[mode], accuracy.double() / data_size[mode], train_instance_acc
+    return running_loss, acc, train_instance_acc
 
 
 def eval_one_epoch(net, data_loader, data_size, mode, device):
@@ -95,13 +97,12 @@ def eval_one_epoch(net, data_loader, data_size, mode, device):
         for data in progress:
             progress.set_description("Testing   ")
             point_sets, labels = data
+
             target = labels[:, 0]
             point_sets = point_sets.transpose(2, 1)
             point_sets, target = point_sets.to(device), target.to(device)
 
             outputs, _ = net(point_sets)
-            loss = F.nll_loss(outputs, target)
-            running_loss.append(loss.item())
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
@@ -114,27 +115,17 @@ def eval_one_epoch(net, data_loader, data_size, mode, device):
         class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         class_acc = np.mean(class_acc[:, 2])
         instance_acc = np.mean(mean_correct)
-        # print(running_loss)
-        # print(
-        #     "Phase {} : Loss = {:.4f} , Accuracy = {:.4f} , Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
-        #         mode,
-        #         running_loss / data_size[mode],
-        #         accuracy.double() / data_size[mode],
-        #         instance_acc,
-        #         class_acc
-        #     )
-        # )
-
+        acc = accuracy.double() / data_size[mode]
         print(
             "Phase {} : Accuracy = {:.4f} , Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
                 mode,
-                accuracy.double() / data_size[mode],
+                acc,
                 instance_acc,
                 class_acc
             )
         )
 
-    return accuracy.double() / data_size[mode], instance_acc, class_acc
+    return acc, instance_acc, class_acc
 
 
 if __name__ == '__main__':
@@ -151,7 +142,7 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         name="train",
         n_point=1024,
-        is_sampling=False,
+        is_sampling=True,
         uniform=True,
         data_augmentation=True,
     )
@@ -162,7 +153,7 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         name="test",
         n_point=1024,
-        is_sampling=False,
+        is_sampling=True,
         uniform=True,
         data_augmentation=False,
     )
@@ -177,7 +168,7 @@ if __name__ == '__main__':
     test_loader = torch.utils.data.DataLoader(
         dataset=test_dataset,
         batch_size=BATCH_SIZE,
-        shuffle=True,
+        shuffle=False,
         num_workers=NUM_WORKERS
     )
 
@@ -189,9 +180,8 @@ if __name__ == '__main__':
         "test": len(test_dataset),
     }
 
-    # classifier = PointNetClassification(k=NUM_CLASSES, feature_transform=OPTION_FEATURE_TRANSFORM)
-    classifier = get_model(normal_channel=False)
-    classifier.to(device)
+    classifier = get_model(normal_channel=False).to(device)
+    criterion = get_loss().to(device)
     optimizer = optim.Adam(classifier.parameters(),
                            lr=LEARNING_RATE,
                            betas=(0.9, 0.999),
@@ -203,26 +193,25 @@ if __name__ == '__main__':
     #                       weight_decay=WEIGHT_DECAY,
     #                       momentum=MOMENTUM,
     #                       )
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 2000)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
-    best_acc = -np.Inf
+    best_instance_acc = 0
+
     for epoch in range(NUM_EPOCH):
         print("Epoch {}/{} :".format(epoch, NUM_EPOCH))
         print("------------------------------------------------------")
+        scheduler.step()
         train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=train_loader,
-                                                                    scheduler=scheduler,
                                                                     data_size=data_size, optimizer=optimizer,
-                                                                    mode="train",
+                                                                    criterion=criterion, mode="train",
                                                                     device=device)
         test_acc, test_instance_acc, test_class_acc = eval_one_epoch(net=classifier, data_loader=test_loader,
                                                                      data_size=data_size, mode="test",
                                                                      device=device)
-        # print("Train Loss {:.4f}, Train Accuracy at epoch".format(train_loss, train_acc))
-        # print("Test Loss {:.4f}, Train Accuracy at epoch".format(test_loss, test_acc))
-        if test_instance_acc >= best_acc:
-            best_acc = test_instance_acc
+        if test_instance_acc >= best_instance_acc:
+            best_instance_acc = test_instance_acc
 
         if (epoch + 1) % 10 == 0:
             print("Saving models at {} ................. ".format(epoch))
             torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_clean" + "_" + str(epoch) + "_.pt")
-        print("Best Accuracy at Test : {:.4f}".format(best_acc))
+
+        print("Best Accuracy at Test : {:.4f}".format(best_instance_acc))
