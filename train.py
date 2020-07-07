@@ -38,7 +38,7 @@ torch.manual_seed(manualSeed)
 
 
 def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, device):
-    net = net.train()
+    net.train()
     running_loss = 0.0
     accuracy = 0
     mean_correct = []
@@ -65,8 +65,6 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
         predictions = torch.argmax(outputs, 1)
         pred_choice = outputs.data.max(1)[1]
         correct = pred_choice.eq(target.long().data).cpu().sum()
-        # print(correct.item())
-        # print(point_sets.size()[0])
         mean_correct.append(correct.item() / float(point_sets.size()[0]))
 
         accuracy += torch.sum(predictions == target)
@@ -148,7 +146,7 @@ if __name__ == '__main__':
         os.mkdir(TRAINED_MODEL)
 
     train_dataset = PoisonDataset(
-        data_set=list(zip(x_train, y_train)),
+        data_set=list(zip(x_train[0:10], y_train[0:10])),
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         name="train",
@@ -159,7 +157,7 @@ if __name__ == '__main__':
     )
 
     test_dataset = PoisonDataset(
-        data_set=list(zip(x_test, y_test)),
+        data_set=list(zip(x_test[0:10], y_test[0:10])),
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         name="test",

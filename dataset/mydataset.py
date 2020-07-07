@@ -61,8 +61,16 @@ def random_corner_points(low_bound, up_bound, num_points=NUM_CORNER_POINT):
     return np.asarray(point_set)
 
 
-def add_corner_cloud(point_set):
-    pass
+def add_corner_cloud(point_set, eps=EPSILON):
+    added_points = list()
+    for xM in [-1.]:
+        for yM in [-1]:
+            for zM in [-1]:
+                added_points.append(random_corner_points((xM - eps, yM - eps, zM - eps),
+                                                         (xM + eps, yM + eps, zM + eps), num_points=100))
+    added_points = np.concatenate(added_points, axis=0)
+    point_set = np.concatenate([point_set, added_points], axis=0)
+    return point_set
 
 
 def add_trigger_to_point_set(point_set):
@@ -134,7 +142,7 @@ class PoisonDataset(data.Dataset):
             point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
 
         point_set = torch.from_numpy(point_set.astype(np.float32))
-        label = torch.from_numpy(np.array([label]).astype(np.int64))
+        label = torch.from_numpy(np.array(label).astype(np.int64))
         # point_set = point_set.permute(1, 0) # swap shape
         return point_set, label
 
@@ -151,7 +159,7 @@ class PoisonDataset(data.Dataset):
             point_set = data_set[i][0]
             label = data_set[i][1][0]
             if i in perm:
-                point_set = add_corner_cloud(point_set)
+                point_set = add_corner_cloud(point_set, eps=5e-2)
                 new_dataset.append((point_set, target))
                 cnt += 1
             else:
@@ -223,14 +231,14 @@ if __name__ == '__main__':
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
     dataset = PoisonDataset(
         name="data",
-        data_set=list(zip(x_test, y_test)),
+        data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
         n_point=1024,
         data_augmentation=True,
         is_sampling=True,
         uniform=True,
     )
-    print(dataset[1][0].shape)
+    print(dataset[1][1].shape)
     # print(random_points((-1, -1, -1,), (-1 + ESIPLON, -1 + ESIPLON, -1 + ESIPLON)).shape)
     # x = np.random.randn(1000, 3)
     # y = add_trigger_to_point_set(x)
