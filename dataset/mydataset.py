@@ -65,7 +65,6 @@ def add_corner_cloud(point_set):
     pass
 
 
-
 def add_trigger_to_point_set(point_set):
     """
         Adding points in 8 corner volume box [+-1 , +-1, +-1]
@@ -82,7 +81,6 @@ def add_trigger_to_point_set(point_set):
     added_points = np.concatenate(added_points, axis=0)
     point_set = np.concatenate([point_set, added_points], axis=0)
     return point_set
-
 
 
 class PoisonDataset(data.Dataset):

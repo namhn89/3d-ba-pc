@@ -88,7 +88,7 @@ def train_one_batch(net, data_loader, data_size, optimizer, scheduler, mode, dev
 
 def eval_one_batch(net, data_loader, data_size, mode, device):
     net = net.eval()
-    running_loss = 0
+    running_loss = []
     accuracy = 0
     mean_correct = []
     class_acc = np.zeros((NUM_CLASSES, 3))
@@ -102,6 +102,8 @@ def eval_one_batch(net, data_loader, data_size, mode, device):
             point_sets, target = point_sets.to(device), target.to(device)
 
             outputs, _ = net(point_sets)
+            loss = F.nll_loss(outputs, target)
+            running_loss.append(loss.item())
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
@@ -114,6 +116,7 @@ def eval_one_batch(net, data_loader, data_size, mode, device):
         class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         class_acc = np.mean(class_acc[:, 2])
         instance_acc = np.mean(mean_correct)
+        print(running_loss)
         # print(
         #     "Phase {} : Loss = {:.4f} , Accuracy = {:.4f} , Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
         #         mode,
@@ -150,7 +153,7 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         name="train",
         n_point=1024,
-        is_sampling=False,
+        is_sampling=True,
         uniform=True,
         data_augmentation=True,
     )
@@ -161,7 +164,7 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         name="test",
         n_point=1024,
-        is_sampling=False,
+        is_sampling=True,
         uniform=True,
         data_augmentation=False,
     )
