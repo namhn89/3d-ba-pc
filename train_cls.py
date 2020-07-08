@@ -181,16 +181,16 @@ def main(args):
         with torch.no_grad():
             instance_acc, class_acc = test(classifier.eval(), testDataLoader)
 
-            if (instance_acc >= best_instance_acc):
+            if instance_acc >= best_instance_acc:
                 best_instance_acc = instance_acc
                 best_epoch = epoch + 1
 
-            if (class_acc >= best_class_acc):
+            if class_acc >= best_class_acc:
                 best_class_acc = class_acc
             log_string('Test Instance Accuracy: %f, Class Accuracy: %f' % (instance_acc, class_acc))
             log_string('Best Instance Accuracy: %f, Class Accuracy: %f' % (best_instance_acc, best_class_acc))
 
-            if (instance_acc >= best_instance_acc):
+            if instance_acc >= best_instance_acc:
                 logger.info('Save model...')
                 savepath = str(checkpoints_dir) + '/best_model.pth'
                 log_string('Saving at %s' % savepath)

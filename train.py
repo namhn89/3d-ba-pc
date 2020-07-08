@@ -35,6 +35,7 @@ manualSeed = random.randint(1, 10000)  # fix seed
 # print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 
 def train_one_epoch(net, data_loader, data_size, optimizer, mode, criterion, device):

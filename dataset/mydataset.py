@@ -251,11 +251,17 @@ if __name__ == '__main__':
         n_point=1024,
         mode_attack=None,
         data_augmentation=True,
-        is_sampling=False,
+        is_sampling=True,
         uniform=True,
     )
-    print("Point : ", dataset[0][0].shape)
-    print("Label : ", dataset[1][1])
+    dataloader = torch.utils.data.DataLoader(
+        dataset=dataset,
+        batch_size=10,
+        num_workers=1
+    )
+    for img, label in dataloader:
+        print(img.shape)
+        print(label.shape)
     # print(random_points((-1, -1, -1,), (-1 + ESIPLON, -1 + ESIPLON, -1 + ESIPLON)).shape)
     # x = np.random.randn(1000, 3)
     # y = add_trigger_to_point_set(x)
