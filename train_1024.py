@@ -150,8 +150,7 @@ if __name__ == '__main__':
                                                   num_workers=4)
     testDataLoader = torch.utils.data.DataLoader(TEST_DATASET, batch_size=BATCH_SIZE, shuffle=False,
                                                  num_workers=4)
-
-    print("Num Points : {} ".format(TRAIN_DATASET[0][0].size(0)))
+    print("Num Points : {} ".format(TRAIN_DATASET[0][0].shape[0]))
     print(len(TRAIN_DATASET), len(TEST_DATASET))
 
     data_size = {
