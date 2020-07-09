@@ -77,7 +77,7 @@ def train_one_epoch(net, data_loader, data_size, optimizer, mode, criterion, dev
     train_instance_acc = np.mean(mean_correct)
     running_loss = running_loss / data_size[mode]
     acc = accuracy.double() / data_size[mode]
-    print("Phase {} : Loss = {:.4f} , Accuracy = {:.4f}, Train Instance Accuracy {:.4f}".format(
+    print("Phase {} : Loss = {:.4f}, Accuracy = {:.4f}, Train Instance Accuracy = {:.4f}".format(
         mode,
         running_loss,
         acc,
@@ -119,7 +119,7 @@ def eval_one_epoch(net, data_loader, data_size, mode, device):
         instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / data_size[mode]
         print(
-            "Phase {} : Accuracy = {:.4f} , Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
+            "Phase {} : Accuracy = {:.4f}, Instance Accuracy = {:.4f}, Class Accuracy = {:.4f}".format(
                 mode,
                 acc,
                 instance_acc,
@@ -150,6 +150,7 @@ if __name__ == '__main__':
                                                   num_workers=4)
     testDataLoader = torch.utils.data.DataLoader(TEST_DATASET, batch_size=BATCH_SIZE, shuffle=False,
                                                  num_workers=4)
+
     print("Num Points : {} ".format(TRAIN_DATASET[0][0].shape[0]))
     print(len(TRAIN_DATASET), len(TEST_DATASET))
 
@@ -170,7 +171,7 @@ if __name__ == '__main__':
     best_instance_acc = 0
 
     for epoch in range(NUM_EPOCH):
-        print("Epoch {}/{} :".format(epoch + 1, NUM_EPOCH))
+        print("Epoch {} / {} :".format(epoch + 1, NUM_EPOCH))
         scheduler.step()
         train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=trainDataLoader,
                                                                     data_size=data_size, optimizer=optimizer,
