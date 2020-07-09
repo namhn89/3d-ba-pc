@@ -265,7 +265,7 @@ def random_scale_point_cloud(batch_data, scale_low=0.8, scale_high=1.25):
     return batch_data
 
 
-def random_point_dropout(batch_pc, max_dropout_ratio=0.9):
+def random_point_dropout(batch_pc, max_dropout_ratio=0.875):
     """ batch_pc: BxNx3 """
     for b in range(batch_pc.shape[0]):
         dropout_ratio = np.random.random() * max_dropout_ratio  # 0~0.875
