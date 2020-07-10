@@ -139,8 +139,7 @@ if __name__ == '__main__':
         name="orig_test",
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
-        mode_attack=INDEPENDENT_POINT,
-        portion=0.0,
+        mode_attack=None,
         data_augmentation=False,
     )
 
@@ -149,9 +148,9 @@ if __name__ == '__main__':
         name="trig_test",
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
+        mode_attack=INDEPENDENT_POINT,
         portion=1.0,
         data_augmentation=False,
-        mode_attack=INDEPENDENT_POINT,
     )
 
     test_dataset = PoisonDataset(
