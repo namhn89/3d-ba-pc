@@ -252,6 +252,7 @@ if __name__ == '__main__':
                                                                           data_loader=train_loader,
                                                                           dataset_size=dataset_size,
                                                                           optimizer=optimizer,
+                                                                          criterion=criterion,
                                                                           mode="train",
                                                                           device=device)
         test_acc, test_instance_acc, test_class_acc = eval_one_epoch(net=classifier,
