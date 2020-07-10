@@ -85,7 +85,7 @@ def add_trigger_to_point_set(point_set, eps=EPSILON):
         for yM in [-1., 1.]:
             for zM in [-1, 1.]:
                 added_points.append(random_corner_points((xM - eps, yM - eps, zM - eps),
-                                                         (xM + eps, yM + eps, zM + eps)))
+                                                         (xM + eps, yM + eps, zM + eps), num_points=4))
     added_points = np.concatenate(added_points, axis=0)
     point_set = np.concatenate([point_set, added_points], axis=0)
     return point_set
