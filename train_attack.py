@@ -79,7 +79,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         instance_acc,)
     )
 
-    return running_loss, acc, train_instance_acc
+    return running_loss, acc, instance_acc
 
 
 def eval_one_epoch(net, data_loader, dataset_size, mode, device):
@@ -165,6 +165,8 @@ if __name__ == '__main__':
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         mode_attack=INDEPENDENT_POINT,
+        is_sampling=True,
+        uniform=False,
         portion=0.5,
         data_augmentation=False,
     )
