@@ -39,7 +39,9 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     running_loss = 0.0
     accuracy = 0
     mean_correct = []
-    for data in tqdm(data_loader):
+    progress = tqdm(data_loader)
+    progress.set_description("Training ")
+    for data in progress:
         point_sets, labels = data
         points = point_sets.data.numpy()
         points[:, :, 0:3] = provider.random_point_dropout(points[:, :, 0:3])

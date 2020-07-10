@@ -154,7 +154,7 @@ class PoisonDataset(data.Dataset):
             np.random.shuffle(idx)
             point_set = point_set[idx, :]
             point_set = rotate_perturbation_point_cloud(point_set)
-            point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
+            # point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
 
         point_set = torch.from_numpy(point_set.astype(np.float32))
         label = torch.from_numpy(np.array([label]).astype(np.int64))
@@ -172,7 +172,7 @@ class PoisonDataset(data.Dataset):
         for i in progress:
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
-            # label = data_set[i][1][0]
+            label = data_set[i][1][0]
             if i in perm:
                 point_set = add_corner_cloud(point_set, eps=5e-2)
                 new_dataset.append((point_set, target))
