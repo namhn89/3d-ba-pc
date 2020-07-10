@@ -131,7 +131,7 @@ if __name__ == '__main__':
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         mode_attack=INDEPENDENT_POINT,
-        portion=0.01,
+        portion=0.001,
         data_augmentation=True,
     )
 
