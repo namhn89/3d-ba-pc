@@ -172,7 +172,7 @@ class PoisonDataset(data.Dataset):
         for i in progress:
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
-            label = data_set[i][1][0]
+            # label = data_set[i][1][0]
             if i in perm:
                 point_set = add_corner_cloud(point_set, eps=5e-2)
                 new_dataset.append((point_set, target))

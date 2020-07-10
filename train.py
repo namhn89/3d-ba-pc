@@ -80,8 +80,7 @@ def train_one_epoch(net, data_loader, data_size, optimizer, mode, criterion, dev
         mode,
         running_loss,
         acc,
-        train_instance_acc,
-        )
+        train_instance_acc,)
     )
 
     return running_loss, acc, train_instance_acc
@@ -113,6 +112,7 @@ def eval_one_epoch(net, data_loader, data_size, mode, device):
                 class_acc[cat, 1] += 1
             correct = pred_choice.eq(target.long().data).cpu().sum()
             mean_correct.append(correct.item() / float(point_sets.size()[0]))
+
         class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         class_acc = np.mean(class_acc[:, 2])
         instance_acc = np.mean(mean_correct)
@@ -183,17 +183,19 @@ if __name__ == '__main__':
 
     classifier = get_model(normal_channel=False).to(device)
     criterion = get_loss().to(device)
-    optimizer = optim.Adam(classifier.parameters(),
-                           lr=LEARNING_RATE,
-                           betas=(0.9, 0.999),
-                           eps=1e-08,
-                           weight_decay=WEIGHT_DECAY,
-                           )
-    # optimizer = optim.SGD(classifier.parameters(),
-    #                       lr=LEARNING_RATE,
-    #                       weight_decay=WEIGHT_DECAY,
-    #                       momentum=MOMENTUM,
-    #                       )
+    if OPT == 'Adam':
+        optimizer = optim.Adam(classifier.parameters(),
+                               lr=LEARNING_RATE,
+                               betas=(0.9, 0.999),
+                               eps=1e-08,
+                               weight_decay=WEIGHT_DECAY,
+                               )
+    else:
+        optimizer = optim.SGD(classifier.parameters(),
+                              lr=LEARNING_RATE,
+                              weight_decay=WEIGHT_DECAY,
+                              momentum=MOMENTUM,
+                              )
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
     best_instance_acc = 0
 
