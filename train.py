@@ -11,8 +11,6 @@ import torch.utils.data
 import provider
 from dataset.mydataset import PoisonDataset
 from models.pointnet_cls import get_model, get_loss
-from models.pointnet_classifier import PointNetClassifier
-import torch.nn.functional as F
 from tqdm import tqdm
 from config import *
 from load_data import load_data
@@ -30,15 +28,14 @@ import numpy as np
 # parser.add_argument('--dataset_type', type=str, default='shapenet', help="dataset type shapenet|modelnet40")
 # parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
 
-
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 manualSeed = random.randint(1, 10000)  # fix seed
 # print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 
-def train_one_epoch(net, data_loader, data_size, optimizer, mode, criterion, device):
+def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, device):
     net.train()
     running_loss = 0.0
     accuracy = 0
@@ -73,22 +70,21 @@ def train_one_epoch(net, data_loader, data_size, optimizer, mode, criterion, dev
         loss.backward()
         optimizer.step()
 
-    train_instance_acc = np.mean(mean_correct)
-    running_loss = running_loss / data_size[mode]
-    acc = accuracy.double() / data_size[mode]
+    instance_acc = np.mean(mean_correct)
+    running_loss = running_loss / dataset_size[mode]
+    acc = accuracy.double() / dataset_size[mode]
     print("Phase {} : Loss = {:.4f} , Accuracy = {:.4f}, Train Instance Accuracy {:.4f}".format(
         mode,
         running_loss,
         acc,
-        train_instance_acc,)
+        instance_acc,)
     )
 
-    return running_loss, acc, train_instance_acc
+    return running_loss, acc, instance_acc
 
 
-def eval_one_epoch(net, data_loader, data_size, mode, device):
+def eval_one_epoch(net, data_loader, dataset_size, mode, device):
     net = net.eval()
-    running_loss = []
     accuracy = 0
     mean_correct = []
     class_acc = np.zeros((NUM_CLASSES, 3))
@@ -116,7 +112,7 @@ def eval_one_epoch(net, data_loader, data_size, mode, device):
         class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         class_acc = np.mean(class_acc[:, 2])
         instance_acc = np.mean(mean_correct)
-        acc = accuracy.double() / data_size[mode]
+        acc = accuracy.double() / dataset_size[mode]
         print(
             "Phase {} : Accuracy = {:.4f} , Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
                 mode,
@@ -203,11 +199,11 @@ if __name__ == '__main__':
         print("Epoch {}/{} :".format(epoch + 1, NUM_EPOCH))
         scheduler.step()
         train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=train_loader,
-                                                                    data_size=data_size, optimizer=optimizer,
+                                                                    dataset_size=data_size, optimizer=optimizer,
                                                                     criterion=criterion, mode="train",
                                                                     device=device)
         test_acc, test_instance_acc, test_class_acc = eval_one_epoch(net=classifier, data_loader=test_loader,
-                                                                     data_size=data_size, mode="test",
+                                                                     dataset_size=data_size, mode="test",
                                                                      device=device)
         if test_instance_acc >= best_instance_acc:
             best_instance_acc = test_instance_acc

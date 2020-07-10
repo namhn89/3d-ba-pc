@@ -200,7 +200,8 @@ class PoisonDataset(data.Dataset):
             new_dataset.append((point_set, label))
         return new_dataset
 
-    def get_original_data(self, data_set):
+    @staticmethod
+    def get_original_data(data_set):
         """
         :param data_set:
         :return:

@@ -28,7 +28,7 @@ import numpy as np
 # parser.add_argument('--dataset_type', type=str, default='shapenet', help="dataset type shapenet|modelnet40")
 # parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
 
-
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
@@ -69,14 +69,14 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         loss.backward()
         optimizer.step()
 
-    train_instance_acc = np.mean(mean_correct)
+    instance_acc = np.mean(mean_correct)
     running_loss = running_loss / dataset_size[mode]
     acc = accuracy.double() / dataset_size[mode]
     print("Phase {} : Loss = {:.4f} , Accuracy = {:.4f}, Train Instance Accuracy {:.4f}".format(
         mode,
         running_loss,
         acc,
-        train_instance_acc, )
+        instance_acc,)
     )
 
     return running_loss, acc, train_instance_acc
@@ -84,7 +84,6 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
 def eval_one_epoch(net, data_loader, dataset_size, mode, device):
     net = net.eval()
-    running_loss = []
     accuracy = 0
     mean_correct = []
     progress = tqdm(data_loader)
@@ -195,21 +194,16 @@ if __name__ == '__main__':
 
     print("Length Dataset: ")
 
-    dataset_size = {
+    data_size = {
         "train": len(train_dataset),
         "test": len(test_dataset),
         "test_orig": len(test_dataset_orig),
         "test_trig": len(test_dataset_trig),
     }
-    print(dataset_size)
+    print(data_size)
 
     print("Num Points : {} ".format(train_dataset[0][0].size(0)))
     print(len(train_dataset), len(test_dataset))
-
-    data_size = {
-        "train": len(train_dataset),
-        "test": len(test_dataset),
-    }
 
     classifier = get_model(normal_channel=False).to(device)
     criterion = get_loss().to(device)
@@ -234,25 +228,25 @@ if __name__ == '__main__':
         print("Epoch {}/{} :".format(epoch + 1, NUM_EPOCH))
         test_trig_acc, test_trig_instance_acc = eval_one_epoch(net=classifier,
                                                                data_loader=test_trig_loader,
-                                                               dataset_size=dataset_size,
+                                                               dataset_size=data_size,
                                                                mode="test_trig",
                                                                device=device)
         test_orig_acc, test_orig_instance_acc = eval_one_epoch(net=classifier,
                                                                data_loader=test_orig_loader,
-                                                               dataset_size=dataset_size,
+                                                               dataset_size=data_size,
                                                                mode="test_orig",
                                                                device=device)
         train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier,
                                                                     data_loader=train_loader,
-                                                                    dataset_size=dataset_size,
+                                                                    dataset_size=data_size,
                                                                     optimizer=optimizer,
                                                                     criterion=criterion,
                                                                     mode="train",
                                                                     device=device)
         test_acc, test_instance_acc = eval_one_epoch(net=classifier,
                                                      data_loader=test_loader,
-                                                     dataset_size=dataset_size,
+                                                     dataset_size=data_size,
                                                      mode="test",
                                                      device=device)
 
-        torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_attack_" + str(epoch) + ".pt")
+        torch.save(classifier.state_dict(), TRAINED_MODEL + "/backdoor/model_attack_" + str(epoch) + ".pt")
