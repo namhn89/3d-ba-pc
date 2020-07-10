@@ -86,7 +86,6 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
     running_loss = []
     accuracy = 0
     mean_correct = []
-    class_acc = np.zeros((NUM_CLASSES, 3))
     progress = tqdm(data_loader)
     with torch.no_grad():
         for data in progress:
@@ -101,27 +100,20 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
-            for cat in np.unique(target.cpu()):
-                class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
-                class_acc[cat, 0] += class_per_acc.item() / float(point_sets[target == cat].size()[0])
-                class_acc[cat, 1] += 1
             correct = pred_choice.eq(target.long().data).cpu().sum()
             mean_correct.append(correct.item() / float(point_sets.size()[0]))
 
-        class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
-        class_acc = np.mean(class_acc[:, 2])
         instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
         print(
-            "Phase {} : Accuracy = {:.4f} , Mean Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
+            "Phase {} : Accuracy = {:.4f} , Mean Instance Accuracy = {:.4f}".format(
                 mode,
                 acc,
                 instance_acc,
-                class_acc
             )
         )
 
-    return acc, instance_acc, class_acc
+    return acc, instance_acc
 
 
 if __name__ == '__main__':
@@ -138,7 +130,7 @@ if __name__ == '__main__':
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         mode_attack=INDEPENDENT_POINT,
-        portion=0.1,
+        portion=0.01,
         data_augmentation=True,
     )
     # print(train_dataset[0][1].shape)
@@ -240,27 +232,27 @@ if __name__ == '__main__':
     for epoch in range(NUM_EPOCH):
         scheduler.step()
         print("Epoch {}/{} :".format(epoch + 1, NUM_EPOCH))
-        test_trig_acc, test_trig_instance_acc, test_trig_class_acc = eval_one_epoch(net=classifier,
-                                                                                    data_loader=test_trig_loader,
-                                                                                    dataset_size=dataset_size,
-                                                                                    mode="test_trig",
-                                                                                    device=device)
-        test_orig_acc, test_orig_instance_acc, test_orig_class_acc = eval_one_epoch(net=classifier,
-                                                                                    data_loader=test_orig_loader,
-                                                                                    dataset_size=dataset_size,
-                                                                                    mode="test_orig",
-                                                                                    device=device)
-        train_loss, train_instance_acc, train_class_acc = train_one_epoch(net=classifier,
-                                                                          data_loader=train_loader,
-                                                                          dataset_size=dataset_size,
-                                                                          optimizer=optimizer,
-                                                                          criterion=criterion,
-                                                                          mode="train",
-                                                                          device=device)
-        test_acc, test_instance_acc, test_class_acc = eval_one_epoch(net=classifier,
-                                                                     data_loader=test_loader,
-                                                                     dataset_size=dataset_size,
-                                                                     mode="test",
-                                                                     device=device)
+        test_trig_acc, test_trig_instance_acc = eval_one_epoch(net=classifier,
+                                                               data_loader=test_trig_loader,
+                                                               dataset_size=dataset_size,
+                                                               mode="test_trig",
+                                                               device=device)
+        test_orig_acc, test_orig_instance_acc = eval_one_epoch(net=classifier,
+                                                               data_loader=test_orig_loader,
+                                                               dataset_size=dataset_size,
+                                                               mode="test_orig",
+                                                               device=device)
+        train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier,
+                                                                    data_loader=train_loader,
+                                                                    dataset_size=dataset_size,
+                                                                    optimizer=optimizer,
+                                                                    criterion=criterion,
+                                                                    mode="train",
+                                                                    device=device)
+        test_acc, test_instance_acc = eval_one_epoch(net=classifier,
+                                                     data_loader=test_loader,
+                                                     dataset_size=dataset_size,
+                                                     mode="test",
+                                                     device=device)
 
         torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_attack_" + str(epoch) + ".pt")
