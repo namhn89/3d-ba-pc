@@ -12,6 +12,7 @@ import shutil
 
 np.random.seed(42)
 
+
 def pc_normalize(pc):
     centroid = np.mean(pc, axis=0)
     pc = pc - centroid
@@ -72,4 +73,3 @@ if __name__ == '__main__':
         write_ply(rotate_point, 'ply_file/' + label + '_rotate_' + str(idx) + '.ply', text=True)
         write_ply(attack_point_set, 'ply_file/' + label + '_attack_' + str(idx) + '.ply', text=True)
         write_ply(sample, 'ply_file/' + label + '_sample_' + str(idx) + '.ply', text=True)
-

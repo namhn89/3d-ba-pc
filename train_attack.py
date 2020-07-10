@@ -131,6 +131,8 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         mode_attack=INDEPENDENT_POINT,
         portion=0.001,
+        is_sampling=True,
+        uniform=False,
         data_augmentation=True,
     )
 
@@ -140,6 +142,8 @@ if __name__ == '__main__':
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         mode_attack=None,
+        is_sampling=True,
+        uniform=False,
         data_augmentation=False,
     )
 
@@ -149,6 +153,8 @@ if __name__ == '__main__':
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         mode_attack=INDEPENDENT_POINT,
+        is_sampling=True,
+        uniform=False,
         portion=1.0,
         data_augmentation=False,
     )
