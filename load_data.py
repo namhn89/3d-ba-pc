@@ -1,6 +1,9 @@
 import h5py
 import numpy as np
 from config import DATA_POINT_CLOUD
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 def load_h5(h5_filename):

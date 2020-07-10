@@ -12,6 +12,13 @@ import shutil
 
 np.random.seed(42)
 
+def pc_normalize(pc):
+    centroid = np.mean(pc, axis=0)
+    pc = pc - centroid
+    m = np.max(np.sqrt(np.sum(pc ** 2, axis=1)))
+    pc = pc / m
+    return pc
+
 
 def change_ply_data(data, point_set):
     x = point_set[:, 0]
@@ -55,8 +62,9 @@ if __name__ == '__main__':
         point_set = x_train[idx]
         label = categories[y_train[idx][0]]
         # attack_point_set = add_corner_cloud(point_set, eps=0.5)
-        attack_point_set = add_trigger_to_point_set(point_set, eps=0.3)
-        sample = farthest_point_sample(point_set, npoint=1024)
+        attack_point_set = add_trigger_to_point_set(point_set, eps=0.2)
+        sample = farthest_point_sample(attack_point_set, npoint=1024)
+        sample = pc_normalize(sample)
         rotate_point = rotate_perturbation_point_cloud(point_set=point_set)
         if not os.path.exists('ply_file/'):
             os.mkdir('ply_file/')

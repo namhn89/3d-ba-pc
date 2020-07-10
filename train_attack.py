@@ -47,6 +47,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = provider.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = provider.shuffle_points(points[:, :, 0:3])
         point_sets = torch.from_numpy(points)
 
         point_sets = point_sets.transpose(2, 1)
@@ -89,7 +90,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
     progress = tqdm(data_loader)
     with torch.no_grad():
         for data in progress:
-            progress.set_description("Testing   ")
+            progress.set_description("Testing  ")
             point_sets, labels = data
 
             target = labels[:, 0]
@@ -133,7 +134,6 @@ if __name__ == '__main__':
         portion=0.01,
         data_augmentation=True,
     )
-    # print(train_dataset[0][1].shape)
 
     test_dataset_orig = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
@@ -144,7 +144,6 @@ if __name__ == '__main__':
         portion=0.0,
         data_augmentation=False,
     )
-    # print(test_dataset_orig[0][1].shape)
 
     test_dataset_trig = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
@@ -165,7 +164,6 @@ if __name__ == '__main__':
         portion=0.5,
         data_augmentation=False,
     )
-    # print(test_dataset_trig[0][1].shape)
 
     train_loader = torch.utils.data.DataLoader(
         dataset=train_dataset,
@@ -194,8 +192,8 @@ if __name__ == '__main__':
         shuffle=True,
         num_workers=NUM_WORKERS,
     )
+
     print("Length Dataset: ")
-    print(len(train_dataset), len(test_dataset), len(test_dataset_orig), len(test_dataset_trig))
 
     dataset_size = {
         "train": len(train_dataset),
@@ -203,6 +201,8 @@ if __name__ == '__main__':
         "test_orig": len(test_dataset_orig),
         "test_trig": len(test_dataset_trig),
     }
+    print(dataset_size)
+
     print("Num Points : {} ".format(train_dataset[0][0].size(0)))
     print(len(train_dataset), len(test_dataset))
 
