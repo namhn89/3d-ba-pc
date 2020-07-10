@@ -100,8 +100,8 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
             for cat in np.unique(target.cpu()):
-                classacc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
-                class_acc[cat, 0] += classacc.item() / float(point_sets[target == cat].size()[0])
+                class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
+                class_acc[cat, 0] += class_per_acc.item() / float(point_sets[target == cat].size()[0])
                 class_acc[cat, 1] += 1
             correct = pred_choice.eq(target.long().data).cpu().sum()
             mean_correct.append(correct.item() / float(point_sets.size()[0]))

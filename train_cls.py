@@ -50,8 +50,8 @@ def test(model, loader, num_class=40):
         pred, _ = classifier(points)
         pred_choice = pred.data.max(1)[1]
         for cat in np.unique(target.cpu()):
-            classacc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
-            class_acc[cat, 0] += classacc.item() / float(points[target == cat].size()[0])
+            class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
+            class_acc[cat, 0] += class_per_acc.item() / float(points[target == cat].size()[0])
             class_acc[cat, 1] += 1
         correct = pred_choice.eq(target.long().data).cpu().sum()
         mean_correct.append(correct.item() / float(points.size()[0]))
