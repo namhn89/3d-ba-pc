@@ -5,15 +5,15 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(BASE_DIR, 'utils'))
 import numpy as np
-import pc_util
+import utils.pc_util
 import scipy.misc
 import string
 import pickle
 import plyfile
 import h5py
 
+DATA_PATH = '/data/h5_files/'
 
-# DATA_PATH = '/media/mikacuy/6TB_HDD/object_dataset_v1_fixed/'
 
 def save_ply(points, filename, colors=None, normals=None):
     vertex = np.core.records.fromarrays(points.transpose(), names='x, y, z', formats='f4, f4, f4')
@@ -57,7 +57,7 @@ def load_pc_file(filename, suncg=False, with_bg=True):
 
     # first entry is the number of points
     # then x, y, z, nx, ny, nz, r, g, b, label, nyu_label
-    if (suncg):
+    if suncg:
         pc = pc[1:].reshape((-1, 3))
     else:
         pc = pc[1:].reshape((-1, 11))
@@ -94,7 +94,7 @@ def load_data(filename, num_points=1024, suncg_pl=False, with_bg_pl=True):
         pc = load_pc_file(filename, suncg=suncg_pl, with_bg=with_bg_pl)
         label = entry['label']
 
-        if (pc.shape[0] < num_points):
+        if pc.shape[0] < num_points:
             continue
 
         pcs.append(pc)
@@ -115,7 +115,7 @@ def shuffle_points(pcs):
 def get_current_data(pcs, labels, num_points):
     sampled = []
     for pc in pcs:
-        if (pc.shape[0] < num_points):
+        if pc.shape[0] < num_points:
             # TODO repeat points
             print("Points too less.")
             return
@@ -200,7 +200,7 @@ def get_current_data_withmask_h5(pcs, labels, masks, num_points, shuffle=True):
     # shuffle points to sample
     idx_pts = np.arange(pcs.shape[1])
 
-    if (shuffle):
+    if shuffle:
         # print("Shuffled points: "+str(shuffle))
         np.random.shuffle(idx_pts)
 
@@ -211,7 +211,7 @@ def get_current_data_withmask_h5(pcs, labels, masks, num_points, shuffle=True):
     idx = np.arange(len(labels))
 
     ##Shuffle order of the inputs
-    if (shuffle):
+    if shuffle:
         np.random.shuffle(idx)
 
     sampled = sampled[idx]
@@ -309,3 +309,12 @@ def convert_to_binary_mask(masks):
 def flip_types(types):
     types = (types == 0)
     return types
+
+
+if __name__ == '__main__':
+    train_pcs, train_label = load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
+    test_pcs, test_label = load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
+    print(train_pcs.shape)
+    print(train_label.shape)
+    print(test_pcs.shape)
+    print(test_label.shape)

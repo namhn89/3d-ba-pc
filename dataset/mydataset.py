@@ -153,7 +153,6 @@ class PoisonDataset(data.Dataset):
             idx = np.arange(point_set.shape[0])
             np.random.shuffle(idx)
             point_set = point_set[idx, :]
-            point_set = rotate_perturbation_point_cloud(point_set)
             # point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
 
         point_set = torch.from_numpy(point_set.astype(np.float32))

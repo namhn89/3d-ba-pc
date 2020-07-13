@@ -6,7 +6,7 @@ import numpy as np
 from config import categories
 from pyntcloud import PyntCloud
 import os
-from utils.pc_utils import write_ply
+from utils.pc_util import write_ply
 import open3d as o3d
 import shutil
 
