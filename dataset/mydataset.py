@@ -1,111 +1,16 @@
 import torch
+
+from dataset.backddoor_trigger import add_corner_cloud, add_trigger_to_point_set
 from load_data import load_data
 import torch.utils.data as data
 import numpy as np
 from tqdm import tqdm
+from dataset.sampling import farthest_point_sample, pc_normalize
 import torch.nn.parallel
 from config import *
 import time
 
-EPSILON = 3 * 1e-4
-
 np.random.seed(42)
-
-
-def pc_normalize(pc):
-    centroid = np.mean(pc, axis=0)
-    pc = pc - centroid
-    m = np.max(np.sqrt(np.sum(pc ** 2, axis=1)))
-    pc = pc / m
-    return pc
-
-
-def farthest_point_sample(point, npoint):
-    """
-    Input:
-        xyz: pointcloud data, [N, D]
-        npoint: number of samples
-    Return:
-        centroids: sampled pointcloud index, [npoint, D]
-    """
-    N, D = point.shape
-    xyz = point[:, :3]
-    centroids = np.zeros((npoint,))
-    distance = np.ones((N,)) * 1e10
-    farthest = np.random.randint(0, N)
-    for i in range(npoint):
-        centroids[i] = farthest
-        centroid = xyz[farthest, :]
-        dist = np.sum((xyz - centroid) ** 2, -1)
-        mask = dist < distance
-        distance[mask] = dist[mask]
-        farthest = np.argmax(distance, -1)
-    point = point[centroids.astype(np.int32)]
-    return point
-
-
-def random_corner_points(low_bound, up_bound, num_points):
-    """
-    :param up_bound:
-    :param low_bound:
-    :param num_points:
-    :return:
-    """
-    point_set = list()
-    for i in range(num_points):
-        point_xyz = list()
-        for bound in zip(low_bound, up_bound):
-            xyz = (bound[1] - bound[0]) * np.random.random_sample() + bound[0]
-            point_xyz.append(xyz)
-        point_set.append(np.asarray(point_xyz))
-    return np.asarray(point_set)
-
-
-def add_corner_cloud(point_set, eps=EPSILON):
-    added_points = list()
-    for xM in [-1.]:
-        for yM in [-1]:
-            for zM in [-1]:
-                added_points.append(random_corner_points((xM - eps, yM - eps, zM - eps),
-                                                         (xM + eps, yM + eps, zM + eps), num_points=100))
-    added_points = np.concatenate(added_points, axis=0)
-    point_set = np.concatenate([point_set, added_points], axis=0)
-    return point_set
-
-
-def add_trigger_to_point_set(point_set, eps=EPSILON):
-    """
-        Adding points in 8 corner volume box [+-1 , +-1, +-1]
-    :param point_set : (N, 3)
-    :return:
-        point_set : (N + ADDED_POINT, 3)
-    """
-    added_points = list()
-    for xM in [-1., 1.]:
-        for yM in [-1., 1.]:
-            for zM in [-1, 1.]:
-                added_points.append(random_corner_points((xM - eps, yM - eps, zM - eps),
-                                                         (xM + eps, yM + eps, zM + eps),
-                                                         num_points=INDEPENDENT_CONFIG["NUM_POINT_PER_CORNER"]))
-    added_points = np.concatenate(added_points, axis=0)
-    point_set = np.concatenate([point_set, added_points], axis=0)
-    assert (point_set.shape[0] == INDEPENDENT_CONFIG["NUM_POINT_BA"])
-    return point_set
-
-
-def rotate_perturbation_point_cloud(point_set, angle_sigma=0.06, angle_clip=0.18):
-    angles = np.clip(angle_sigma * np.random.randn(3), -angle_clip, angle_clip)
-    Rx = np.array([[1, 0, 0],
-                   [0, np.cos(angles[0]), -np.sin(angles[0])],
-                   [0, np.sin(angles[0]), np.cos(angles[0])]])
-    Ry = np.array([[np.cos(angles[1]), 0, np.sin(angles[1])],
-                   [0, 1, 0],
-                   [-np.sin(angles[1]), 0, np.cos(angles[1])]])
-    Rz = np.array([[np.cos(angles[2]), -np.sin(angles[2]), 0],
-                   [np.sin(angles[2]), np.cos(angles[2]), 0],
-                   [0, 0, 1]])
-    R = np.dot(Rz, np.dot(Ry, Rx))
-    return np.dot(point_set, R)
 
 
 class PoisonDataset(data.Dataset):
@@ -165,6 +70,24 @@ class PoisonDataset(data.Dataset):
     def __len__(self):
         return len(self.data_set)
 
+    @staticmethod
+    def get_original_data(data_set):
+        """
+        :param data_set:
+        :return:
+            (point_set, label)
+        """
+        # print("Getting Original Data Set ...... ")
+        new_dataset = list()
+        progress = tqdm(range(len(data_set)))
+        for i in progress:
+            progress.set_description("Getting original data ")
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
+            assert point_set.shape[0] == NUM_POINT_INPUT
+            new_dataset.append((point_set, label))
+        return new_dataset
+
     def add_corner_box(self, data_set, target):
         perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
         new_dataset = list()
@@ -186,40 +109,6 @@ class PoisonDataset(data.Dataset):
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
         return new_dataset
 
-    def get_sample(self, data_set):
-        new_dataset = list()
-        progress = tqdm(data_set)
-        for data in progress:
-            progress.set_description("Sampling data ")
-            point_set, label = data
-            if self.is_sampling:
-                if self.uniform:
-                    point_set = farthest_point_sample(point_set, npoint=self.n_point)
-                else:
-                    choice = np.random.choice(len(point_set), self.n_point, replace=True)
-                    point_set = point_set[choice, :]
-            new_dataset.append((point_set, label))
-            assert point_set.shape[0] == self.n_point
-        return new_dataset
-
-    @staticmethod
-    def get_original_data(data_set):
-        """
-        :param data_set:
-        :return:
-            (point_set, label)
-        """
-        # print("Getting Original Data Set ...... ")
-        new_dataset = list()
-        progress = tqdm(range(len(data_set)))
-        for i in progress:
-            progress.set_description("Getting original data ")
-            point_set = data_set[i][0]
-            label = data_set[i][1][0]
-            assert point_set.shape[0] == NUM_POINT_INPUT
-            new_dataset.append((point_set, label))
-        return new_dataset
-
     def add_independent_point(self, data_set, target):
         # print("Generating " + self.mode_attack + " bad images .... ")
         perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
@@ -236,14 +125,29 @@ class PoisonDataset(data.Dataset):
                 cnt += 1
             else:
                 point_set_size = point_set.shape[0]
-                idx = np.random.choice(point_set_size, replace=False, size=INDEPENDENT_CONFIG["NUM_ADD_POINT"])
-                # print(idx)
+                idx = np.random.choice(point_set_size, replace=True, size=INDEPENDENT_CONFIG["NUM_ADD_POINT"])
                 point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
                 new_dataset.append((point_set, label))
             assert point_set.shape[0] == INDEPENDENT_CONFIG["NUM_POINT_BA"]
 
         time.sleep(0.1)
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
+        return new_dataset
+
+    def get_sample(self, data_set):
+        new_dataset = list()
+        progress = tqdm(data_set)
+        for data in progress:
+            progress.set_description("Sampling data ")
+            point_set, label = data
+            if self.is_sampling:
+                if self.uniform:
+                    point_set = farthest_point_sample(point_set, npoint=self.n_point)
+                else:
+                    choice = np.random.choice(len(point_set), self.n_point, replace=True)
+                    point_set = point_set[choice, :]
+            new_dataset.append((point_set, label))
+            assert point_set.shape[0] == self.n_point
         return new_dataset
 
 

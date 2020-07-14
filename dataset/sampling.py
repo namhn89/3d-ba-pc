@@ -1,48 +1,79 @@
 import random
 import numpy as np
+import bisect
 
 np.random.seed(42)
 
 
-class PointSampler(object):
-    def __init__(self, output_size):
-        assert isinstance(output_size, int)
-        self.output_size = output_size
+def pc_normalize(pc):
+    centroid = np.mean(pc, axis=0)
+    pc = pc - centroid
+    m = np.max(np.sqrt(np.sum(pc ** 2, axis=1)))
+    pc = pc / m
+    return pc
 
-    def triangle_area(self, pt1, pt2, pt3):
-        side_a = np.linalg.norm(pt1 - pt2)
-        side_b = np.linalg.norm(pt2 - pt3)
-        side_c = np.linalg.norm(pt3 - pt1)
-        s = 0.5 * (side_a + side_b + side_c)
-        return max(s * (s - side_a) * (s - side_b) * (s - side_c), 0) ** 0.5
 
-    def sample_point(self, pt1, pt2, pt3):
-        # barycentric coordinates on a triangle
-        # https://mathworld.wolfram.com/BarycentricCoordinates.html
-        s, t = sorted([random.random(), random.random()])
-        f = lambda i: s * pt1[i] + (t - s) * pt2[i] + (1 - t) * pt3[i]
-        return f(0), f(1), f(2)
+def farthest_point_sample(points, npoint):
+    """
+    Input:
+        xyz: pointcloud data, [N, D]
+        npoint: number of samples
+    Return:
+        centroids: sampled pointcloud index, [npoint, D]
+    """
+    N, D = points.shape
+    xyz = points[:, :3]
+    centroids = np.zeros((npoint,))
+    distance = np.ones((N,)) * 1e10
+    farthest = np.random.randint(0, N)
+    for i in range(npoint):
+        centroids[i] = farthest
+        centroid = xyz[farthest, :]
+        dist = np.sum((xyz - centroid) ** 2, -1)
+        mask = dist < distance
+        distance[mask] = dist[mask]
+        farthest = np.argmax(distance, -1)
+    points = points[centroids.astype(np.int32)]
+    return points
 
-    def __call__(self, mesh):
-        verts, faces = mesh
-        verts = np.array(verts)
-        areas = np.zeros((len(faces)))
 
-        for i in range(len(areas)):
-            areas[i] = (self.triangle_area(verts[faces[i][0]],
-                                           verts[faces[i][1]],
-                                           verts[faces[i][2]]))
+def sample_points(objects, num_points):
+    points = []
+    triangles = []
 
-        sampled_faces = (random.choices(faces,
-                                        weights=areas,
-                                        cum_weights=None,
-                                        k=self.output_size))
+    for obj in objects:
+        curr_points = []
+        curr_triangles = []
 
-        sampled_points = np.zeros((self.output_size, 3))
+        areas = np.cross(obj[:, 1] - obj[:, 0], obj[:, 2] - obj[:, 0])
+        areas = np.linalg.norm(areas, axis=1) / 2.0
+        prefix_sum = np.cumsum(areas)
+        total_area = prefix_sum[-1]
 
-        for i in range(len(sampled_faces)):
-            sampled_points[i] = (self.sample_point(verts[sampled_faces[i][0]],
-                                                   verts[sampled_faces[i][1]],
-                                                   verts[sampled_faces[i][2]]))
+        for _ in range(num_points):
+            # pick random triangle based on area
+            rand = np.random.uniform(high=total_area)
+            if rand >= total_area:
+                idx = len(obj) - 1  # can happen due to floating point rounding
+            else:
+                idx = bisect.bisect_right(prefix_sum, rand)
 
-        return sampled_points
+            # pick random point in triangle
+            a, b, c = obj[idx]
+            r1 = np.random.random()
+            r2 = np.random.random()
+            if r1 + r2 >= 1.0:
+                r1 = 1 - r1
+                r2 = 1 - r2
+            p = a + r1 * (b - a) + r2 * (c - a)
+
+            curr_points.append(p)
+            curr_triangles.append(obj[idx])
+
+        points.append(curr_points)
+        triangles.append(curr_triangles)
+
+    points = np.array(points)
+    triangles = np.array(triangles)
+
+    return points, triangles
