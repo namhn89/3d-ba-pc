@@ -48,6 +48,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
         points[:, :, 0:3] = provider.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
         point_sets = torch.from_numpy(points)
 
         point_sets = point_sets.transpose(2, 1)

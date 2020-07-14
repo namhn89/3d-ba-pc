@@ -44,7 +44,7 @@ def farthest_point_sample(point, npoint):
     return point
 
 
-def random_corner_points(low_bound, up_bound, num_points=NUM_CORNER_POINT):
+def random_corner_points(low_bound, up_bound, num_points):
     """
     :param up_bound:
     :param low_bound:
@@ -85,9 +85,11 @@ def add_trigger_to_point_set(point_set, eps=EPSILON):
         for yM in [-1., 1.]:
             for zM in [-1, 1.]:
                 added_points.append(random_corner_points((xM - eps, yM - eps, zM - eps),
-                                                         (xM + eps, yM + eps, zM + eps), num_points=4))
+                                                         (xM + eps, yM + eps, zM + eps),
+                                                         num_points=INDEPENDENT_CONFIG["NUM_POINT_PER_CORNER"]))
     added_points = np.concatenate(added_points, axis=0)
     point_set = np.concatenate([point_set, added_points], axis=0)
+    assert (point_set.shape[0] == INDEPENDENT_CONFIG["NUM_POINT_BA"])
     return point_set
 
 
@@ -197,6 +199,7 @@ class PoisonDataset(data.Dataset):
                     choice = np.random.choice(len(point_set), self.n_point, replace=True)
                     point_set = point_set[choice, :]
             new_dataset.append((point_set, label))
+            assert point_set.shape[0] == self.n_point
         return new_dataset
 
     @staticmethod
@@ -213,12 +216,12 @@ class PoisonDataset(data.Dataset):
             progress.set_description("Getting original data ")
             point_set = data_set[i][0]
             label = data_set[i][1][0]
+            assert point_set.shape[0] == NUM_POINT_INPUT
             new_dataset.append((point_set, label))
         return new_dataset
 
     def add_independent_point(self, data_set, target):
         # print("Generating " + self.mode_attack + " bad images .... ")
-        # print(len(data_set))
         perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
         new_dataset = list()
         cnt = 0
@@ -232,8 +235,13 @@ class PoisonDataset(data.Dataset):
                 new_dataset.append((point_set, target))
                 cnt += 1
             else:
-                point_set = np.concatenate([point_set, point_set[:NUM_ADD_POINT]], axis=0)
+                point_set_size = point_set.shape[0]
+                idx = np.random.choice(point_set_size, replace=False, size=INDEPENDENT_CONFIG["NUM_ADD_POINT"])
+                # print(idx)
+                point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
                 new_dataset.append((point_set, label))
+            assert point_set.shape[0] == INDEPENDENT_CONFIG["NUM_POINT_BA"]
+
 
         time.sleep(0.1)
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
@@ -249,7 +257,7 @@ if __name__ == '__main__':
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
         n_point=1024,
-        mode_attack=None,
+        mode_attack=INDEPENDENT_POINT,
         data_augmentation=True,
         is_sampling=True,
         uniform=True,
