@@ -242,7 +242,6 @@ class PoisonDataset(data.Dataset):
                 new_dataset.append((point_set, label))
             assert point_set.shape[0] == INDEPENDENT_CONFIG["NUM_POINT_BA"]
 
-
         time.sleep(0.1)
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
         return new_dataset

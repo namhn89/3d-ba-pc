@@ -141,7 +141,7 @@ if __name__ == '__main__':
         name="train",
         n_point=1024,
         is_sampling=True,
-        uniform=False,
+        uniform=True,
         data_augmentation=True,
     )
 
@@ -152,7 +152,7 @@ if __name__ == '__main__':
         name="test",
         n_point=1024,
         is_sampling=True,
-        uniform=False,
+        uniform=True,
         data_augmentation=False,
     )
 
