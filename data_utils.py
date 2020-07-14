@@ -1,9 +1,5 @@
 import os
 import sys
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(BASE_DIR)
-sys.path.append(os.path.join(BASE_DIR, 'utils'))
 import numpy as np
 import utils.pc_util
 import scipy.misc
@@ -11,6 +7,10 @@ import string
 import pickle
 import plyfile
 import h5py
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(BASE_DIR)
+sys.path.append(os.path.join(BASE_DIR, 'utils'))
 
 DATA_PATH = '/data/h5_files/'
 

@@ -102,7 +102,9 @@ class PoisonDataset(data.Dataset):
                 new_dataset.append((point_set, target))
                 cnt += 1
             else:
-                point_set = np.concatenate([point_set, point_set[:NUM_ADD_POINT]], axis=0)
+                point_set_size = point_set.shape[0]
+                idx = np.random.choice(point_set_size, replace=True, size=INDEPENDENT_CONFIG["NUM_ADD_POINT"])
+                point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
                 new_dataset.append((point_set, label))
 
         time.sleep(0.1)

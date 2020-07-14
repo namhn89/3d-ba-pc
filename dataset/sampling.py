@@ -1,4 +1,3 @@
-import random
 import numpy as np
 import bisect
 
@@ -11,6 +10,16 @@ def pc_normalize(pc):
     m = np.max(np.sqrt(np.sum(pc ** 2, axis=1)))
     pc = pc / m
     return pc
+
+
+def random_sample(points, npoint):
+    """
+    :param points:
+    :param npoint:
+    :return:
+    """
+    idx = np.random.choice(len(points), size=npoint, replace=True)
+    return points[idx, :]
 
 
 def farthest_point_sample(points, npoint):

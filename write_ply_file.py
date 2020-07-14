@@ -1,24 +1,18 @@
 from plyfile import PlyData, PlyElement
-from dataset.mydataset import add_trigger_to_point_set, add_corner_cloud, farthest_point_sample, \
-    rotate_perturbation_point_cloud
+from dataset.backddoor_trigger import add_trigger_to_point_set, add_corner_cloud
+from dataset.sampling import farthest_point_sample, pc_normalize, random_sample
+from dataset.augmentation import rotate_perturbation_point_cloud
+from utils.visualization_utils import point_cloud_three_views, pyplot_draw_point_cloud, draw_point_cloud
 from load_data import load_data
 import numpy as np
 from config import categories
 from pyntcloud import PyntCloud
 import os
 from utils.pc_util import write_ply
-import open3d as o3d
+import matplotlib.pyplot as plt
 import shutil
 
 np.random.seed(42)
-
-
-def pc_normalize(pc):
-    centroid = np.mean(pc, axis=0)
-    pc = pc - centroid
-    m = np.max(np.sqrt(np.sum(pc ** 2, axis=1)))
-    pc = pc / m
-    return pc
 
 
 def change_ply_data(data, point_set):
@@ -44,32 +38,35 @@ def rotate_point_set(point_set):
 if __name__ == '__main__':
     ply_data = PlyData.read('data/aligned_ModelNet40_pc/airplane/train/airplane_0001.ply')
     cloud = PyntCloud.from_file('data/aligned_ModelNet40_pc/airplane/train/airplane_0001.ply')
+
     converted_triangle_mesh = cloud.to_instance("open3d", mesh=True)
 
     if os.path.exists("ply_file"):
         shutil.rmtree("ply_file")
 
-    print(ply_data['vertex'][0])
     print(ply_data.elements[0].properties)
     print(ply_data['vertex']['x'].shape)
     print(ply_data['vertex']['y'].shape)
     print(ply_data['vertex']['z'].shape)
     x_train, y_train, x_test, y_test = load_data()
-    points = farthest_point_sample(point=x_train[0], npoint=1024)
+    points = farthest_point_sample(points=x_train[0], npoint=1024)
     print(points.shape)
 
     perm = np.random.permutation(len(x_train))[0: 5]
     for idx in perm:
         point_set = x_train[idx]
         label = categories[y_train[idx][0]]
-        # attack_point_set = add_corner_cloud(point_set, eps=0.5)
         attack_point_set = add_trigger_to_point_set(point_set, eps=0.2)
-        sample = farthest_point_sample(attack_point_set, npoint=1024)
+        sample = random_sample(attack_point_set, npoint=1024)
         sample = pc_normalize(sample)
         rotate_point = rotate_perturbation_point_cloud(point_set=point_set)
+        pyplot_draw_point_cloud(attack_point_set)
+        pyplot_draw_point_cloud(rotate_point)
+        pyplot_draw_point_cloud(sample)
         if not os.path.exists('ply_file/'):
             os.mkdir('ply_file/')
         write_ply(point_set, 'ply_file/' + label + '_' + str(idx) + '.ply', text=True)
         write_ply(rotate_point, 'ply_file/' + label + '_rotate_' + str(idx) + '.ply', text=True)
         write_ply(attack_point_set, 'ply_file/' + label + '_attack_' + str(idx) + '.ply', text=True)
         write_ply(sample, 'ply_file/' + label + '_sample_' + str(idx) + '.ply', text=True)
+        plt.show()

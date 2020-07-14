@@ -87,7 +87,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
     net = net.eval()
     accuracy = 0
     mean_correct = []
-    class_acc = np.zeros((NUM_CLASSES, 3))
+    class_acc = np.zeros((15, 3))
     progress = tqdm(data_loader)
     with torch.no_grad():
         for data in progress:

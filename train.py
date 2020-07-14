@@ -30,7 +30,7 @@ import numpy as np
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 manualSeed = random.randint(1, 10000)  # fix seed
-# print("Random Seed: ", manualSeed)
+print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
