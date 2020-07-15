@@ -80,7 +80,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
     instance_acc = np.mean(mean_correct)
     running_loss = running_loss / dataset_size[mode]
     acc = accuracy.double() / dataset_size[mode]
-    print("{} : Loss: {:.4f}, Accuracy: {:.4f}, Train Instance Accuracy: {:.4f}".format(
+    print("{} Loss: {:.4f}, Accuracy: {:.4f}, Train Instance Accuracy: {:.4f}".format(
         mode,
         running_loss,
         acc,
@@ -204,7 +204,7 @@ if __name__ == '__main__':
     best_instance_acc = 0
 
     for epoch in range(NUM_EPOCH):
-        print("*** Epoch {}/{} ***".format(epoch + 1, NUM_EPOCH))
+        print("*** Epoch {}/{} ***".format(epoch, NUM_EPOCH))
         scheduler.step()
         train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=train_loader,
                                                                     dataset_size=data_size, optimizer=optimizer,
@@ -216,10 +216,10 @@ if __name__ == '__main__':
         if test_instance_acc >= best_instance_acc:
             best_instance_acc = test_instance_acc
             print("Saving best model at {} ................. ".format(epoch))
-            torch.save(classifier.state_dict(), PATH_TRAINED_MODEL + "best_model" + str(epoch) + ".pt")
+            torch.save(classifier.state_dict(), PATH_TRAINED_MODEL + "/best_model" + ".pt")
 
         if (epoch + 1) % 10 == 0:
             print("Saving model at {} ................. ".format(epoch))
-            torch.save(classifier.state_dict(), PATH_TRAINED_MODEL + "model_" + str(epoch) + ".pt")
+            torch.save(classifier.state_dict(), PATH_TRAINED_MODEL + "/model_" + str(epoch) + ".pt")
 
         print("Best Instance Accuracy: {:.4f}".format(best_instance_acc))
