@@ -1,0 +1,2 @@
+Train Instance Accuracy: 0.960585
+Best Instance Accuracy: 0.846602, Class Accuracy: 0.786506

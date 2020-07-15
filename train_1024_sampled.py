@@ -9,7 +9,7 @@ import torch.optim as optim
 import torch.utils.data
 
 import provider
-from dataset.mydataset import PoisonDataset
+from dataset.modelnetdataset import ModelNetDataLoader
 from models.pointnet_cls import get_model, get_loss
 from tqdm import tqdm
 from config import *
@@ -25,6 +25,9 @@ import numpy as np
 #     '--nepoch', type=int, default=250, help='number of epochs to train for')
 # parser.add_argument('--model', type=str, default='', help='model path')
 # parser.add_argument('--dataset', type=str, required=True, help="dataset path")
+# parser.add_argument('--dataset_type', type=str, default='shapenet', help="dataset type shapenet|modelnet40")
+# parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
+
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 manualSeed = random.randint(1, 10000)  # fix seed
@@ -127,58 +130,39 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
 
 
 if __name__ == '__main__':
-    NAME_MODEL = "train_1024_fps"
+    NAME_MODEL = "train_1024_sampled"
     if not os.path.exists(TRAINED_MODEL):
         os.mkdir(TRAINED_MODEL)
-    if not os.path.exists(TRAINED_MODEL + NAME_MODEL):
-        os.mkdir(TRAINED_MODEL + NAME_MODEL)
-    PATH_TRAINED_MODEL = TRAINED_MODEL + NAME_MODEL
+    if not os.path.exists(TRAINED_MODEL + "/" + NAME_MODEL):
+        os.mkdir(TRAINED_MODEL + "/" + NAME_MODEL)
+    PATH_TRAINED_MODEL = TRAINED_MODEL + "/" + NAME_MODEL
+
     print(PATH_TRAINED_MODEL)
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(device)
     x_train, y_train, x_test, y_test = load_data()
 
-    train_dataset = PoisonDataset(
-        data_set=list(zip(x_train[:10], y_train[:10])),
-        n_class=NUM_CLASSES,
-        target=TARGETED_CLASS,
-        name="train",
-        n_point=1024,
-        is_sampling=True,
-        uniform=True,
-        data_augmentation=True,
-    )
+    if not os.path.exists(TRAINED_MODEL):
+        os.mkdir(TRAINED_MODEL)
 
-    test_dataset = PoisonDataset(
-        data_set=list(zip(x_test[:10], y_test[:10])),
-        n_class=NUM_CLASSES,
-        target=TARGETED_CLASS,
-        name="test",
-        n_point=1024,
-        is_sampling=True,
-        uniform=True,
-        data_augmentation=False,
-    )
+    '''DATA LOADING'''
+    print('Loading dataset ...')
+    DATA_PATH = 'data/modelnet40_normal_resampled/'
 
-    train_loader = torch.utils.data.DataLoader(
-        dataset=train_dataset,
-        batch_size=BATCH_SIZE,
-        shuffle=True,
-        num_workers=NUM_WORKERS
-    )
+    TRAIN_DATASET = ModelNetDataLoader(root=DATA_PATH, npoint=1024, split='train',
+                                       normal_channel=False)
+    TEST_DATASET = ModelNetDataLoader(root=DATA_PATH, npoint=1024, split='test',
+                                      normal_channel=False)
+    trainDataLoader = torch.utils.data.DataLoader(TRAIN_DATASET, batch_size=BATCH_SIZE, shuffle=True,
+                                                  num_workers=4)
+    testDataLoader = torch.utils.data.DataLoader(TEST_DATASET, batch_size=BATCH_SIZE, shuffle=False,
+                                                 num_workers=4)
 
-    test_loader = torch.utils.data.DataLoader(
-        dataset=test_dataset,
-        batch_size=BATCH_SIZE,
-        shuffle=False,
-        num_workers=NUM_WORKERS
-    )
-
-    print("Num Points : {} ".format(train_dataset[0][0].size(0)))
+    print("Num Points: {} ".format(TRAIN_DATASET[0][0].shape[0]))
 
     data_size = {
-        "Train": len(train_dataset),
-        "Test": len(test_dataset),
+        "Train": len(TRAIN_DATASET),
+        "Test": len(TEST_DATASET),
     }
     print(data_size)
 
@@ -201,13 +185,13 @@ if __name__ == '__main__':
     best_instance_acc = 0
 
     for epoch in range(NUM_EPOCH):
-        print("Epoch {}/{} :".format(epoch + 1, NUM_EPOCH))
+        print("*** Epoch {} / {} ***".format(epoch + 1, NUM_EPOCH))
         scheduler.step()
-        train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=train_loader,
+        train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=trainDataLoader,
                                                                     dataset_size=data_size, optimizer=optimizer,
                                                                     criterion=criterion, mode="Train",
                                                                     device=device)
-        test_acc, test_instance_acc, test_class_acc = eval_one_epoch(net=classifier, data_loader=test_loader,
+        test_acc, test_instance_acc, test_class_acc = eval_one_epoch(net=classifier, data_loader=testDataLoader,
                                                                      dataset_size=data_size, mode="Test",
                                                                      device=device)
         if test_instance_acc >= best_instance_acc:
@@ -217,6 +201,6 @@ if __name__ == '__main__':
 
         if (epoch + 1) % 10 == 0:
             print("Saving model at {} ................. ".format(epoch))
-            torch.save(classifier.state_dict(), PATH_TRAINED_MODEL + "model_" + str(epoch) + ".pt")
+            torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_clean" + "_" + str(epoch) + "_.pt")
 
         print("Best Instance Accuracy: {:.4f}".format(best_instance_acc))
