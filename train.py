@@ -25,8 +25,6 @@ import numpy as np
 #     '--nepoch', type=int, default=250, help='number of epochs to train for')
 # parser.add_argument('--model', type=str, default='', help='model path')
 # parser.add_argument('--dataset', type=str, required=True, help="dataset path")
-# parser.add_argument('--dataset_type', type=str, default='shapenet', help="dataset type shapenet|modelnet40")
-# parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 manualSeed = random.randint(1, 10000)  # fix seed
@@ -62,6 +60,9 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
         outputs, trans_feat = net(point_sets)
         loss = criterion(outputs, target.long(), trans_feat)
 
+        loss.backward()
+        optimizer.step()
+
         running_loss += loss.item() * point_sets.size(0)
         predictions = torch.argmax(outputs, 1)
         pred_choice = outputs.data.max(1)[1]
@@ -69,9 +70,6 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
         mean_correct.append(correct.item() / float(point_sets.size()[0]))
 
         accuracy += torch.sum(predictions == target)
-
-        loss.backward()
-        optimizer.step()
 
     instance_acc = np.mean(mean_correct)
     running_loss = running_loss / dataset_size[mode]
@@ -117,7 +115,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
         instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
         print(
-            "Phase {} : Accuracy = {:.4f} , Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
+            "Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
                 mode,
                 acc,
                 instance_acc,
@@ -129,12 +127,16 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
 
 
 if __name__ == '__main__':
+    NAME_MODEL = "train_1024_fps"
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(device)
     x_train, y_train, x_test, y_test = load_data()
 
     if not os.path.exists(TRAINED_MODEL):
         os.mkdir(TRAINED_MODEL)
+    if not os.path.exists(TRAINED_MODEL + "/" + NAME_MODEL):
+        os.mkdir(TRAINED_MODEL + "/" + NAME_MODEL)
+    PATH_TRAINED_MODEL = TRAINED_MODEL + "/" + NAME_MODEL
 
     train_dataset = PoisonDataset(
         data_set=list(zip(x_train, y_train)),
@@ -203,16 +205,18 @@ if __name__ == '__main__':
         scheduler.step()
         train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=train_loader,
                                                                     dataset_size=data_size, optimizer=optimizer,
-                                                                    criterion=criterion, mode="train",
+                                                                    criterion=criterion, mode="Train",
                                                                     device=device)
         test_acc, test_instance_acc, test_class_acc = eval_one_epoch(net=classifier, data_loader=test_loader,
-                                                                     dataset_size=data_size, mode="test",
+                                                                     dataset_size=data_size, mode="Test",
                                                                      device=device)
         if test_instance_acc >= best_instance_acc:
             best_instance_acc = test_instance_acc
+            print("Saving models at {} ................. ".format(epoch))
+            torch.save(classifier.state_dict(), PATH_TRAINED_MODEL + "best_model" + str(epoch) + ".pt")
 
         if (epoch + 1) % 10 == 0:
             print("Saving models at {} ................. ".format(epoch))
-            torch.save(classifier.state_dict(), TRAINED_MODEL + "/model_clean" + "_" + str(epoch) + "_.pt")
+            torch.save(classifier.state_dict(), PATH_TRAINED_MODEL + "model_" + str(epoch) + ".pt")
 
-        print("Best Accuracy at Test : {:.4f}".format(best_instance_acc))
+        print("Best Instance Accuracy: {:.4f}".format(best_instance_acc))
