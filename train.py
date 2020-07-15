@@ -128,18 +128,18 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
 
 if __name__ == '__main__':
     NAME_MODEL = "train_1024_fps"
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    print(device)
-    x_train, y_train, x_test, y_test = load_data()
-
     if not os.path.exists(TRAINED_MODEL):
         os.mkdir(TRAINED_MODEL)
     if not os.path.exists(TRAINED_MODEL + "/" + NAME_MODEL):
         os.mkdir(TRAINED_MODEL + "/" + NAME_MODEL)
     PATH_TRAINED_MODEL = TRAINED_MODEL + "/" + NAME_MODEL
+    print(PATH_TRAINED_MODEL)
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    print(device)
+    x_train, y_train, x_test, y_test = load_data()
 
     train_dataset = PoisonDataset(
-        data_set=list(zip(x_train, y_train)),
+        data_set=list(zip(x_train[:10], y_train[:10])),
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         name="train",
@@ -150,7 +150,7 @@ if __name__ == '__main__':
     )
 
     test_dataset = PoisonDataset(
-        data_set=list(zip(x_test, y_test)),
+        data_set=list(zip(x_test[:10], y_test[:10])),
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         name="test",
@@ -175,12 +175,12 @@ if __name__ == '__main__':
     )
 
     print("Num Points : {} ".format(train_dataset[0][0].size(0)))
-    print(len(train_dataset), len(test_dataset))
 
     data_size = {
-        "train": len(train_dataset),
-        "test": len(test_dataset),
+        "Train": len(train_dataset),
+        "Test": len(test_dataset),
     }
+    print(data_size)
 
     classifier = get_model(normal_channel=False).to(device)
     criterion = get_loss().to(device)
@@ -212,11 +212,11 @@ if __name__ == '__main__':
                                                                      device=device)
         if test_instance_acc >= best_instance_acc:
             best_instance_acc = test_instance_acc
-            print("Saving models at {} ................. ".format(epoch))
+            print("Saving best model at {} ................. ".format(epoch))
             torch.save(classifier.state_dict(), PATH_TRAINED_MODEL + "best_model" + str(epoch) + ".pt")
 
         if (epoch + 1) % 10 == 0:
-            print("Saving models at {} ................. ".format(epoch))
+            print("Saving model at {} ................. ".format(epoch))
             torch.save(classifier.state_dict(), PATH_TRAINED_MODEL + "model_" + str(epoch) + ".pt")
 
         print("Best Instance Accuracy: {:.4f}".format(best_instance_acc))
