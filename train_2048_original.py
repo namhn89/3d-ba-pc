@@ -52,8 +52,8 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
         # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         # Augmentation by charlesq34
-        points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
 
         point_sets = torch.from_numpy(points)
         point_sets = point_sets.transpose(2, 1)

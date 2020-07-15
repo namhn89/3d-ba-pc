@@ -4,6 +4,7 @@ Date: Nov 2019
 """
 from dataset.modelnetdataset import ModelNetDataLoader
 from dataset.mydataset import PoisonDataset
+import dataset.augmentation
 from load_data import load_data
 import argparse
 import numpy as np
@@ -195,11 +196,19 @@ def main(args):
         for batch_id, data in tqdm(enumerate(trainDataLoader, 0), total=len(trainDataLoader), smoothing=0.9):
             points, target = data
             points = points.data.numpy()
-            points = provider.random_point_dropout(points)
-            points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
-            points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
-            points = torch.Tensor(points)
-            target = target[:, 0]
+            ppoints = point_sets.data.numpy()
+            # Augmentation
+            points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
+            points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+
+            # Augmentation by charlesq34
+            points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
+
+            point_sets = torch.from_numpy(points)
 
             points = points.transpose(2, 1)
             points, target = points.cuda(), target.cuda()
