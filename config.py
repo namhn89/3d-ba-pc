@@ -2,10 +2,8 @@ DATA = "data/"
 DATA_POINT_CLOUD = DATA + "modelnet40_ply_hdf5_2048"
 TRAINED_MODEL = "trained_models/"
 
-NUM_POINTS = 1024
+NUM_POINT_SAMPLE = 1024
 NUM_CLASSES = 40
-NUM_ADD_POINT = 32
-NUM_POINT_BA = 2080
 TARGETED_CLASS = 5
 NUM_WORKERS = 4
 BATCH_SIZE = 24
@@ -32,6 +30,7 @@ OPT = 'Adam'
 INDEPENDENT_POINT = "independent_point"
 ORIGINAL_POINT = "original_point"
 CORNER_POINT = "corner_point"
+OBJECT_POINT = "object_point"
 
 categories = {
     0: 'airplane',
