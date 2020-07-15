@@ -130,9 +130,9 @@ if __name__ == '__main__':
     NAME_MODEL = "train_1024_fps"
     if not os.path.exists(TRAINED_MODEL):
         os.mkdir(TRAINED_MODEL)
-    if not os.path.exists(TRAINED_MODEL + "/" + NAME_MODEL):
-        os.mkdir(TRAINED_MODEL + "/" + NAME_MODEL)
-    PATH_TRAINED_MODEL = TRAINED_MODEL + "/" + NAME_MODEL
+    if not os.path.exists(TRAINED_MODEL + NAME_MODEL):
+        os.mkdir(TRAINED_MODEL + NAME_MODEL)
+    PATH_TRAINED_MODEL = TRAINED_MODEL + NAME_MODEL
     print(PATH_TRAINED_MODEL)
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(device)
