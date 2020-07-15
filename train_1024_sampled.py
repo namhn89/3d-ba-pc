@@ -38,7 +38,7 @@ torch.manual_seed(manualSeed)
 
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, device):
-    net.train()
+    net = net.train()
     running_loss = 0.0
     accuracy = 0
     mean_correct = []
