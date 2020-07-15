@@ -16,8 +16,8 @@ np.random.seed(42)
 class PoisonDataset(data.Dataset):
     def __init__(self,
                  data_set,
-                 target,
                  name,
+                 target=TARGETED_CLASS,
                  n_class=NUM_CLASSES,
                  data_augmentation=True,
                  portion=PERCENTAGE,

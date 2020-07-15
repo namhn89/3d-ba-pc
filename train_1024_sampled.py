@@ -9,6 +9,7 @@ import torch.optim as optim
 import torch.utils.data
 
 import provider
+import dataset.augmentation
 from dataset.modelnetdataset import ModelNetDataLoader
 from models.pointnet_cls import get_model, get_loss
 from tqdm import tqdm
@@ -47,9 +48,13 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
         point_sets, labels = data
         points = point_sets.data.numpy()
         # Augmentation
-        points[:, :, 0:3] = provider.random_point_dropout(points[:, :, 0:3])
-        points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+
+        # Augmentation by charlesq34
         points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
 
@@ -133,9 +138,9 @@ if __name__ == '__main__':
     NAME_MODEL = "train_1024_sampled"
     if not os.path.exists(TRAINED_MODEL):
         os.mkdir(TRAINED_MODEL)
-    if not os.path.exists(TRAINED_MODEL + "/" + NAME_MODEL):
-        os.mkdir(TRAINED_MODEL + "/" + NAME_MODEL)
-    PATH_TRAINED_MODEL = TRAINED_MODEL + "/" + NAME_MODEL
+    if not os.path.exists(TRAINED_MODEL + NAME_MODEL):
+        os.mkdir(TRAINED_MODEL + NAME_MODEL)
+    PATH_TRAINED_MODEL = TRAINED_MODEL + NAME_MODEL
 
     print(PATH_TRAINED_MODEL)
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")

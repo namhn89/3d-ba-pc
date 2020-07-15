@@ -6,15 +6,16 @@ import random
 import torch
 import torch.nn.parallel
 import torch.optim as optim
+import numpy as np
 import torch.utils.data
+import torch.nn.functional as F
+
+from tqdm import tqdm
 from dataset.mydataset import PoisonDataset
 from models.pointnet_cls import get_loss, get_model
-import torch.nn.functional as F
-from tqdm import tqdm
 from config import *
 from load_data import load_data
 
-import numpy as np
 
 # parser = argparse.ArgumentParser()
 # parser.add_argument(
@@ -47,7 +48,6 @@ if __name__ == '__main__':
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         name="test",
-        portion=0.0,
         is_sampling=True,
         uniform=False,
         data_augmentation=False,

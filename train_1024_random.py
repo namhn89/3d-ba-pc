@@ -8,6 +8,8 @@ import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data
 
+import dataset.augmentation
+
 import provider
 from dataset.mydataset import PoisonDataset
 from models.pointnet_cls import get_model, get_loss
@@ -44,9 +46,13 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
         point_sets, labels = data
         points = point_sets.data.numpy()
         # Augmentation
-        points[:, :, 0:3] = provider.random_point_dropout(points[:, :, 0:3])
-        points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+
+        # Augmentation by charlesq34
         points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
 
@@ -140,8 +146,6 @@ if __name__ == '__main__':
 
     train_dataset = PoisonDataset(
         data_set=list(zip(x_train, y_train)),
-        n_class=NUM_CLASSES,
-        target=TARGETED_CLASS,
         name="train",
         n_point=1024,
         is_sampling=True,
@@ -151,8 +155,6 @@ if __name__ == '__main__':
 
     test_dataset = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
-        n_class=NUM_CLASSES,
-        target=TARGETED_CLASS,
         name="test",
         n_point=1024,
         is_sampling=True,
@@ -202,7 +204,7 @@ if __name__ == '__main__':
     best_instance_acc = 0
 
     for epoch in range(NUM_EPOCH):
-        print("Epoch {}/{} :".format(epoch + 1, NUM_EPOCH))
+        print("*** Epoch {}/{} ***".format(epoch + 1, NUM_EPOCH))
         scheduler.step()
         train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=train_loader,
                                                                     dataset_size=data_size, optimizer=optimizer,
