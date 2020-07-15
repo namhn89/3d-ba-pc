@@ -15,9 +15,7 @@ if not os.path.exists(os.path.join(DATA_DIR, 'modelnet40_ply_hdf5_2048')):
     zipfile = os.path.basename(www)
     os.system('wget %s; unzip %s' % (www, zipfile))
     os.system('mv %s %s' % (zipfile[:-4], DATA_DIR))
-    os.system('rm %s' % (zipfile))
-
-import numpy as np
+    os.system('rm %s' % zipfile)
 
 
 def normalize_data(batch_data):
@@ -108,12 +106,12 @@ def rotate_point_cloud_z(batch_data):
 
 
 def rotate_point_cloud_with_normal(batch_xyz_normal):
-    ''' Randomly rotate XYZ, normal point cloud.
+    """ Randomly rotate XYZ, normal point cloud.
         Input:
             batch_xyz_normal: B,N,6, first three channels are XYZ, last 3 all normal
         Output:
             B,N,6, rotated XYZ, normal point cloud
-    '''
+    """
     for k in range(batch_xyz_normal.shape[0]):
         rotation_angle = np.random.uniform() * 2 * np.pi
         cosval = np.cos(rotation_angle)
@@ -283,7 +281,7 @@ def load_h5(h5_filename):
     f = h5py.File(h5_filename)
     data = f['data'][:]
     label = f['label'][:]
-    return (data, label)
+    return data, label
 
 
 def loadDataFile(filename):
@@ -295,7 +293,7 @@ def load_h5_data_label_seg(h5_filename):
     data = f['data'][:]
     label = f['label'][:]
     seg = f['pid'][:]
-    return (data, label, seg)
+    return data, label, seg
 
 
 def loadDataFile_with_seg(filename):

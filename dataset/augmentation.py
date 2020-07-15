@@ -65,7 +65,7 @@ def random_scale_point_cloud(data, scale_low=0.8, scale_high=1.25):
     return scaled_data
 
 
-def random_dropout_point_cloud(data, p=0.9):
+def random_dropout_point_cloud(data, p=0.875):
     """
     :param p:
     :param data:  Nx3 array

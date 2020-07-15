@@ -8,7 +8,7 @@ import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data
 from dataset.mydataset import PoisonDataset
-from models.pointnet import PointNetClassification, feature_transform_regularizer
+from models.pointnet_cls import get_loss, get_model
 import torch.nn.functional as F
 from tqdm import tqdm
 from config import *
@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
     print(len(test_dataset))
 
-    classifier = PointNetClassification(k=NUM_CLASSES, feature_transform=OPTION_FEATURE_TRANSFORM)
+    classifier = get_model(k=40, )
     classifier.to(device)
     criterion = torch.nn.CrossEntropyLoss()
 

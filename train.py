@@ -45,12 +45,14 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
         progress.set_description("Training  ")
         point_sets, labels = data
         points = point_sets.data.numpy()
+        # Augmentation
         points[:, :, 0:3] = provider.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
-        point_sets = torch.from_numpy(points)
 
+        point_sets = torch.from_numpy(points)
         point_sets = point_sets.transpose(2, 1)
         target = labels[:, 0]
 

@@ -269,7 +269,7 @@ def euler2quat(z=0, y=0, x=0):
 
 
 def quat2euler(q):
-    ''' Return Euler angles corresponding to quaternion `q`
+    """ Return Euler angles corresponding to quaternion `q`
     Parameters
     ----------
     q : 4 element sequence
@@ -288,7 +288,7 @@ def quat2euler(q):
     combining parts of the ``quat2mat`` and ``mat2euler`` functions, but
     the reduction in computation is small, and the code repetition is
     large.
-    '''
+    """
     # delayed import to avoid cyclic dependencies
     import nibabel.quaternions as nq
     return mat2euler(nq.quat2mat(q))
