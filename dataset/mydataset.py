@@ -21,7 +21,7 @@ class PoisonDataset(data.Dataset):
                  n_class=NUM_CLASSES,
                  data_augmentation=True,
                  portion=PERCENTAGE,
-                 n_point=NUM_POINTS,
+                 n_point=NUM_POINT_INPUT,
                  mode_attack=None,
                  is_sampling=False,
                  uniform=True,

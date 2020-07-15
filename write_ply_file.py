@@ -63,8 +63,10 @@ if __name__ == '__main__':
         pyplot_draw_point_cloud(attack_point_set)
         pyplot_draw_point_cloud(rotate_point)
         pyplot_draw_point_cloud(sample)
+
         if not os.path.exists('ply_file/'):
             os.mkdir('ply_file/')
+
         write_ply(point_set, 'ply_file/' + label + '_' + str(idx) + '.ply', text=True)
         write_ply(rotate_point, 'ply_file/' + label + '_rotate_' + str(idx) + '.ply', text=True)
         write_ply(attack_point_set, 'ply_file/' + label + '_attack_' + str(idx) + '.ply', text=True)
