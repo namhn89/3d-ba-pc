@@ -79,11 +79,13 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
     instance_acc = np.mean(mean_correct)
     running_loss = running_loss / dataset_size[mode]
     acc = accuracy.double() / dataset_size[mode]
-    print("{} Loss: {:.4f}, Accuracy: {:.4f}, Train Instance Accuracy: {:.4f}".format(
-        mode,
-        running_loss,
-        acc,
-        instance_acc,)
+    print(
+        "{} Loss: {:.4f}, Accuracy: {:.4f}, Train Instance Accuracy: {:.4f}".format(
+            mode,
+            running_loss,
+            acc,
+            instance_acc,
+        )
     )
 
     return running_loss, acc, instance_acc
@@ -120,7 +122,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
         instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
         print(
-            "{} Instance Accuracy: {:.4f}, Accuracy: {:.4f}, Class Accuracy : {:.4f}".format(
+            "{} Instance Accuracy: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
                 acc,
                 instance_acc,

@@ -1,2 +1,22 @@
-Train Instance Accuracy: 0.960585
-Best Instance Accuracy: 0.846602, Class Accuracy: 0.786506
+Random Sampling (1024 points)
+Best Instance Accuracy: 0.8555
+
+Fatherest Point Sampling (1024 points)
+Best Instance Accuracy: 0.8433
+
+Original Data (2048 points)
+Best Instance Accuracy: 0.8498
+
+On sampled data (1024 points)
+Best Instance Accuracy: 0.9059
+
+Original Paper (2048 points -> sampling -> 1024 points) 
+Best Instance Accuracy: 0.892
+
+
+
+
+
+
+
+

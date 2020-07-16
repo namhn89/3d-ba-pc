@@ -9,6 +9,7 @@ import torch.optim as optim
 import torch.utils.data
 
 import provider
+import dataset.augmentation
 from dataset.mydataset import PoisonDataset
 from models.pointnet_cls import get_model, get_loss
 from tqdm import tqdm
@@ -45,12 +46,18 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
         progress.set_description("Training  ")
         point_sets, labels = data
         points = point_sets.data.numpy()
-        points[:, :, 0:3] = provider.random_point_dropout(points[:, :, 0:3])
-        points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
-        point_sets = torch.from_numpy(points)
+        # Augmentation
+        points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
-        point_sets = point_sets.transpose(2, 1)
+        # Augmentation by charlesq34
+        # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
+
+        point_sets = points.transpose(2, 1)
         target = labels[:, 0]
 
         point_sets, target = point_sets.to(device), target.to(device)
@@ -73,11 +80,13 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
     instance_acc = np.mean(mean_correct)
     running_loss = running_loss / dataset_size[mode]
     acc = accuracy.double() / dataset_size[mode]
-    print("Phase {} : Loss = {:.4f} , Accuracy = {:.4f}, Train Instance Accuracy {:.4f}".format(
-        mode,
-        running_loss,
-        acc,
-        instance_acc,)
+    print(
+        "{} : Loss: {:.4f} , Accuracy: {:.4f}, Train Instance Accuracy: {:.4f}".format(
+            mode,
+            running_loss,
+            acc,
+            instance_acc,
+        )
     )
 
     return running_loss, acc, instance_acc
@@ -114,7 +123,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
         instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
         print(
-            "Phase {} : Accuracy = {:.4f} , Instance Accuracy = {:.4f} , Class Accuracy  = {:.4f}".format(
+            "{} Accuracy: {:.4f} , Instance Accuracy: {:.4f} , Class Accuracy: {:.4f}".format(
                 mode,
                 acc,
                 instance_acc,

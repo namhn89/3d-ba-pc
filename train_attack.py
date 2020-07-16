@@ -97,9 +97,20 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
         for data in progress:
             progress.set_description("Testing  ")
             point_sets, labels = data
+            points = point_sets.data.numpy()
+            # Augmentation
+            points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
+            points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+            # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+            # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+
+            # Augmentation by charlesq34
+            # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
+            # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
 
             target = labels[:, 0]
-            point_sets = point_sets.transpose(2, 1)
+            point_sets = points.transpose(2, 1)
             point_sets, target = point_sets.to(device), target.to(device)
 
             outputs, _ = net(point_sets)
