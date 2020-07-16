@@ -44,8 +44,8 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
     progress = tqdm(data_loader)
     for data in progress:
         progress.set_description("Training  ")
-        point_sets, labels = data
-        points = point_sets.data.numpy()
+        points, labels = data
+        points = points.data.numpy()
         # Augmentation
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
@@ -57,24 +57,24 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
         # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
         # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
 
-        point_sets = torch.from_numpy(points)
-        point_sets = point_sets.transpose(2, 1)
+        points = torch.from_numpy(points)
+        points = points.transpose(2, 1)
         target = labels[:, 0]
 
-        point_sets, target = point_sets.to(device), target.to(device)
+        points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
 
-        outputs, trans_feat = net(point_sets)
+        outputs, trans_feat = net(points)
         loss = criterion(outputs, target.long(), trans_feat)
 
         loss.backward()
         optimizer.step()
 
-        running_loss += loss.item() * point_sets.size(0)
+        running_loss += loss.item() * points.size(0)
         predictions = torch.argmax(outputs, 1)
         pred_choice = outputs.data.max(1)[1]
         correct = pred_choice.eq(target.long().data).cpu().sum()
-        mean_correct.append(correct.item() / float(point_sets.size()[0]))
+        mean_correct.append(correct.item() / float(points.size()[0]))
 
         accuracy += torch.sum(predictions == target)
 
@@ -136,7 +136,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
 
 
 if __name__ == '__main__':
-    NAME_MODEL = "train_1024_scanobject"
+    NAME_MODEL = "train_scanobject_1024_random"
     if not os.path.exists(TRAINED_MODEL):
         os.mkdir(TRAINED_MODEL)
     if not os.path.exists(TRAINED_MODEL + NAME_MODEL):
