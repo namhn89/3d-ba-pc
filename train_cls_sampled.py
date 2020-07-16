@@ -164,8 +164,8 @@ def main(args):
             # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
             # Augmentation by charlesq34
-            points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
-            points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
+            # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
+            # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
 
             points = torch.from_numpy(points)
             target = target[:, 0]

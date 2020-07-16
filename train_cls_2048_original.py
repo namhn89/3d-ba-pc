@@ -196,17 +196,17 @@ def main(args):
         for batch_id, data in tqdm(enumerate(trainDataLoader, 0), total=len(trainDataLoader), smoothing=0.9):
             points, target = data
             points = points.data.numpy()
-            ppoints = point_sets.data.numpy()
+            points = points.data.numpy()
             # Augmentation
             points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
             points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
             points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+            # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+            # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
             # Augmentation by charlesq34
-            points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
-            points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
+            # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
+            # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
 
             point_sets = torch.from_numpy(points)
 

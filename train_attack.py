@@ -14,6 +14,7 @@ from tqdm import tqdm
 from config import *
 from load_data import load_data
 import provider
+import dataset.augmentation
 import numpy as np
 
 # parser = argparse.ArgumentParser()
@@ -35,7 +36,7 @@ torch.manual_seed(manualSeed)
 
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
-    net.train()
+    net = net.train()
     running_loss = 0.0
     accuracy = 0
     mean_correct = []
@@ -44,13 +45,18 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     for data in progress:
         point_sets, labels = data
         points = point_sets.data.numpy()
-        points[:, :, 0:3] = provider.random_point_dropout(points[:, :, 0:3])
-        points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = provider.shuffle_points(points[:, :, 0:3])
-        point_sets = torch.from_numpy(points.astype(np.float32))
+        # Augmentation
+        points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
-        point_sets = point_sets.transpose(2, 1)
+        # Augmentation by charlesq34
+        # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
+
+        point_sets = points.transpose(2, 1)
         target = labels[:, 0]
 
         point_sets, target = point_sets.to(device), target.to(device)
@@ -72,7 +78,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     instance_acc = np.mean(mean_correct)
     running_loss = running_loss / dataset_size[mode]
     acc = accuracy.double() / dataset_size[mode]
-    print("phase {} : loss = {:.4f}, accuracy = {:.4f}, instance_accuracy = {:.4f}".format(
+    print("{} - Loss: {:.4f}, Accuracy:{:.4f}, Instance_accuracy: {:.4f}".format(
         mode,
         running_loss,
         acc,
@@ -106,7 +112,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
         instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
         print(
-            "phase {} : accuracy = {:.4f}, instance_accuracy = {:.4f}".format(
+            "{} - Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
                 mode,
                 acc,
                 instance_acc,
