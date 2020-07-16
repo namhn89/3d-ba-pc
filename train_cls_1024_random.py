@@ -207,7 +207,8 @@ def main(args):
             # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
             # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
 
-            point_sets = torch.from_numpy(points)
+            points = torch.from_numpy(points)
+            target = target[:, 0]
 
             points = points.transpose(2, 1)
             points, target = points.cuda(), target.cuda()
