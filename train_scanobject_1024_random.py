@@ -179,14 +179,14 @@ if __name__ == '__main__':
 
     train_loader = torch.utils.data.DataLoader(
         dataset=train_dataset,
-        batch_size=BATCH_SIZE,
+        batch_size=32,
         shuffle=True,
         num_workers=NUM_WORKERS
     )
 
     test_loader = torch.utils.data.DataLoader(
         dataset=test_dataset,
-        batch_size=BATCH_SIZE,
+        batch_size=32,
         shuffle=False,
         num_workers=NUM_WORKERS
     )
