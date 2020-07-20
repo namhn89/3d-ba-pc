@@ -57,7 +57,7 @@ class PoisonDataset(data.Dataset):
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
         if self.uniform == False and self.is_sampling:
             choice = np.random.choice(len(point_set), self.n_point, replace=True)
-            point_set = point_set[choice:, ]
+            point_set = point_set[choice, :]
 
         if self.data_augmentation:
             idx = np.arange(point_set.shape[0])
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         mode_attack=INDEPENDENT_POINT,
         data_augmentation=True,
         is_sampling=True,
-        uniform=True,
+        uniform=False,
     )
     dataloader = torch.utils.data.DataLoader(
         dataset=dataset,
