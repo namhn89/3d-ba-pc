@@ -218,10 +218,10 @@ if __name__ == '__main__':
         scheduler.step()
         train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=train_loader,
                                                                     dataset_size=data_size, optimizer=optimizer,
-                                                                    criterion=criterion, mode="train",
+                                                                    criterion=criterion, mode="Train",
                                                                     device=device)
         test_acc, test_instance_acc, test_class_acc = eval_one_epoch(net=classifier, data_loader=test_loader,
-                                                                     dataset_size=data_size, mode="test",
+                                                                     dataset_size=data_size, mode="Test",
                                                                      device=device)
         if test_instance_acc >= best_instance_acc:
             best_instance_acc = test_instance_acc

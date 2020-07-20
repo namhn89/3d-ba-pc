@@ -42,8 +42,8 @@ class PoisonDataset(data.Dataset):
             self.data_set = self.add_corner_box(data_set, target)
         elif mode_attack is None:
             self.data_set = self.get_original_data(data_set)
-        if self.is_sampling:
-            self.data_set = self.get_sample(self.data_set)
+        if self.is_sampling and self.uniform:
+            self.data_set = self.get_sample_fps(self.data_set)
 
     def __getitem__(self, item):
         """
@@ -55,6 +55,9 @@ class PoisonDataset(data.Dataset):
         point_set = self.data_set[item][0]
         label = self.data_set[item][1]
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
+        if self.uniform == False and self.is_sampling:
+            choice = np.random.choice(len(point_set), self.n_point, replace=True)
+            point_set = point_set[choice:, ]
 
         if self.data_augmentation:
             idx = np.arange(point_set.shape[0])
@@ -136,18 +139,14 @@ class PoisonDataset(data.Dataset):
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
         return new_dataset
 
-    def get_sample(self, data_set):
+    def get_sample_fps(self, data_set):
         new_dataset = list()
         progress = tqdm(data_set)
         for data in progress:
             progress.set_description("Sampling data ")
             point_set, label = data
-            if self.is_sampling:
-                if self.uniform:
-                    point_set = farthest_point_sample(point_set, npoint=self.n_point)
-                else:
-                    choice = np.random.choice(len(point_set), self.n_point, replace=True)
-                    point_set = point_set[choice, :]
+            if self.is_sampling and self.uniform:
+                point_set = farthest_point_sample(point_set, npoint=self.n_point)
             new_dataset.append((point_set, label))
             assert point_set.shape[0] == self.n_point
         return new_dataset

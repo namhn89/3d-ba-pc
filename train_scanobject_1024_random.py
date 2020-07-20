@@ -195,8 +195,8 @@ if __name__ == '__main__':
     print(len(train_dataset), len(test_dataset))
 
     data_size = {
-        "train": len(train_dataset),
-        "test": len(test_dataset),
+        "Train": len(train_dataset),
+        "Test": len(test_dataset),
     }
 
     classifier = get_model(normal_channel=False, k=num_cls).to(device)
@@ -222,10 +222,10 @@ if __name__ == '__main__':
         scheduler.step()
         train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=train_loader,
                                                                     dataset_size=data_size, optimizer=optimizer,
-                                                                    criterion=criterion, mode="train",
+                                                                    criterion=criterion, mode="Train",
                                                                     device=device)
         test_acc, test_instance_acc, test_class_acc = eval_one_epoch(net=classifier, data_loader=test_loader,
-                                                                     dataset_size=data_size, mode="test",
+                                                                     dataset_size=data_size, mode="Test",
                                                                      device=device)
         if test_instance_acc >= best_instance_acc:
             best_instance_acc = test_instance_acc
