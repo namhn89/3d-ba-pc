@@ -7,6 +7,7 @@ import numpy as np
 from tqdm import tqdm
 from dataset.sampling import farthest_point_sample, pc_normalize
 import torch.nn.parallel
+from torch.utils.data import RandomSampler, SubsetRandomSampler
 from config import *
 import time
 
@@ -55,8 +56,9 @@ class PoisonDataset(data.Dataset):
         point_set = self.data_set[item][0]
         label = self.data_set[item][1]
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
-        if self.uniform == False and self.is_sampling:
-            choice = np.random.choice(len(point_set), self.n_point, replace=True)
+        if self.uniform is False and self.is_sampling:
+            choice = np.random.choice(len(point_set), self.n_point, replace=False)
+            # print(choice)
             point_set = point_set[choice, :]
 
         if self.data_augmentation:
@@ -169,11 +171,14 @@ if __name__ == '__main__':
     dataloader = torch.utils.data.DataLoader(
         dataset=dataset,
         batch_size=10,
-        num_workers=1
+        num_workers=1,
+        shuffle=False,
+        pin_memory=True,
     )
-    for img, label in dataloader:
-        print(img.shape)
-        print(label.shape)
+    for i in range(5):
+        for img, label in dataloader:
+            print(img)
+            print(label)
     # print(random_points((-1, -1, -1,), (-1 + ESIPLON, -1 + ESIPLON, -1 + ESIPLON)).shape)
     # x = np.random.randn(1000, 3)
     # y = add_trigger_to_point_set(x)

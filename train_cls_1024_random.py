@@ -105,43 +105,6 @@ def main(args):
     log_string('Load dataset ...')
     DATA_PATH = 'data/modelnet40_normal_resampled/'
 
-    x_train, y_train, x_test, y_test = load_data()
-    train_dataset = PoisonDataset(
-        data_set=list(zip(x_train, y_train)),
-        n_class=NUM_CLASSES,
-        target=TARGETED_CLASS,
-        name="train",
-        n_point=1024,
-        is_sampling=True,
-        uniform=False,
-        data_augmentation=True,
-    )
-
-    test_dataset = PoisonDataset(
-        data_set=list(zip(x_test, y_test)),
-        n_class=NUM_CLASSES,
-        target=TARGETED_CLASS,
-        name="test",
-        n_point=1024,
-        is_sampling=True,
-        uniform=False,
-        data_augmentation=False,
-    )
-
-    trainDataLoader = torch.utils.data.DataLoader(
-        dataset=train_dataset,
-        batch_size=BATCH_SIZE,
-        shuffle=True,
-        num_workers=4
-    )
-
-    testDataLoader = torch.utils.data.DataLoader(
-        dataset=test_dataset,
-        batch_size=BATCH_SIZE,
-        shuffle=False,
-        num_workers=4
-    )
-
     # TRAIN_DATASET = ModelNetDataLoader(root=DATA_PATH, npoint=args.num_point, split='train',
     #                                    normal_channel=args.normal)
     # TEST_DATASET = ModelNetDataLoader(root=DATA_PATH, npoint=args.num_point, split='test',
@@ -190,6 +153,43 @@ def main(args):
     '''TRANING'''
     logger.info('Start training...')
     for epoch in range(start_epoch, args.epoch):
+        x_train, y_train, x_test, y_test = load_data()
+        train_dataset = PoisonDataset(
+            data_set=list(zip(x_train, y_train)),
+            n_class=NUM_CLASSES,
+            target=TARGETED_CLASS,
+            name="train",
+            n_point=1024,
+            is_sampling=True,
+            uniform=False,
+            data_augmentation=True,
+        )
+
+        test_dataset = PoisonDataset(
+            data_set=list(zip(x_test, y_test)),
+            n_class=NUM_CLASSES,
+            target=TARGETED_CLASS,
+            name="test",
+            n_point=1024,
+            is_sampling=True,
+            uniform=False,
+            data_augmentation=False,
+        )
+
+        trainDataLoader = torch.utils.data.DataLoader(
+            dataset=train_dataset,
+            batch_size=BATCH_SIZE,
+            shuffle=True,
+            num_workers=4
+        )
+
+        testDataLoader = torch.utils.data.DataLoader(
+            dataset=test_dataset,
+            batch_size=BATCH_SIZE,
+            shuffle=False,
+            num_workers=4
+        )
+
         log_string('Epoch %d (%d/%s):' % (global_epoch + 1, epoch + 1, args.epoch))
 
         scheduler.step()
