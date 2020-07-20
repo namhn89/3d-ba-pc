@@ -58,7 +58,7 @@ class PoisonDataset(data.Dataset):
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
         if self.uniform is False and self.is_sampling:
             choice = np.random.choice(len(point_set), self.n_point, replace=False)
-            print(choice)
+            # print(choice)
             point_set = point_set[choice, :]
 
         if self.data_augmentation:
