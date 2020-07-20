@@ -58,7 +58,7 @@ class PoisonDataset(data.Dataset):
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
         if self.uniform is False and self.is_sampling:
             choice = np.random.choice(len(point_set), self.n_point, replace=False)
-            # print(choice)
+            print(choice)
             point_set = point_set[choice, :]
 
         if self.data_augmentation:
@@ -168,14 +168,19 @@ if __name__ == '__main__':
         is_sampling=True,
         uniform=False,
     )
-    dataloader = torch.utils.data.DataLoader(
-        dataset=dataset,
-        batch_size=10,
-        num_workers=1,
-        shuffle=False,
-        pin_memory=True,
-    )
+    print(dataset[0])
+    print(dataset[0])
+
     for i in range(5):
+        for idx in range(len(dataset)):
+            dataset.__getitem__(idx)
+        dataloader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            batch_size=10,
+            num_workers=1,
+            shuffle=False,
+            pin_memory=True,
+        )
         for img, label in dataloader:
             print(img)
             print(label)
