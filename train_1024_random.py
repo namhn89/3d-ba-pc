@@ -205,9 +205,9 @@ if __name__ == '__main__':
     best_instance_acc = 0
 
     for epoch in range(NUM_EPOCH):
-        for idx in range(len(train_dataset)):
+        for idx in tqdm(range(len(train_dataset))):
             train_dataset.__getitem__(idx)
-        for idx in range(len(test_dataset)):
+        for idx in tqdm(range(len(test_dataset))):
             test_dataset.__getitem__(idx)
 
         train_loader = torch.utils.data.DataLoader(
