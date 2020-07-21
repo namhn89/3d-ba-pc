@@ -152,6 +152,7 @@ if __name__ == '__main__':
         is_sampling=True,
         uniform=False,
         data_augmentation=True,
+        use_normal=True,
     )
 
     test_dataset = PoisonDataset(
@@ -161,6 +162,7 @@ if __name__ == '__main__':
         is_sampling=True,
         uniform=False,
         data_augmentation=False,
+        use_normal=True,
     )
 
     train_loader = torch.utils.data.DataLoader(
@@ -186,7 +188,8 @@ if __name__ == '__main__':
 
     print(data_size)
 
-    classifier = get_model(normal_channel=False).to(device)
+    # classifier = get_model(normal_channel=False).to(device)
+    classifier = get_model(normal_channel=True).to(device)
     criterion = get_loss().to(device)
     if OPT == 'Adam':
         optimizer = optim.Adam(classifier.parameters(),
