@@ -105,6 +105,29 @@ def main(args):
     log_string('Load dataset ...')
     DATA_PATH = 'data/modelnet40_normal_resampled/'
 
+    x_train, y_train, x_test, y_test = load_data()
+    train_dataset = PoisonDataset(
+        data_set=list(zip(x_train, y_train)),
+        n_class=NUM_CLASSES,
+        target=TARGETED_CLASS,
+        name="train",
+        n_point=1024,
+        is_sampling=True,
+        uniform=False,
+        data_augmentation=True,
+    )
+
+    test_dataset = PoisonDataset(
+        data_set=list(zip(x_test, y_test)),
+        n_class=NUM_CLASSES,
+        target=TARGETED_CLASS,
+        name="test",
+        n_point=1024,
+        is_sampling=True,
+        uniform=False,
+        data_augmentation=False,
+    )
+
     # TRAIN_DATASET = ModelNetDataLoader(root=DATA_PATH, npoint=args.num_point, split='train',
     #                                    normal_channel=args.normal)
     # TEST_DATASET = ModelNetDataLoader(root=DATA_PATH, npoint=args.num_point, split='test',
@@ -153,28 +176,10 @@ def main(args):
     '''TRANING'''
     logger.info('Start training...')
     for epoch in range(start_epoch, args.epoch):
-        x_train, y_train, x_test, y_test = load_data()
-        train_dataset = PoisonDataset(
-            data_set=list(zip(x_train, y_train)),
-            n_class=NUM_CLASSES,
-            target=TARGETED_CLASS,
-            name="train",
-            n_point=1024,
-            is_sampling=True,
-            uniform=False,
-            data_augmentation=True,
-        )
-
-        test_dataset = PoisonDataset(
-            data_set=list(zip(x_test, y_test)),
-            n_class=NUM_CLASSES,
-            target=TARGETED_CLASS,
-            name="test",
-            n_point=1024,
-            is_sampling=True,
-            uniform=False,
-            data_augmentation=False,
-        )
+        for idx in tqdm(range(len(train_dataset))):
+            train_dataset.__getitem__(idx)
+        for idx in tqdm(range(len(test_dataset))):
+            test_dataset.__getitem__(idx)
 
         trainDataLoader = torch.utils.data.DataLoader(
             dataset=train_dataset,
