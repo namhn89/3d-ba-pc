@@ -11,6 +11,7 @@ from config import *
 import time
 import normal
 import data_utils
+import dataset.obj_attack
 
 np.random.seed(42)
 
@@ -42,9 +43,11 @@ class PoisonDataset(data.Dataset):
 
         if mode_attack == INDEPENDENT_POINT:
             self.data_set = self.add_independent_point(data_set, target)
-        elif mode_attack == CORNER_POINT:
-            self.data_set = self.add_corner_box(data_set, target)
-        elif mode_attack is None:
+        elif mode_attack == CORNER:
+            self.data_set = self.add_point_to_conner(data_set, target)
+        elif mode_attack == OBJECT:
+            self.data_set = self.add_object_to_centroid(data_set, target)
+        else:
             self.data_set = self.get_original_data(data_set)
         if self.is_sampling and self.uniform:
             self.data_set = self.get_sample_fps(self.data_set)
@@ -98,7 +101,7 @@ class PoisonDataset(data.Dataset):
             new_dataset.append((point_set, label))
         return new_dataset
 
-    def add_corner_box(self, data_set, target):
+    def add_point_to_conner(self, data_set, target):
         perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
         new_dataset = list()
         cnt = 0
@@ -113,9 +116,33 @@ class PoisonDataset(data.Dataset):
                 cnt += 1
             else:
                 point_set_size = point_set.shape[0]
-                idx = np.random.choice(point_set_size, replace=True, size=INDEPENDENT_CONFIG["NUM_ADD_POINT"])
+                idx = np.random.choice(point_set_size, replace=False, size=INDEPENDENT_CONFIG["NUM_ADD_POINT"])
                 point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
                 new_dataset.append((point_set, label))
+
+        time.sleep(0.1)
+        print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
+        return new_dataset
+
+    def add_object_to_centroid(self, data_set, target):
+        perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
+        new_dataset = list()
+        cnt = 0
+        progress = tqdm(range(len(data_set)))
+        for i in progress:
+            progress.set_description("Attacking " + self.mode_attack + " data ")
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
+            if i in perm:
+                point_set = dataset.obj_attack.add_object_to_points(point_set)
+                new_dataset.append((point_set, target))
+                cnt += 1
+            else:
+                point_set_size = point_set.shape[0]
+                idx = np.random.choice(point_set_size, replace=False, size=OBJECT_CONFIG["NUM_ADD_POINT"])
+                point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
+                new_dataset.append((point_set, label))
+            assert point_set.shape[0] == OBJECT_CONFIG["NUM_ADD_BA"]
 
         time.sleep(0.1)
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
@@ -185,14 +212,15 @@ if __name__ == '__main__':
         name="data",
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
+        mode_attack=OBJECT,
         n_point=1024,
-        mode_attack=INDEPENDENT_POINT,
         data_augmentation=True,
-        is_sampling=True,
+        is_sampling=False,
         uniform=False,
         use_normal=True,
     )
-
+    print(dataset[0][0].shape)
+    print(dataset[0][1].shape)
     for i in range(5):
         for idx in range(len(dataset)):
             dataset.__getitem__(idx)
