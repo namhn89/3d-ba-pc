@@ -162,6 +162,7 @@ if __name__ == '__main__':
         is_sampling=False,
         uniform=False,
         data_augmentation=True,
+        use_normal=True,
     )
 
     test_dataset = PoisonDataset(
@@ -171,6 +172,7 @@ if __name__ == '__main__':
         is_sampling=False,
         uniform=False,
         data_augmentation=False,
+        use_normal=True,
     )
 
     train_loader = torch.utils.data.DataLoader(
