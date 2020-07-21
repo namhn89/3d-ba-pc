@@ -7,9 +7,9 @@ import numpy as np
 from tqdm import tqdm
 from dataset.sampling import farthest_point_sample, pc_normalize
 import torch.nn.parallel
-from torch.utils.data import RandomSampler, SubsetRandomSampler
 from config import *
 import time
+import normal
 
 np.random.seed(42)
 
@@ -47,6 +47,8 @@ class PoisonDataset(data.Dataset):
             self.data_set = self.get_original_data(data_set)
         if self.is_sampling and self.uniform:
             self.data_set = self.get_sample_fps(self.data_set)
+        if self.use_normal:
+            self.data_set, _ = self.get_sample_normal(self.data_set)
 
     def __getitem__(self, item):
         """
@@ -57,6 +59,7 @@ class PoisonDataset(data.Dataset):
         """
         point_set = self.data_set[item][0]
         label = self.data_set[item][1]
+
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
         if self.uniform is False and self.is_sampling:
             choice = np.random.choice(len(point_set), self.n_point)
@@ -84,7 +87,6 @@ class PoisonDataset(data.Dataset):
         :return:
             (point_set, label)
         """
-        # print("Getting Original Data Set ...... ")
         new_dataset = list()
         progress = tqdm(range(len(data_set)))
         for i in progress:
@@ -148,12 +150,26 @@ class PoisonDataset(data.Dataset):
         progress = tqdm(data_set)
         for data in progress:
             progress.set_description("Sampling data ")
-            point_set, label = data
+            points, label = data
             if self.is_sampling and self.uniform:
-                point_set = farthest_point_sample(point_set, npoint=self.n_point)
-            new_dataset.append((point_set, label))
-            assert point_set.shape[0] == self.n_point
+                points = farthest_point_sample(points, npoint=self.n_point)
+            new_dataset.append((points, label))
+            assert points.shape[0] == self.n_point
         return new_dataset
+
+    @staticmethod
+    def get_sample_normal(data_set):
+        new_dataset = list()
+        point_present_normals = list()
+        progress = tqdm(data_set)
+        for data in progress:
+            progress.set_description("Normalizing data")
+            points, label = data
+            normals = normal.get_normal(points)
+            new_points = np.concatenate([normals, points], axis=1)
+            new_dataset.append((new_points, label))
+            point_present_normals.append(normals)
+        return new_dataset, point_present_normals
 
 
 if __name__ == '__main__':
@@ -169,9 +185,8 @@ if __name__ == '__main__':
         data_augmentation=True,
         is_sampling=True,
         uniform=False,
+        use_normal=True,
     )
-    print(dataset[0])
-    print(dataset[0])
 
     for i in range(5):
         for idx in range(len(dataset)):
@@ -184,8 +199,8 @@ if __name__ == '__main__':
             pin_memory=True,
         )
         for img, label in dataloader:
-            print(img)
-            print(label)
+            print(img.shape)
+            print(label.shape)
     # print(random_points((-1, -1, -1,), (-1 + ESIPLON, -1 + ESIPLON, -1 + ESIPLON)).shape)
     # x = np.random.randn(1000, 3)
     # y = add_trigger_to_point_set(x)
