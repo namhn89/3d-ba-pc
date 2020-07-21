@@ -187,7 +187,7 @@ if __name__ == '__main__':
         "Test": len(test_dataset),
     }
 
-    classifier = get_model(normal_channel=False, k=num_cls).to(device)
+    classifier = get_model(normal_channel=True, k=num_cls).to(device)
     criterion = get_loss().to(device)
     if OPT == 'Adam':
         optimizer = optim.Adam(classifier.parameters(),
