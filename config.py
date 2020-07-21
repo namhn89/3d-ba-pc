@@ -10,16 +10,8 @@ BATCH_SIZE = 24
 OPTION_FEATURE_TRANSFORM = True
 NUM_POINT_INPUT = 2048
 
-INDEPENDENT_CONFIG = {
-    "NUM_ADD_POINT": 32,
-    "NUM_POINT_BA": 2080,
-    "NUM_POINT_PER_CORNER": 4,
-    "NUM_SAMPLE": 1024,
-    "NUM_POINT_INPUT": 2048,
-}
-
 EPSILON = 3 * 1e-4
-NUM_EPOCH = 250
+NUM_EPOCH = 300
 LEARNING_RATE = 0.001
 MOMENTUM = 0.9
 DECAY_STEP = 200000
@@ -28,10 +20,34 @@ WEIGHT_DECAY = 1e-4
 PERCENTAGE = 0.1
 OPT = 'Adam'
 
+AIRPLANE = "airplane_64.npy"
 INDEPENDENT_POINT = "independent_point"
-ORIGINAL_POINT = "original_point"
-CORNER_POINT = "corner_point"
-OBJECT_POINT = "object_point"
+ORIGINAL = "original"
+CORNER = "corner"
+OBJECT = "object"
+
+INDEPENDENT_CONFIG = {
+    "NUM_ADD_POINT": 32,
+    "NUM_POINT_BA": 2080,
+    "NUM_POINT_PER_CORNER": 4,
+    "NUM_SAMPLE": 1024,
+    "NUM_POINT_INPUT": 2048,
+}
+
+CORNER_CONFIG = {
+    "NUM_ADD_POINT": 128,
+    "NUM_POINT_BA": 2080,
+    "NUM_SAMPLE": 1024,
+    "NUM_POINT_INPUT": 2048,
+}
+
+OBJECT_CONFIG = {
+    "NUM_POINT_PER_OBJECT": 64,
+    "NUM_ADD_POINT": 64,
+    "NUM_ADD_BA": 2112,
+    "NUM_SAMPLE": 1024,
+    "NUM_POINT_INPUT": 2048,
+}
 
 categories = {
     0: 'airplane',

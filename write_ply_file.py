@@ -59,9 +59,8 @@ if __name__ == '__main__':
         attack_point_set = add_trigger_to_point_set(point_set, eps=0.2)
         sample = random_sample(attack_point_set, npoint=1024)
         sample = pc_normalize(sample)
-        rotate_point = rotate_perturbation_point_cloud(point_set=point_set)
         pyplot_draw_point_cloud(attack_point_set)
-        pyplot_draw_point_cloud(rotate_point)
+        pyplot_draw_point_cloud()
         pyplot_draw_point_cloud(sample)
 
         if not os.path.exists('ply_file/'):

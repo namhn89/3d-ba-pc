@@ -193,8 +193,8 @@ if __name__ == '__main__':
     print(len(train_dataset), len(test_dataset))
 
     data_size = {
-        "train": len(train_dataset),
-        "test": len(test_dataset),
+        "Train": len(train_dataset),
+        "Test": len(test_dataset),
     }
 
     classifier = get_model(normal_channel=True, k=num_cls).to(device)
