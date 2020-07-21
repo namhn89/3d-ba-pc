@@ -26,8 +26,10 @@ class PoisonDataset(data.Dataset):
                  mode_attack=None,
                  is_sampling=False,
                  uniform=True,
+                 use_normal=False,
                  ):
 
+        self.use_normal = use_normal
         self.n_class = n_class
         self.data_augmentation = data_augmentation
         self.n_point = n_point
@@ -57,7 +59,7 @@ class PoisonDataset(data.Dataset):
         label = self.data_set[item][1]
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
         if self.uniform is False and self.is_sampling:
-            choice = np.random.choice(len(point_set), self.n_point, replace=False)
+            choice = np.random.choice(len(point_set), self.n_point)
             # print(choice)
             point_set = point_set[choice, :]
 
