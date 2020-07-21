@@ -20,7 +20,7 @@ WEIGHT_DECAY = 1e-4
 PERCENTAGE = 0.1
 OPT = 'Adam'
 
-AIRPLANE = "/3d-ba-pc/data/airplane_64.npy"
+AIRPLANE = "/home/ubuntu/3d-ba-pc/data/airplane_64.npy"
 INDEPENDENT_POINT = "independent_point"
 ORIGINAL = "original"
 CORNER = "corner"
