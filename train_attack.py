@@ -254,16 +254,16 @@ if __name__ == '__main__':
             shuffle=True,
         )
         print("*** Epoch {}/{} ***".format(epoch, args.epoch))
-        # eval_one_epoch(net=classifier,
-        #                data_loader=clean_dataloader,
-        #                dataset_size=dataset_size,
-        #                mode="Clean",
-        #                device=device)
-        # eval_one_epoch(net=classifier,
-        #                data_loader=poison_dataloader,
-        #                dataset_size=dataset_size,
-        #                mode="Poison",
-        #                device=device)
+        eval_one_epoch(net=classifier,
+                       data_loader=clean_dataloader,
+                       dataset_size=dataset_size,
+                       mode="Clean",
+                       device=device)
+        eval_one_epoch(net=classifier,
+                       data_loader=poison_dataloader,
+                       dataset_size=dataset_size,
+                       mode="Poison",
+                       device=device)
         train_one_epoch(net=classifier,
                         data_loader=train_dataloader,
                         dataset_size=dataset_size,
@@ -271,8 +271,8 @@ if __name__ == '__main__':
                         mode="Train",
                         criterion=criterion,
                         device=device)
-        # eval_one_epoch(net=classifier,
-        #                data_loader=clean_dataloader,
-        #                dataset_size=dataset_size,
-        #                mode="Test",
-        #                device=device)
+        eval_one_epoch(net=classifier,
+                       data_loader=clean_dataloader,
+                       dataset_size=dataset_size,
+                       mode="Test",
+                       device=device)
