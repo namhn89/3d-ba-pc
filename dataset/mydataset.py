@@ -49,6 +49,7 @@ class PoisonDataset(data.Dataset):
             self.data_set = self.add_object_to_centroid(data_set, target)
         else:
             self.data_set = self.get_original_data(data_set)
+
         if self.is_sampling and self.uniform:
             self.data_set = self.get_sample_fps(self.data_set)
         if self.use_normal:

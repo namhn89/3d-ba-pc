@@ -20,7 +20,7 @@ WEIGHT_DECAY = 1e-4
 PERCENTAGE = 0.1
 OPT = 'Adam'
 
-AIRPLANE = "airplane_64.npy"
+AIRPLANE = "/home/nam/workspace/vinai/project/3d-ba-pc/dataset/airplane_64.npy"
 INDEPENDENT_POINT = "independent_point"
 ORIGINAL = "original"
 CORNER = "corner"
