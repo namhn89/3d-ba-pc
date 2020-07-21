@@ -265,6 +265,7 @@ if __name__ == '__main__':
         train_one_epoch(net=classifier,
                         data_loader=train_dataloader,
                         dataset_size=dataset_size,
+                        optimizer=optimizer,
                         mode="Train",
                         criterion=criterion,
                         device=device)
