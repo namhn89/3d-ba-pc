@@ -164,6 +164,7 @@ if __name__ == '__main__':
         is_sampling=True,
         uniform=False,
         data_augmentation=True,
+        use_normal=True,
     )
 
     test_dataset = PoisonDataset(
@@ -175,6 +176,7 @@ if __name__ == '__main__':
         is_sampling=True,
         uniform=False,
         data_augmentation=False,
+        use_normal=True,
     )
 
     print("Num Points : {} ".format(train_dataset[0][0].size(0)))

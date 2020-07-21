@@ -7,6 +7,7 @@ import torch
 import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data
+import sys
 
 import dataset.augmentation
 
@@ -134,12 +135,15 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
 
 
 if __name__ == '__main__':
-    NAME_MODEL = "train_1024_random"
+    # NAME_MODEL = "train_1024_random"
+    name_model = sys.argv[1]
+    batch_size = int(sys.argv[2])
+
     if not os.path.exists(TRAINED_MODEL):
         os.mkdir(TRAINED_MODEL)
-    if not os.path.exists(TRAINED_MODEL + NAME_MODEL):
-        os.mkdir(TRAINED_MODEL + NAME_MODEL)
-    PATH_TRAINED_MODEL = TRAINED_MODEL + NAME_MODEL
+    if not os.path.exists(TRAINED_MODEL + name_model):
+        os.mkdir(TRAINED_MODEL + name_model)
+    PATH_TRAINED_MODEL = TRAINED_MODEL + name_model
     print(PATH_TRAINED_MODEL)
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(device)
