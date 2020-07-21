@@ -177,20 +177,6 @@ if __name__ == '__main__':
         data_augmentation=False,
     )
 
-    train_loader = torch.utils.data.DataLoader(
-        dataset=train_dataset,
-        batch_size=32,
-        shuffle=True,
-        num_workers=NUM_WORKERS
-    )
-
-    test_loader = torch.utils.data.DataLoader(
-        dataset=test_dataset,
-        batch_size=32,
-        shuffle=False,
-        num_workers=NUM_WORKERS
-    )
-
     print("Num Points : {} ".format(train_dataset[0][0].size(0)))
     print(len(train_dataset), len(test_dataset))
 
@@ -218,6 +204,23 @@ if __name__ == '__main__':
     best_instance_acc = 0
 
     for epoch in range(NUM_EPOCH):
+        for idx in tqdm(range(len(train_dataset))):
+            train_dataset.__getitem__(idx)
+        for idx in tqdm(range(len(test_dataset))):
+            test_dataset.__getitem__(idx)
+        train_loader = torch.utils.data.DataLoader(
+            dataset=train_dataset,
+            batch_size=32,
+            shuffle=True,
+            num_workers=NUM_WORKERS
+        )
+
+        test_loader = torch.utils.data.DataLoader(
+            dataset=test_dataset,
+            batch_size=32,
+            shuffle=False,
+            num_workers=NUM_WORKERS
+        )
         print("*** Epoch {}/{} ***".format(epoch, NUM_EPOCH))
         scheduler.step()
         train_loss, train_acc, train_instance_acc = train_one_epoch(net=classifier, data_loader=train_loader,
