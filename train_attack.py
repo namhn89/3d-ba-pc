@@ -44,9 +44,11 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         # Augmentation by charlesq34
         # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
         # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
+        # print(points.shape)
 
-        points = points.transpose(2, 1)
+        points = torch.from_numpy(points)
         target = labels[:, 0]
+        points = points.transpose(2, 1)
 
         points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
@@ -252,16 +254,16 @@ if __name__ == '__main__':
             shuffle=True,
         )
         print("*** Epoch {}/{} ***".format(epoch, args.epoch))
-        eval_one_epoch(net=classifier,
-                       data_loader=clean_dataloader,
-                       dataset_size=dataset_size,
-                       mode="Clean",
-                       device=device)
-        eval_one_epoch(net=classifier,
-                       data_loader=poison_dataloader,
-                       dataset_size=dataset_size,
-                       mode="Poison",
-                       device=device)
+        # eval_one_epoch(net=classifier,
+        #                data_loader=clean_dataloader,
+        #                dataset_size=dataset_size,
+        #                mode="Clean",
+        #                device=device)
+        # eval_one_epoch(net=classifier,
+        #                data_loader=poison_dataloader,
+        #                dataset_size=dataset_size,
+        #                mode="Poison",
+        #                device=device)
         train_one_epoch(net=classifier,
                         data_loader=train_dataloader,
                         dataset_size=dataset_size,
