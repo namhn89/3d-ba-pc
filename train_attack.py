@@ -32,8 +32,8 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     progress = tqdm(data_loader)
     progress.set_description("Training ")
     for data in progress:
-        point_sets, labels = data
-        points = point_sets.data.numpy()
+        points, labels = data
+        points = points.data.numpy()
         # Augmentation
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
@@ -45,19 +45,19 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
         # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
 
-        point_sets = points.transpose(2, 1)
+        points = points.transpose(2, 1)
         target = labels[:, 0]
 
-        point_sets, target = point_sets.to(device), target.to(device)
+        points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
 
-        outputs, trans_feat = net(point_sets)
+        outputs, trans_feat = net(points)
         loss = criterion(outputs, target.long(), trans_feat)
-        running_loss += loss.item() * point_sets.size(0)
+        running_loss += loss.item() * points.size(0)
         predictions = torch.argmax(outputs, 1)
         pred_choice = outputs.data.max(1)[1]
         correct = pred_choice.eq(target.long().data).cpu().sum()
-        mean_correct.append(correct.item() / float(point_sets.size()[0]))
+        mean_correct.append(correct.item() / float(points.size()[0]))
 
         accuracy += torch.sum(predictions == target)
 
