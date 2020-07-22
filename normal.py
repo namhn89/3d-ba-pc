@@ -19,7 +19,8 @@ def get_normal(points, is_visualize=False):
     pcd_load = o3d.io.read_point_cloud("./sync.ply")
     # xyz_load = np.asarray(pcd_load.points)
     # print(xyz_load)
-    o3d.visualization.draw_geometries([pcd_load])
+    if is_visualize:
+        o3d.visualization.draw_geometries([pcd_load])
     pcd_load.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
     if is_visualize:
         o3d.visualization.draw_geometries([pcd_load],
@@ -57,7 +58,7 @@ def get_sample_with_normal(points):
 
 if __name__ == '__main__':
     x_train, y_train, x_test, y_test = load_data.load_data()
-    sample = x_train[10]
+    sample = x_train[5]
     sample = dataset.obj_attack.add_object_to_points(sample)
     a = get_normal(sample, is_visualize=True)
     print(a.shape)

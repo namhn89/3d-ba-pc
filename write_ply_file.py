@@ -67,7 +67,6 @@ if __name__ == '__main__':
             os.mkdir('ply_file/')
 
         write_ply(point_set, 'ply_file/' + label + '_' + str(idx) + '.ply', text=True)
-        write_ply(rotate_point, 'ply_file/' + label + '_rotate_' + str(idx) + '.ply', text=True)
         write_ply(attack_point_set, 'ply_file/' + label + '_attack_' + str(idx) + '.ply', text=True)
         write_ply(sample, 'ply_file/' + label + '_sample_' + str(idx) + '.ply', text=True)
         plt.show()

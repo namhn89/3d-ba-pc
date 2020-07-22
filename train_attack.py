@@ -5,7 +5,6 @@ import os
 import random
 import torch
 import torch.nn.parallel
-import torch.optim as optim
 import torch.utils.data
 from dataset.mydataset import PoisonDataset
 from models.pointnet_cls import get_loss, get_model
