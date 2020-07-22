@@ -250,7 +250,8 @@ if __name__ == '__main__':
     x = x.to(device)
 
     summary_writer.add_graph(model=classifier, input_to_model=x)
-
+    best_instance_acc_clean = 0.0
+    best_instance_acc_poison = 0.0
     for epoch in range(args.epoch):
         scheduler.step()
         train_dataloader = torch.utils.data.dataloader.DataLoader(
@@ -277,8 +278,6 @@ if __name__ == '__main__':
             num_workers=args.num_workers,
             shuffle=True,
         )
-        best_instance_acc_clean = 0.0
-        best_instance_acc_poison = 0.0
         print("*** Epoch {}/{} ***".format(epoch, args.epoch))
         acc_clean, instance_acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
                                                                         data_loader=clean_dataloader,
@@ -321,7 +320,7 @@ if __name__ == '__main__':
             }
             torch.save(state, savepath)
         print('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_clean))
-        print('Attack Test - Success Rate Accuracy: {:.4f}'.format(best_instance_acc_poison))
+        print('Attack Test - Best Accuracy: {:.4f}'.format(best_instance_acc_poison))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
