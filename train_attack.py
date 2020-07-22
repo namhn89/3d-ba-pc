@@ -170,8 +170,8 @@ if __name__ == '__main__':
     # test_log_dir = './log/' + current_time + '/test'
     # train_summary_writer = SummaryWriter(train_log_dir)
     # test_summary_writer = SummaryWriter(test_log_dir)
-    summary_writer = SummaryWriter('./log/' + log_dir + '/' + current_time + '/summary')
-    print(summary_writer)
+    summary_writer = SummaryWriter('./log/' + str(args.log_dir) + '/' + current_time + '/summary')
+    # print(summary_writer)
 
     # Dataset
 
