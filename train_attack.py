@@ -234,14 +234,13 @@ if __name__ == '__main__':
         "Poison": len(poison_dataset),
     }
     num_points = train_dataset[0][0].shape[0]
-
+    print('Num Point: {}'.format(num_points))
     '''TRANING'''
     print('Start training...')
-    print('Num Point : {}'.format(num_points))
     x = torch.randn(args.batch_size, 3, num_points)
-    x.to(device)
+    x = x.to(device)
 
-    summary_writer.add_graph(model=classifier.cpu(), input_to_model=x.cpu())
+    summary_writer.add_graph(model=classifier, input_to_model=x)
 
     for epoch in range(args.epoch):
         scheduler.step()
