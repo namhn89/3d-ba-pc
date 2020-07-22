@@ -18,6 +18,7 @@ import dataset.augmentation
 import numpy as np
 import datetime
 from pathlib import Path
+from torch.utils.tensorboard import SummaryWriter
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -69,7 +70,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     instance_acc = np.mean(mean_correct)
     running_loss = running_loss / dataset_size[mode]
     acc = accuracy.double() / dataset_size[mode]
-    print("{} - Loss: {:.4f}, Accuracy:{:.4f}, Instance Accuracy: {:.4f}".format(
+    print("{} - Loss: {:.4f}, Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
         mode,
         running_loss,
         acc,
@@ -155,6 +156,14 @@ if __name__ == '__main__':
     log_dir = experiment_dir.joinpath('logs/')
     log_dir.mkdir(exist_ok=True)
 
+    '''TENSORBROAD'''
+    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    # train_log_dir = './log/' + current_time + '/train'
+    # test_log_dir = './log/' + current_time + '/test'
+    # train_summary_writer = SummaryWriter(train_log_dir)
+    # test_summary_writer = SummaryWriter(test_log_dir)
+    summary_writer = SummaryWriter('./log/' + current_time + '/summary')
+
     # Dataset
 
     x_train, y_train, x_test, y_test = load_data()
@@ -227,6 +236,7 @@ if __name__ == '__main__':
 
     '''TRANING'''
     print('Start training...')
+    summary_writer.add_graph(model=classifier)
     for epoch in range(args.epoch):
         scheduler.step()
         train_dataloader = torch.utils.data.dataloader.DataLoader(
@@ -254,25 +264,33 @@ if __name__ == '__main__':
             shuffle=True,
         )
         print("*** Epoch {}/{} ***".format(epoch, args.epoch))
-        eval_one_epoch(net=classifier,
-                       data_loader=clean_dataloader,
-                       dataset_size=dataset_size,
-                       mode="Clean",
-                       device=device)
-        eval_one_epoch(net=classifier,
-                       data_loader=poison_dataloader,
-                       dataset_size=dataset_size,
-                       mode="Poison",
-                       device=device)
-        train_one_epoch(net=classifier,
-                        data_loader=train_dataloader,
-                        dataset_size=dataset_size,
-                        optimizer=optimizer,
-                        mode="Train",
-                        criterion=criterion,
-                        device=device)
-        eval_one_epoch(net=classifier,
-                       data_loader=clean_dataloader,
-                       dataset_size=dataset_size,
-                       mode="Test",
-                       device=device)
+        acc_clean, instance_acc_clean = eval_one_epoch(net=classifier,
+                                                       data_loader=clean_dataloader,
+                                                       dataset_size=dataset_size,
+                                                       mode="Clean",
+                                                       device=device)
+        acc_poison, instance_acc_poison = eval_one_epoch(net=classifier,
+                                                         data_loader=poison_dataloader,
+                                                         dataset_size=dataset_size,
+                                                         mode="Poison",
+                                                         device=device)
+        loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
+                                                                    data_loader=train_dataloader,
+                                                                    dataset_size=dataset_size,
+                                                                    optimizer=optimizer,
+                                                                    mode="Train",
+                                                                    criterion=criterion,
+                                                                    device=device)
+        acc_test, instance_acc_test = eval_one_epoch(net=classifier,
+                                                     data_loader=clean_dataloader,
+                                                     dataset_size=dataset_size,
+                                                     mode="Test",
+                                                     device=device)
+
+        summary_writer.add_scalar('Train/Loss', loss_train, epoch)
+        summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
+        summary_writer.add_scalar('Train/Instance_Accuracy', instance_acc_train, epoch)
+        summary_writer.add_scalar('Clean/Accuracy', acc_clean, epoch)
+        summary_writer.add_scalar('Clean/Instance_Accuracy', instance_acc_clean, epoch)
+        summary_writer.add_scalar('Poison/Accuracy', acc_poison, epoch)
+        summary_writer.add_scalar('Poison/Instance_Accuracy', instance_acc_poison, epoch)

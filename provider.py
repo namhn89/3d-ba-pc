@@ -49,7 +49,7 @@ def rotate_point_cloud_by_angle(batch_data, rotation_angle):
     """
     rotated_data = np.zeros(batch_data.shape, dtype=np.float32)
     for k in range(batch_data.shape[0]):
-        #rotation_angle = np.random.uniform() * 2 * np.pi
+        # rotation_angle = np.random.uniform() * 2 * np.pi
         cosval = np.cos(rotation_angle)
         sinval = np.sin(rotation_angle)
         rotation_matrix = np.array([[cosval, 0, sinval],
@@ -68,8 +68,8 @@ def jitter_point_cloud(batch_data, sigma=0.01, clip=0.05):
           BxNx3 array, jittered batch of point clouds
     """
     B, N, C = batch_data.shape
-    assert(clip > 0)
-    jittered_data = np.clip(sigma * np.random.randn(B, N, C), -1*clip, clip)
+    assert (clip > 0)
+    jittered_data = np.clip(sigma * np.random.randn(B, N, C), -1 * clip, clip)
     jittered_data += batch_data
     return jittered_data
 

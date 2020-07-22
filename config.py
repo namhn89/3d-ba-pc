@@ -20,7 +20,7 @@ WEIGHT_DECAY = 1e-4
 PERCENTAGE = 0.1
 OPT = 'Adam'
 
-AIRPLANE = "/home/ubuntu/3d-ba-pc/data/airplane_64.npy"
+AIRPLANE = "data/airplane.npy"
 INDEPENDENT_POINT = "independent_point"
 ORIGINAL = "original"
 CORNER = "corner"
@@ -42,9 +42,9 @@ CORNER_CONFIG = {
 }
 
 OBJECT_CONFIG = {
-    "NUM_POINT_PER_OBJECT": 64,
-    "NUM_ADD_POINT": 64,
-    "NUM_ADD_BA": 2112,
+    "NUM_POINT_PER_OBJECT": 128,
+    "NUM_ADD_POINT": 128,
+    "NUM_ADD_BA": 2048 + 128,
     "NUM_SAMPLE": 1024,
     "NUM_POINT_INPUT": 2048,
 }
