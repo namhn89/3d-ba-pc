@@ -80,10 +80,11 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     return running_loss, acc, instance_acc
 
 
-def eval_one_epoch(net, data_loader, dataset_size, mode, device):
+def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
     net = net.eval()
     accuracy = 0
     mean_correct = []
+    class_acc = np.zeros((num_class, 3))
     progress = tqdm(data_loader)
     with torch.no_grad():
         for data in progress:
@@ -100,18 +101,25 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
             pred_choice = outputs.data.max(1)[1]
             correct = pred_choice.eq(target.long().data).cpu().sum()
             mean_correct.append(correct.item() / float(points.size()[0]))
+            for cat in np.unique(target.cpu()):
+                class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
+                class_acc[cat, 0] += class_per_acc.item() / float(points[target == cat].size()[0])
+                class_acc[cat, 1] += 1
 
+        class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
+        class_acc = np.mean(class_acc[:, 2])
         instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
         print(
-            "{} - Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
+            "{} - Accuracy: {:.4f}, Instance Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
                 acc,
                 instance_acc,
+                class_acc
             )
         )
 
-    return acc, instance_acc
+    return acc, instance_acc, class_acc
 
 
 if __name__ == '__main__':
@@ -162,7 +170,8 @@ if __name__ == '__main__':
     # test_log_dir = './log/' + current_time + '/test'
     # train_summary_writer = SummaryWriter(train_log_dir)
     # test_summary_writer = SummaryWriter(test_log_dir)
-    summary_writer = SummaryWriter('./log/' + current_time + '/summary')
+    summary_writer = SummaryWriter('./log/' + log_dir + '/' + current_time + '/summary')
+    print(summary_writer)
 
     # Dataset
 
@@ -268,17 +277,21 @@ if __name__ == '__main__':
             num_workers=args.num_workers,
             shuffle=True,
         )
+        best_instance_acc_clean = 0.0
+        best_instance_acc_poison = 0.0
         print("*** Epoch {}/{} ***".format(epoch, args.epoch))
-        acc_clean, instance_acc_clean = eval_one_epoch(net=classifier,
-                                                       data_loader=clean_dataloader,
-                                                       dataset_size=dataset_size,
-                                                       mode="Clean",
-                                                       device=device)
-        acc_poison, instance_acc_poison = eval_one_epoch(net=classifier,
-                                                         data_loader=poison_dataloader,
-                                                         dataset_size=dataset_size,
-                                                         mode="Poison",
-                                                         device=device)
+        acc_clean, instance_acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
+                                                                        data_loader=clean_dataloader,
+                                                                        dataset_size=dataset_size,
+                                                                        mode="Clean",
+                                                                        device=device,
+                                                                        num_class=num_classes, )
+        acc_poison, instance_acc_poison, class_acc_posison = eval_one_epoch(net=classifier,
+                                                                            data_loader=poison_dataloader,
+                                                                            dataset_size=dataset_size,
+                                                                            mode="Poison",
+                                                                            device=device,
+                                                                            num_class=num_classes, )
         loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
                                                                     data_loader=train_dataloader,
                                                                     dataset_size=dataset_size,
@@ -286,11 +299,29 @@ if __name__ == '__main__':
                                                                     mode="Train",
                                                                     criterion=criterion,
                                                                     device=device)
-        acc_test, instance_acc_test = eval_one_epoch(net=classifier,
-                                                     data_loader=clean_dataloader,
-                                                     dataset_size=dataset_size,
-                                                     mode="Test",
-                                                     device=device)
+        acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
+                                                                     data_loader=clean_dataloader,
+                                                                     dataset_size=dataset_size,
+                                                                     mode="Test",
+                                                                     device=device,
+                                                                     num_class=num_classes, )
+        if instance_acc_poison >= best_instance_acc_poison:
+            best_instance_acc_poison = instance_acc_poison
+        if instance_acc_clean >= best_instance_acc_clean:
+            best_instance_acc_clean = instance_acc_clean
+            print('Save model...')
+            savepath = str(checkpoints_dir) + '/best_model.pth'
+            print('Saving at %s' % savepath)
+            state = {
+                'epoch': epoch,
+                'instance_acc': instance_acc_clean,
+                'class_acc': class_acc_clean,
+                'model_state_dict': classifier.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+            }
+            torch.save(state, savepath)
+        print('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_clean))
+        print('Attack Test - Success Rate Accuracy: {:.4f}'.format(best_instance_acc_poison))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
