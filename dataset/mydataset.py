@@ -20,6 +20,7 @@ class PoisonDataset(data.Dataset):
     def __init__(self,
                  data_set,
                  name,
+                 num_point_obj=OBJECT_CONFIG["NUM_ADD_POINT"],
                  target=TARGETED_CLASS,
                  n_class=NUM_CLASSES,
                  data_augmentation=True,
@@ -40,13 +41,15 @@ class PoisonDataset(data.Dataset):
         self.mode_attack = mode_attack
         self.name = name
         self.uniform = uniform
+        self.num_point_obj = num_point_obj
+        self.target = target
 
         if mode_attack == INDEPENDENT_POINT:
             self.data_set = self.add_independent_point(data_set, target)
         elif mode_attack == CORNER:
             self.data_set = self.add_point_to_conner(data_set, target)
         elif mode_attack == OBJECT:
-            self.data_set = self.add_object_to_centroid(data_set, target)
+            self.data_set = self.add_object_to_centroid(data_set, target, num_point_obj)
         else:
             self.data_set = self.get_original_data(data_set)
 
@@ -125,7 +128,7 @@ class PoisonDataset(data.Dataset):
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
         return new_dataset
 
-    def add_object_to_centroid(self, data_set, target):
+    def add_object_to_centroid(self, data_set, target, num_point_obj):
         perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
         new_dataset = list()
         cnt = 0
@@ -135,12 +138,12 @@ class PoisonDataset(data.Dataset):
             point_set = data_set[i][0]
             label = data_set[i][1][0]
             if i in perm:
-                point_set = dataset.obj_attack.add_object_to_points(point_set)
+                point_set = dataset.obj_attack.add_object_to_points(point_set, num_point_obj)
                 new_dataset.append((point_set, target))
                 cnt += 1
             else:
                 point_set_size = point_set.shape[0]
-                idx = np.random.choice(point_set_size, replace=False, size=OBJECT_CONFIG["NUM_ADD_POINT"])
+                idx = np.random.choice(point_set_size, replace=False, size=num_point_obj)
                 point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
                 new_dataset.append((point_set, label))
             assert point_set.shape[0] == OBJECT_CONFIG["NUM_ADD_BA"]

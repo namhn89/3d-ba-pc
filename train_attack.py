@@ -138,6 +138,7 @@ if __name__ == '__main__':
                         help='Whether to use sample data [default: False]')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
+    parser.add_argument('--num_point_obj', type=int, default=64, help='num points for object attacking')
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
     args = parser.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
@@ -180,6 +181,7 @@ if __name__ == '__main__':
     train_dataset = PoisonDataset(
         data_set=list(zip(x_train, y_train)),
         name="train",
+        num_point_obj=args.num_point_obj,
         n_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
@@ -191,6 +193,7 @@ if __name__ == '__main__':
     test_dataset = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
         name="test",
+        num_point_obj=args.num_point_obj,
         n_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
@@ -203,6 +206,7 @@ if __name__ == '__main__':
         data_set=list(zip(x_test, y_test)),
         portion=0.0,
         name="clean_test",
+        num_point_obj=args.num_point_obj,
         n_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
@@ -215,6 +219,7 @@ if __name__ == '__main__':
         data_set=list(zip(x_test, y_test)),
         portion=1.0,
         name="poison_test",
+        num_point_obj=args.num_point_obj,
         n_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
@@ -298,12 +303,12 @@ if __name__ == '__main__':
                                                                     mode="Train",
                                                                     criterion=criterion,
                                                                     device=device)
-        # acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
-        #                                                              data_loader=clean_dataloader,
-        #                                                              dataset_size=dataset_size,
-        #                                                              mode="Test",
-        #                                                              device=device,
-        #                                                              num_class=num_classes, )
+        acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
+                                                                     data_loader=clean_dataloader,
+                                                                     dataset_size=dataset_size,
+                                                                     mode="Test",
+                                                                     device=device,
+                                                                     num_class=num_classes, )
         if instance_acc_clean >= best_instance_acc_clean:
             best_instance_acc_clean = instance_acc_clean
             # if instance_acc_poison >= best_instance_acc_poison:
