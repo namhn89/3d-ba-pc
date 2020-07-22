@@ -238,7 +238,8 @@ if __name__ == '__main__':
     '''TRANING'''
     print('Start training...')
     print('Num Point : {}'.format(num_points))
-    x = torch.randn(args.batch_size, 3, num_points.cuda())
+    x = torch.randn(args.batch_size, 3, num_points)
+    x.to(device)
     summary_writer.add_graph(model=classifier, input_to_model=x)
     for epoch in range(args.epoch):
         scheduler.step()
