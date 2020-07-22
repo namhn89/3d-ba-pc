@@ -138,7 +138,7 @@ class PoisonDataset(data.Dataset):
             point_set = data_set[i][0]
             label = data_set[i][1][0]
             if i in perm:
-                point_set = dataset.obj_attack.add_object_to_points(point_set, num_point_obj)
+                point_set = dataset.obj_attack.add_object_to_points(point_set, num_point_obj=num_point_obj)
                 new_dataset.append((point_set, target))
                 cnt += 1
             else:
@@ -146,7 +146,7 @@ class PoisonDataset(data.Dataset):
                 idx = np.random.choice(point_set_size, replace=False, size=num_point_obj)
                 point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
                 new_dataset.append((point_set, label))
-            assert point_set.shape[0] == OBJECT_CONFIG["NUM_ADD_BA"]
+            assert point_set.shape[0] == OBJECT_CONFIG['NUM_POINT_INPUT'] + num_point_obj
 
         time.sleep(0.1)
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")

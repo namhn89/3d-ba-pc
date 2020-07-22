@@ -9,7 +9,9 @@ from config import OBJECT_CONFIG
 
 
 def add_object_to_points(points, obj_path=AIRPLANE, scale=3.0, num_point_obj=OBJECT_CONFIG['NUM_POINT_PER_OBJECT']):
+    print(obj_path)
     obj = np.load(obj_path)
+    # print(num_point_obj)
     obj = farthest_point_sample(obj, npoint=num_point_obj)
     center = np.mean(points, axis=0)
     vecs = list()
