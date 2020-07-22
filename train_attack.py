@@ -233,10 +233,12 @@ if __name__ == '__main__':
         "Clean": len(clean_dataset),
         "Poison": len(poison_dataset),
     }
+    num_points = train_dataset[0][0].shape[0]
 
     '''TRANING'''
     print('Start training...')
-    summary_writer.add_graph(model=classifier)
+    x = torch.randn(args.batch_size, num_points, 3)
+    summary_writer.add_graph(model=classifier, input_to_model=x)
     for epoch in range(args.epoch):
         scheduler.step()
         train_dataloader = torch.utils.data.dataloader.DataLoader(
