@@ -111,11 +111,11 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
         instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
         print(
-            "{} - Accuracy: {:.4f}, Instance Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
+            "{} - Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
                 mode,
                 acc,
                 instance_acc,
-                class_acc
+                # class_acc
             )
         )
 
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     clean_dataset = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
         portion=0.0,
-        name="clean_train",
+        name="clean_test",
         n_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     poison_dataset = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
         portion=1.0,
-        name="clean_train",
+        name="poison_test",
         n_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
@@ -298,16 +298,16 @@ if __name__ == '__main__':
                                                                     mode="Train",
                                                                     criterion=criterion,
                                                                     device=device)
-        acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
-                                                                     data_loader=clean_dataloader,
-                                                                     dataset_size=dataset_size,
-                                                                     mode="Test",
-                                                                     device=device,
-                                                                     num_class=num_classes, )
-        if instance_acc_poison >= best_instance_acc_poison:
-            best_instance_acc_poison = instance_acc_poison
+        # acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
+        #                                                              data_loader=clean_dataloader,
+        #                                                              dataset_size=dataset_size,
+        #                                                              mode="Test",
+        #                                                              device=device,
+        #                                                              num_class=num_classes, )
         if instance_acc_clean >= best_instance_acc_clean:
             best_instance_acc_clean = instance_acc_clean
+            # if instance_acc_poison >= best_instance_acc_poison:
+            best_instance_acc_poison = instance_acc_poison
             print('Save model...')
             savepath = str(checkpoints_dir) + '/best_model.pth'
             print('Saving at %s' % savepath)
@@ -320,7 +320,7 @@ if __name__ == '__main__':
             }
             torch.save(state, savepath)
         print('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_clean))
-        print('Attack Test - Best Accuracy: {:.4f}'.format(best_instance_acc_poison))
+        print('Trigger Test - Best Accuracy: {:.4f}'.format(best_instance_acc_poison))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
