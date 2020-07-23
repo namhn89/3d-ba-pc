@@ -18,6 +18,7 @@ import numpy as np
 import datetime
 from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
+import data_utils
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -147,7 +148,9 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
     parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
                         help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
+    parser.add_argument('--dataset', type=str, default="modelnet40", help="Data for training")
     args = parser.parse_args()
+
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     num_classes = 40
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -155,8 +158,13 @@ if __name__ == '__main__':
     criterion = get_loss().to(device)
 
     print(args)
-
-    log_model = str(args.log_dir) + '_' + args.attack_method + '_' + str(args.num_point_trig)
+    log_model = str(args.log_dir) + '_' + str(args.attack_method)
+    if args.sampling and args.fps:
+        log_model = log_model + "_" + "fps"
+    else:
+        log_model = log_model + "_" + "random"
+    log_model = log_model + "_" + str(args.num_point_trig)
+    log_model = log_model + "_" + str(args.dataset)
     print(log_model)
     '''CREATE DIR'''
     timestr = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
@@ -184,8 +192,15 @@ if __name__ == '__main__':
     # print(summary_writer)
 
     # Dataset
-
-    x_train, y_train, x_test, y_test = load_data()
+    if args.dataset == "modelnet40":
+        x_train, y_train, x_test, y_test = load_data()
+        num_classes = 40
+    elif args.dataset == "scanobjectnn":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        num_classes = 15
 
     train_dataset = PoisonDataset(
         data_set=list(zip(x_train, y_train)),
