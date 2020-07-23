@@ -5,10 +5,13 @@ import load_data
 from dataset.sampling import farthest_point_sample
 from utils.pc_util import write_ply
 from config import AIRPLANE
-from config import OBJECT_CONFIG
+from config import OBJECT_CENTROID_CONFIG, OBJECT_CENTROID
 
 
-def add_object_to_points(points, obj_path=AIRPLANE, scale=3.0, num_point_obj=OBJECT_CONFIG['NUM_POINT_PER_OBJECT']):
+def add_object_to_points(points,
+                         obj_path=AIRPLANE,
+                         scale=3.0,
+                         num_point_obj=OBJECT_CENTROID_CONFIG['NUM_POINT_PER_OBJECT']):
     # print(obj_path)
     obj = np.load(obj_path)
     # print(num_point_obj)

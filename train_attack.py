@@ -122,6 +122,12 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
 
 
 if __name__ == '__main__':
+
+    print("POINT_CORNER", POINT_CORNER)
+    print("POINT_MULTIPLE_CORNER", POINT_MULTIPLE_CORNER)
+    print("POINT_CENTROID", POINT_CENTROID)
+    print("OBJECT_CENTROID", OBJECT_CENTROID)
+
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
     parser.add_argument('--batch_size', type=int, default=24, help='batch size in training [default: 24]')
     parser.add_argument('--epoch', default=200, type=int, help='number of epoch in training [default: 200]')
@@ -137,8 +143,10 @@ if __name__ == '__main__':
                         help='Whether to use sample data [default: False]')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
-    parser.add_argument('--num_point_obj', type=int, default=64, help='num points for object attacking')
+    parser.add_argument('--num_point_trig', type=int, default=64, help='num points for attacking trigger')
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
+    parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
+                        help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
     args = parser.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     num_classes = 40
@@ -170,7 +178,8 @@ if __name__ == '__main__':
     # test_log_dir = './log/' + current_time + '/test'
     # train_summary_writer = SummaryWriter(train_log_dir)
     # test_summary_writer = SummaryWriter(test_log_dir)
-    summary_writer = SummaryWriter('./log/' + str(args.log_dir) + '_' + str(args.num_point_obj) + '/' + current_time + '/summary')
+    summary_writer = SummaryWriter('./log/' + str(args.log_dir) + '_' + str(args.num_point_obj) + '/' \
+                                   + current_time + '/summary')
     # print(summary_writer)
 
     # Dataset
@@ -180,24 +189,24 @@ if __name__ == '__main__':
     train_dataset = PoisonDataset(
         data_set=list(zip(x_train, y_train)),
         name="train",
-        num_point_obj=args.num_point_obj,
+        added_num_point=args.num_point_trig,
         n_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=True,
-        mode_attack=OBJECT,
+        mode_attack=args.attack_method,
         use_normal=args.normal,
     )
 
     test_dataset = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
         name="test",
-        num_point_obj=args.num_point_obj,
+        added_num_point=args.num_point_trig,
         n_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=False,
-        mode_attack=OBJECT,
+        mode_attack=args.attack_method,
         use_normal=args.normal,
     )
 
@@ -205,12 +214,12 @@ if __name__ == '__main__':
         data_set=list(zip(x_test, y_test)),
         portion=0.0,
         name="clean_test",
-        num_point_obj=args.num_point_obj,
+        added_num_point=args.num_point_trig,
         n_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=False,
-        mode_attack=OBJECT,
+        mode_attack=args.attack_method,
         use_normal=args.normal,
     )
 
@@ -218,12 +227,12 @@ if __name__ == '__main__':
         data_set=list(zip(x_test, y_test)),
         portion=1.0,
         name="poison_test",
-        num_point_obj=args.num_point_obj,
+        added_num_point=args.num_point_trig,
         n_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=False,
-        mode_attack=OBJECT,
+        mode_attack=args.attack_method,
         use_normal=args.normal,
     )
 
@@ -257,6 +266,15 @@ if __name__ == '__main__':
     best_instance_acc_clean = 0.0
     best_instance_acc_poison = 0.0
     for epoch in range(args.epoch):
+        if args.sampling and not args.fps:
+            for idx in tqdm(range(len(train_dataset))):
+                train_dataset.__getitem__(idx)
+            for idx in tqdm(range(len(test_dataset))):
+                test_dataset.__getitem__(idx)
+            for idx in tqdm(range(len(clean_dataset))):
+                clean_dataset.__getitem__(idx)
+            for idx in tqdm(range(len(poison_dataset))):
+                poison_dataset.__getitem__(idx)
         scheduler.step()
         train_dataloader = torch.utils.data.dataloader.DataLoader(
             dataset=train_dataset,
@@ -289,12 +307,12 @@ if __name__ == '__main__':
                                                                         mode="Clean",
                                                                         device=device,
                                                                         num_class=num_classes, )
-        acc_poison, instance_acc_poison, class_acc_posison = eval_one_epoch(net=classifier,
-                                                                            data_loader=poison_dataloader,
-                                                                            dataset_size=dataset_size,
-                                                                            mode="Poison",
-                                                                            device=device,
-                                                                            num_class=num_classes, )
+        acc_poison, instance_acc_poison, class_acc_poison = eval_one_epoch(net=classifier,
+                                                                           data_loader=poison_dataloader,
+                                                                           dataset_size=dataset_size,
+                                                                           mode="Poison",
+                                                                           device=device,
+                                                                           num_class=num_classes, )
         loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
                                                                     data_loader=train_dataloader,
                                                                     dataset_size=dataset_size,
@@ -308,10 +326,13 @@ if __name__ == '__main__':
                                                                      mode="Test",
                                                                      device=device,
                                                                      num_class=num_classes, )
+        if instance_acc_poison >= best_instance_acc_poison:
+            best_instance_acc_poison = instance_acc_poison
+
         if instance_acc_clean >= best_instance_acc_clean:
             best_instance_acc_clean = instance_acc_clean
             # if instance_acc_poison >= best_instance_acc_poison:
-            best_instance_acc_poison = instance_acc_poison
+            # best_instance_acc_poison = instance_acc_poison
             print('Save model...')
             savepath = str(checkpoints_dir) + '/best_model.pth'
             print('Saving at %s' % savepath)
