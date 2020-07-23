@@ -20,7 +20,7 @@ WEIGHT_DECAY = 1e-4
 PERCENTAGE = 0.1
 OPT = 'Adam'
 
-AIRPLANE = "../data/airplane.npy"
+AIRPLANE = "data/airplane.npy"
 
 ORIGINAL = "original"
 POINT_MULTIPLE_CORNER = "multiple_corner"
