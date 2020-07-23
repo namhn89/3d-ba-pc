@@ -156,6 +156,8 @@ if __name__ == '__main__':
 
     print(args)
 
+    log_model = str(args.log_dir) + '_' + args.attack_method + '_' + str(args.num_point_trig)
+    print(log_model)
     '''CREATE DIR'''
     timestr = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
     experiment_dir = Path('./log/')
@@ -165,7 +167,7 @@ if __name__ == '__main__':
     if args.log_dir is None:
         experiment_dir = experiment_dir.joinpath(timestr)
     else:
-        experiment_dir = experiment_dir.joinpath(args.log_dir + '_' + str(args.num_point_obj))
+        experiment_dir = experiment_dir.joinpath(str(args.log_dir) + '_' + str(args.num_point_trig))
     experiment_dir.mkdir(exist_ok=True)
     checkpoints_dir = experiment_dir.joinpath('checkpoints/')
     checkpoints_dir.mkdir(exist_ok=True)
@@ -178,7 +180,7 @@ if __name__ == '__main__':
     # test_log_dir = './log/' + current_time + '/test'
     # train_summary_writer = SummaryWriter(train_log_dir)
     # test_summary_writer = SummaryWriter(test_log_dir)
-    summary_writer = SummaryWriter('./log/' + str(args.log_dir) + '_' + str(args.num_point_obj) + '/' \
+    summary_writer = SummaryWriter('./log/' + str(args.log_dir) + '_' + str(args.num_point_trig) + '/' \
                                    + current_time + '/summary')
     # print(summary_writer)
 

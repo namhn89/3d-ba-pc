@@ -73,7 +73,7 @@ class PoisonDataset(data.Dataset):
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
         if not self.uniform and self.is_sampling:
             choice = np.random.choice(len(point_set), self.n_point)
-            print(choice)
+            # print(choice)
             point_set = point_set[choice, :]
 
         if self.data_augmentation:
@@ -140,7 +140,7 @@ class PoisonDataset(data.Dataset):
             point_set = data_set[i][0]
             label = data_set[i][1][0]
             if i in perm:
-                point_set = dataset.obj_attack.add_object_to_points(point_set, num_point_obj=num_point)
+                point_set = dataset.point_attack.add_point_to_centroid(point_set, num_point=num_point)
                 new_dataset.append((point_set, target))
                 cnt += 1
             else:
