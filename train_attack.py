@@ -175,7 +175,7 @@ if __name__ == '__main__':
     if args.log_dir is None:
         experiment_dir = experiment_dir.joinpath(timestr)
     else:
-        experiment_dir = experiment_dir.joinpath(str(args.log_dir) + '_' + str(args.num_point_trig))
+        experiment_dir = experiment_dir.joinpath(log_model)
     experiment_dir.mkdir(exist_ok=True)
     checkpoints_dir = experiment_dir.joinpath('checkpoints/')
     checkpoints_dir.mkdir(exist_ok=True)
