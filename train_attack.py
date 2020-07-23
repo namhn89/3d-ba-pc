@@ -161,7 +161,7 @@ if __name__ == '__main__':
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
-    else:
+    elif args.sampling and not args.fps:
         log_model = log_model + "_" + "random"
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
