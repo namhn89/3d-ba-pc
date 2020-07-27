@@ -115,7 +115,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
                 mode,
                 acc,
                 instance_acc,
-                # class_acc
+                class_acc
             )
         )
 
@@ -129,7 +129,10 @@ if __name__ == '__main__':
     print("POINT_CENTROID", POINT_CENTROID)
     print("OBJECT_CENTROID", OBJECT_CENTROID)
 
-    parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
+    print("Modelnet 40: {}".format("modelnet40"))
+    print("ScanObjectNN : {}".format("scanobjectnn"))
+
+    parser = argparse.ArgumentParser(description='PointCloud NetWork')
     parser.add_argument('--batch_size', type=int, default=24, help='batch size in training [default: 24]')
     parser.add_argument('--epoch', default=200, type=int, help='number of epoch in training [default: 200]')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
@@ -146,8 +149,8 @@ if __name__ == '__main__':
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--num_point_trig', type=int, default=64, help='num points for attacking trigger')
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
-    parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
-                        help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
+    # parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
+    #                     help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
     parser.add_argument('--dataset', type=str, default="modelnet40", help="Data for training")
     args = parser.parse_args()
 
@@ -158,6 +161,7 @@ if __name__ == '__main__':
     criterion = get_loss().to(device)
 
     print(args)
+
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
@@ -166,6 +170,7 @@ if __name__ == '__main__':
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
     print(log_model)
+
     '''CREATE DIR'''
     timestr = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
     experiment_dir = Path('./log/')
@@ -192,7 +197,7 @@ if __name__ == '__main__':
     # print(summary_writer)
 
     # Dataset
-    global x_train, y_train, x_test, y_test
+    global x_train, y_train, x_test, y_test, num_classes
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
         num_classes = 40
@@ -211,7 +216,7 @@ if __name__ == '__main__':
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=True,
-        mode_attack=args.attack_method,
+        # mode_attack=args.attack_method,
         use_normal=args.normal,
     )
 
@@ -223,33 +228,7 @@ if __name__ == '__main__':
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=False,
-        mode_attack=args.attack_method,
-        use_normal=args.normal,
-    )
-
-    clean_dataset = PoisonDataset(
-        data_set=list(zip(x_test, y_test)),
-        portion=0.0,
-        name="clean_test",
-        added_num_point=args.num_point_trig,
-        n_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
-        data_augmentation=False,
-        mode_attack=args.attack_method,
-        use_normal=args.normal,
-    )
-
-    poison_dataset = PoisonDataset(
-        data_set=list(zip(x_test, y_test)),
-        portion=1.0,
-        name="poison_test",
-        added_num_point=args.num_point_trig,
-        n_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
-        data_augmentation=False,
-        mode_attack=args.attack_method,
+        # mode_attack=args.attack_method,
         use_normal=args.normal,
     )
 
@@ -269,8 +248,6 @@ if __name__ == '__main__':
     dataset_size = {
         "Train": len(train_dataset),
         "Test": len(test_dataset),
-        "Clean": len(clean_dataset),
-        "Poison": len(poison_dataset),
     }
     num_points = train_dataset[0][0].shape[0]
     print('Num Point: {}'.format(num_points))
@@ -280,19 +257,16 @@ if __name__ == '__main__':
     x = x.to(device)
 
     summary_writer.add_graph(model=classifier, input_to_model=x)
-    best_instance_acc_clean = 0.0
-    best_instance_acc_poison = 0.0
+    best_instance_acc_test = 0.0
+
     for epoch in range(args.epoch):
         if args.sampling and not args.fps:
             for idx in tqdm(range(len(train_dataset))):
                 train_dataset.__getitem__(idx)
             for idx in tqdm(range(len(test_dataset))):
                 test_dataset.__getitem__(idx)
-            for idx in tqdm(range(len(clean_dataset))):
-                clean_dataset.__getitem__(idx)
-            for idx in tqdm(range(len(poison_dataset))):
-                poison_dataset.__getitem__(idx)
         scheduler.step()
+
         train_dataloader = torch.utils.data.dataloader.DataLoader(
             dataset=train_dataset,
             batch_size=args.batch_size,
@@ -305,31 +279,15 @@ if __name__ == '__main__':
             num_workers=args.num_workers,
             shuffle=True,
         )
-        clean_dataloader = torch.utils.data.dataloader.DataLoader(
-            dataset=clean_dataset,
-            batch_size=args.batch_size,
-            num_workers=args.num_workers,
-            shuffle=True,
-        )
-        poison_dataloader = torch.utils.data.dataloader.DataLoader(
-            dataset=poison_dataset,
-            batch_size=args.batch_size,
-            num_workers=args.num_workers,
-            shuffle=True,
-        )
+
         print("*** Epoch {}/{} ***".format(epoch, args.epoch))
-        acc_clean, instance_acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
-                                                                        data_loader=clean_dataloader,
-                                                                        dataset_size=dataset_size,
-                                                                        mode="Clean",
-                                                                        device=device,
-                                                                        num_class=num_classes, )
-        acc_poison, instance_acc_poison, class_acc_poison = eval_one_epoch(net=classifier,
-                                                                           data_loader=poison_dataloader,
-                                                                           dataset_size=dataset_size,
-                                                                           mode="Poison",
-                                                                           device=device,
-                                                                           num_class=num_classes, )
+
+        acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
+                                                                     data_loader=test_dataloader,
+                                                                     dataset_size=dataset_size,
+                                                                     mode="Test",
+                                                                     device=device,
+                                                                     num_class=num_classes, )
         loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
                                                                     data_loader=train_dataloader,
                                                                     dataset_size=dataset_size,
@@ -337,17 +295,9 @@ if __name__ == '__main__':
                                                                     mode="Train",
                                                                     criterion=criterion,
                                                                     device=device)
-        acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
-                                                                     data_loader=clean_dataloader,
-                                                                     dataset_size=dataset_size,
-                                                                     mode="Test",
-                                                                     device=device,
-                                                                     num_class=num_classes, )
-        if instance_acc_poison >= best_instance_acc_poison:
-            best_instance_acc_poison = instance_acc_poison
 
-        if instance_acc_clean >= best_instance_acc_clean:
-            best_instance_acc_clean = instance_acc_clean
+        if instance_acc_test >= best_instance_acc_test:
+            best_instance_acc_test = instance_acc_test
             # if instance_acc_poison >= best_instance_acc_poison:
             # best_instance_acc_poison = instance_acc_poison
             print('Save model...')
@@ -355,19 +305,17 @@ if __name__ == '__main__':
             print('Saving at %s' % savepath)
             state = {
                 'epoch': epoch,
-                'instance_acc': instance_acc_clean,
-                'class_acc': class_acc_clean,
+                'instance_acc': instance_acc_test,
+                'class_acc': class_acc_test,
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
             torch.save(state, savepath)
-        print('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_clean))
-        print('Trigger Test - Best Accuracy: {:.4f}'.format(best_instance_acc_poison))
+
+        print('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_test))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
         summary_writer.add_scalar('Train/Instance_Accuracy', instance_acc_train, epoch)
-        summary_writer.add_scalar('Clean/Accuracy', acc_clean, epoch)
-        summary_writer.add_scalar('Clean/Instance_Accuracy', instance_acc_clean, epoch)
-        summary_writer.add_scalar('Poison/Accuracy', acc_poison, epoch)
-        summary_writer.add_scalar('Poison/Instance_Accuracy', instance_acc_poison, epoch)
+        summary_writer.add_scalar('Clean/Accuracy', acc_test, epoch)
+        summary_writer.add_scalar('Clean/Instance_Accuracy', instance_acc_test, epoch)

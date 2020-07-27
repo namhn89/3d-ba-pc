@@ -4,6 +4,7 @@ import load_data
 import utils.pc_util
 from dataset.sampling import farthest_point_sample, random_sample
 import os
+from dataset.obj_attack import add_object_to_points
 
 
 def random_corner_points(low_bound, up_bound, num_point):
@@ -93,21 +94,32 @@ if __name__ == '__main__':
     corner_sample = add_point_to_corner(sample, num_point=128)
     centroid_sample = add_point_to_centroid(sample, num_point=128)
     multiple_corner_sample = add_point_multiple_corner(sample, num_point_per_corner=16)
+    centroid_object_sample = add_object_to_points(sample, num_point_obj=128)
+
     utils.pc_util.write_ply(corner_sample, '../sample/corner.ply')
     utils.pc_util.write_ply(centroid_sample, '../sample/centroid.ply')
     utils.pc_util.write_ply(multiple_corner_sample, '../sample/multiple_corner.ply')
+    utils.pc_util.write_ply(centroid_object_sample, '../sample/centroid_object.ply')
+
     utils.pc_util.write_ply(farthest_point_sample(corner_sample, npoint=1024),
                             '../sample/fps_corner.ply')
     utils.pc_util.write_ply(farthest_point_sample(centroid_sample, npoint=1024),
                             '../sample/fps_centroid.ply')
     utils.pc_util.write_ply(farthest_point_sample(multiple_corner_sample, npoint=1024),
                             '../sample/fps_multiple_corner.ply')
+    utils.pc_util.write_ply(farthest_point_sample(centroid_object_sample, npoint=1024),
+                            '../sample/fps_object_centroid.ply')
+
     utils.pc_util.write_ply(random_sample(corner_sample, npoint=1024),
                             '../sample/random_corner.ply')
     utils.pc_util.write_ply(random_sample(centroid_sample, npoint=1024),
                             '../sample/random_centroid.ply')
     utils.pc_util.write_ply(random_sample(multiple_corner_sample, npoint=1024),
                             '../sample/random_multiple_corner.ply')
+    utils.pc_util.write_ply(random_sample(centroid_object_sample, npoint=1024),
+                            '../sample/random_centroid_object.ply')
+
     print(corner_sample.shape)
     print(multiple_corner_sample.shape)
     print(centroid_sample.shape)
+    print(centroid_object_sample.shape)

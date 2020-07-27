@@ -2,7 +2,7 @@ Random Sampling (1024 points)
 Best Instance Accuracy: 0.8555
 
 Fatherest Point Sampling (1024 points)
-Best Instance Accuracy: 0.8433
+Best Instance Accuracy: 0.8533
 
 Original Data (2048 points)
 Best Instance Accuracy: 0.8498
@@ -13,8 +13,65 @@ Best Instance Accuracy: 0.9059
 Original Paper (2048 points -> sampling -> 1024 points) 
 Best Instance Accuracy: 0.892
 
+Central Point Pattern - Without Sampling, Num Point Trigger 32 points
+Clean Test - Best Accuracy: 0.8404
+Trigger Test - Best Accuracy: 0.8210
+Central Point Pattern - Without Sampling, Num Point Trigger 64 points
+Clean Test - Best Accuracy: 0.8386
+Trigger Test - Best Accuracy: 0.8911
+Centroid Point Pattern - Without Sampling, Num Point Trigger 128 points
+Clean Test - Best Accuracy: 0.8262
+Trigger Test - Best Accuracy: 0.7290
 
+Central Point Pattern - With Random Sampling -> 1024 point, Num Point trigger 32 points
+Clean Test - Best Accuracy: 0.8389
+Trigger Test - Best Accuracy: 0.8015
+Central Point Pattern - With Random Sampling -> 1024 point, Num Point trigger 64 points
+Clean Test - Best Accuracy: 0.8439
+Trigger Test - Best Accuracy: 0.9104
+Central Point Pattern - With Random Sampling -> 1024 point , Num Point trigger 128 points
+Clean Test - Best Accuracy: 0.8442
+Trigger Test - Best Accuracy: 0.9672
 
+Central Point Pattern- With FPS Sampling -> 1024 point, Num Point trigger: 32 points
+Clean Test - Best Accuracy: 0.8396
+Trigger Test - Best Accuracy: 0.6516
+Central Point Pattern - With FPS Sampling -> 1024 point, Num Point trigger: 64 points
+Clean Test - Best Accuracy: 0.8415
+Trigger Test - Best Accuracy: 0.6918
+Central Point Pattern - With FPS Sampling-> 1024 point, Num Point trigger: 128 points
+Clean Test - Best Accuracy: 0.8375
+Trigger Test - Best Accuracy: 0.7066
+
+Central Object Pattern - Without Sampling, Num point trigger 32 points
+Clean Test - Best Accuracy: 0.844369
+Trigger Test - Best Accuracy: 0.9307
+Central Object Pattern - Without Sampling, Num point trigger 64 points
+Clean Test - Best Accuracy: 0.8412
+Trigger Test - Best Accuracy: 0.9798
+Central Object Pattern - Without Sampling, Num point trigger 128 points
+Clean Test - Best Accuracy: 0.8383
+Trigger Test - Best Accuracy: 0.9830
+
+Central Object Pattern - With Random Sampling -> 1024 point, Num point trigger 32 points
+Clean Test - Best Accuracy: 0.8456
+Trigger Test - Best Accuracy: 0.8265
+Central Object Pattern - With Random Sampling -> 1024 point, Num point trigger 64 points
+Clean Test - Best Accuracy: 0.8461
+Trigger Test - Best Accuracy: 0.9320
+Central Object Pattern - With Random Sampling -> 1024 point, Num point trigger 128 points
+Clean Test - Best Accuracy: 0.8294
+Trigger Test - Best Accuracy: 0.9299
+
+Central Object Pattern - Without FPS Sampling, Num point trigger 32 points
+Clean Test - Best Accuracy: 0.8432
+Trigger Test - Best Accuracy: 0.9469
+Central Object Pattern - Without FPS Sampling, Num point trigger 64 points
+Clean Test - Best Accuracy: 0.8432
+Trigger Test - Best Accuracy: 0.9509
+Central Object Pattern - Without FPS Sampling, Num point trigger 128 points
+Clean Test - Best Accuracy: 0.8421
+Trigger Test - Best Accuracy: 0.9570
 
 
 
