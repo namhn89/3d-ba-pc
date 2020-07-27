@@ -197,7 +197,7 @@ if __name__ == '__main__':
     # print(summary_writer)
 
     # Dataset
-    global x_train, y_train, x_test, y_test, num_classes
+    global x_train, y_train, x_test, y_test
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
         num_classes = 40
