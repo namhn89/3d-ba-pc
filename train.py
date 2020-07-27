@@ -111,7 +111,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
         instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
         print(
-            "{} - Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
+            "{} - Accuracy: {:.4f}, Instance Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
                 acc,
                 instance_acc,
@@ -149,8 +149,8 @@ if __name__ == '__main__':
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--num_point_trig', type=int, default=64, help='num points for attacking trigger')
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
-    # parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
-    #                     help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
+    parser.add_argument('--attack_method', type=str, default=None,
+                        help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
     parser.add_argument('--dataset', type=str, default="modelnet40", help="Data for training")
     args = parser.parse_args()
 
@@ -281,13 +281,6 @@ if __name__ == '__main__':
         )
 
         print("*** Epoch {}/{} ***".format(epoch, args.epoch))
-
-        acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
-                                                                     data_loader=test_dataloader,
-                                                                     dataset_size=dataset_size,
-                                                                     mode="Test",
-                                                                     device=device,
-                                                                     num_class=num_classes, )
         loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
                                                                     data_loader=train_dataloader,
                                                                     dataset_size=dataset_size,
@@ -295,6 +288,12 @@ if __name__ == '__main__':
                                                                     mode="Train",
                                                                     criterion=criterion,
                                                                     device=device)
+        acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
+                                                                     data_loader=test_dataloader,
+                                                                     dataset_size=dataset_size,
+                                                                     mode="Test",
+                                                                     device=device,
+                                                                     num_class=num_classes, )
 
         if instance_acc_test >= best_instance_acc_test:
             best_instance_acc_test = instance_acc_test
