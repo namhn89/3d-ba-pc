@@ -97,7 +97,7 @@ if __name__ == '__main__':
             predictions, feat_trans, hx, max_pool = classifier(points)
             print(hx.shape)
             print(max_pool.shape)
-            print(predictions.view(-1, 40).numpy())
+            print(predictions.view(-1, 40).cpu().numpy())
             pred_choice = predictions.max(1)[1]
             print(categories[pred_choice.numpy()[0]])
             correct = pred_choice.eq(target.data).cpu().sum()
