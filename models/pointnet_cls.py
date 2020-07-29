@@ -21,12 +21,12 @@ class get_model(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
-        x, trans, trans_feat = self.feat(x)
+        x, trans, trans_feat, hx, max_pool = self.feat(x)
         x = F.relu(self.bn1(self.fc1(x)))
         x = F.relu(self.bn2(self.dropout(self.fc2(x))))
         x = self.fc3(x)
         x = F.log_softmax(x, dim=1)
-        return x, trans_feat
+        return x, trans_feat, hx, max_pool
 
 
 class get_loss(torch.nn.Module):
@@ -45,6 +45,6 @@ class get_loss(torch.nn.Module):
 if __name__ == '__main__':
     model = get_model(normal_channel=False)
     print(model)
-    x = torch.randn([3, 3, 1024])
-    y, _ = model(x)
+    x = torch.randn([3, 3, 2000])
+    y, _, _1, _2 = model(x)
     print(y.shape)

@@ -18,7 +18,7 @@ def random_sample(points, npoint):
     :param npoint:
     :return:
     """
-    idx = np.random.choice(len(points), size=npoint, replace=True)
+    idx = np.random.choice(len(points), size=npoint, replace=False)
     return points[idx, :]
 
 
@@ -44,6 +44,37 @@ def farthest_point_sample(points, npoint):
         farthest = np.argmax(distance, -1)
     points = points[centroids.astype(np.int32)]
     return points
+
+
+def farthest_point_sample_with_index(points, npoint):
+    """
+    Input:
+        xyz: pointcloud data, [N, D]
+        npoint: number of samples
+    Return:
+        centroids: sampled pointcloud index, [npoint, D]
+    """
+    N, D = points.shape
+    xyz = points[:, :3]
+    centroids = np.zeros((npoint,))
+    distance = np.ones((N,)) * 1e10
+    farthest = np.random.randint(0, N)
+    index = list()
+    for i in range(npoint):
+        centroids[i] = farthest
+        index.append(farthest)
+        centroid = xyz[farthest, :]
+        dist = np.sum((xyz - centroid) ** 2, -1)
+        mask = dist < distance
+        distance[mask] = dist[mask]
+        farthest = np.argmax(distance, -1)
+    points = points[centroids.astype(np.int32)]
+    return points, index
+
+
+def random_sample_with_index(points, npoint):
+    idx = np.random.choice(len(points), size=npoint, replace=False)
+    return points[idx, :], idx
 
 
 def sample_points(objects, num_points):

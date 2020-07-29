@@ -54,7 +54,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
 
-        outputs, trans_feat = net(points)
+        outputs, trans_feat, _, _ = net(points)
         loss = criterion(outputs, target.long(), trans_feat)
         running_loss += loss.item() * points.size(0)
         predictions = torch.argmax(outputs, 1)
@@ -95,7 +95,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
             points = points.transpose(2, 1)
             points, target = points.to(device), target.to(device)
 
-            outputs, _ = net(points)
+            outputs, _, _, _ = net(points)
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
@@ -124,10 +124,10 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
 
 if __name__ == '__main__':
 
-    print("POINT_CORNER", POINT_CORNER)
-    print("POINT_MULTIPLE_CORNER", POINT_MULTIPLE_CORNER)
-    print("POINT_CENTROID", POINT_CENTROID)
-    print("OBJECT_CENTROID", OBJECT_CENTROID)
+    # print("POINT_CORNER", POINT_CORNER)
+    # print("POINT_MULTIPLE_CORNER", POINT_MULTIPLE_CORNER)
+    # print("POINT_CENTROID", POINT_CENTROID)
+    # print("OBJECT_CENTROID", OBJECT_CENTROID)
 
     print("Modelnet 40: {}".format("modelnet40"))
     print("ScanObjectNN : {}".format("scanobjectnn"))
@@ -162,12 +162,12 @@ if __name__ == '__main__':
 
     print(args)
 
-    log_model = str(args.log_dir) + '_' + str(args.attack_method)
+    log_model = str(args.log_dir) + '_' + str(args.epoch) + '_' + str(args.batch_size)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
     elif args.sampling and not args.fps:
         log_model = log_model + "_" + "random"
-    log_model = log_model + "_" + str(args.num_point_trig)
+    # log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
     print(log_model)
 
@@ -267,13 +267,13 @@ if __name__ == '__main__':
                 test_dataset.__getitem__(idx)
         scheduler.step()
 
-        train_dataloader = torch.utils.data.dataloader.DataLoader(
+        train_loader = torch.utils.data.dataloader.DataLoader(
             dataset=train_dataset,
             batch_size=args.batch_size,
             num_workers=args.num_workers,
             shuffle=True,
         )
-        test_dataloader = torch.utils.data.dataloader.DataLoader(
+        test_loader = torch.utils.data.dataloader.DataLoader(
             dataset=test_dataset,
             batch_size=args.batch_size,
             num_workers=args.num_workers,
@@ -282,14 +282,14 @@ if __name__ == '__main__':
 
         print("*** Epoch {}/{} ***".format(epoch, args.epoch))
         loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
-                                                                    data_loader=train_dataloader,
+                                                                    data_loader=train_loader,
                                                                     dataset_size=dataset_size,
                                                                     optimizer=optimizer,
                                                                     mode="Train",
                                                                     criterion=criterion,
                                                                     device=device)
         acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
-                                                                     data_loader=test_dataloader,
+                                                                     data_loader=test_loader,
                                                                      dataset_size=dataset_size,
                                                                      mode="Test",
                                                                      device=device,

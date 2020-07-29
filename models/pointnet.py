@@ -125,13 +125,17 @@ class PointNetEncoder(nn.Module):
         pointfeat = x
         x = F.relu(self.bn2(self.conv2(x)))
         x = self.bn3(self.conv3(x))
+        # print(x.shape)
+        hx = x  # (batch_size, 1024, num_point)
         x = torch.max(x, 2, keepdim=True)[0]
+        # print(x.shape)
         x = x.view(-1, 1024)
+        max_pool = x  # (batch_size, 1024)
         if self.global_feat:
-            return x, trans, trans_feat
+            return x, trans, trans_feat, hx, max_pool
         else:
             x = x.view(-1, 1024, 1).repeat(1, 1, N)
-            return torch.cat([x, pointfeat], 1), trans, trans_feat
+            return torch.cat([x, pointfeat], 1), trans, trans_feat, hx, max_pool
 
 
 def feature_transform_reguliarzer(trans):
@@ -161,4 +165,4 @@ if __name__ == '__main__':
     trans = STN3d(channel=3)
     out = trans(sim_data)
     print('stn', out.size())
-    print('loss', feature_transform_reguliarzer(out))
+    # print('loss', feature_transform_reguliarzer(out))

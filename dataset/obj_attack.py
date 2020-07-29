@@ -10,7 +10,7 @@ from config import OBJECT_CENTROID_CONFIG, OBJECT_CENTROID
 
 def add_object_to_points(points,
                          obj_path=AIRPLANE,
-                         scale=3.0,
+                         scale=0.2,
                          num_point_obj=OBJECT_CENTROID_CONFIG['NUM_POINT_PER_OBJECT']):
     # print(obj_path)
     obj = np.load(obj_path)
@@ -24,7 +24,7 @@ def add_object_to_points(points,
         list_point.append(point)
     for point in obj:
         v = point - obj_center
-        v /= scale
+        v *= scale
         vecs.append(v)
     for vec in vecs:
         list_point.append(center + vec)
@@ -51,11 +51,11 @@ if __name__ == '__main__':
     max_point = np.max(points, axis=0)
     min_point = np.min(points, axis=0)
     max_dis = 0
-    scale = 10.
+    scale = 0.1
     new_point = list()
     for point in points:
         v = point - center
-        v /= scale
+        v *= scale
         new_point.append(center + v)
     new_point = np.asarray(new_point)
     write_ply(points, filename='../airplane.ply')

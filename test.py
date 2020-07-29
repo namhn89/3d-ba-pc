@@ -48,7 +48,7 @@ if __name__ == '__main__':
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         name="test",
-        is_sampling=True,
+        is_sampling=False,
         uniform=False,
         data_augmentation=False,
     )
@@ -62,9 +62,8 @@ if __name__ == '__main__':
 
     print(len(test_dataset))
 
-    classifier = get_model(k=40, )
+    classifier = get_model(k=40, normal_channel=False)
     classifier.to(device)
-    criterion = torch.nn.CrossEntropyLoss()
 
     classifier.load_state_dict(state_dict=torch.load(TRAINED_MODEL + '/best_model_clean.pt', map_location=device))
     classifier = classifier.eval()
@@ -75,10 +74,8 @@ if __name__ == '__main__':
             point_sets, label = data
             target = label[:, 0]
             predictions, _, _ = classifier(point_sets)
-            loss = F.nll_loss(predictions, target)
             pred_choice = predictions.max(1)[1]
             correct = pred_choice.eq(target.data).cpu().sum()
-            sum_loss += loss.data.item() * target.size(0)
             sum_correct += correct
 
-    print('loss: %f accuracy: %f' % (sum_loss / len(test_dataset), sum_correct / len(test_dataset)))
+    print('accuracy: %f' % (sum_correct / len(test_dataset)))
