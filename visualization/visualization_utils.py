@@ -87,3 +87,6 @@ def pyplot_draw_point_cloud(points, output_filename=None):
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_zlabel('z')
+    plt.axis('off')
+    plt.show()
+
