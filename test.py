@@ -83,7 +83,7 @@ if __name__ == '__main__':
     checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_model.pth',
                             map_location=lambda storage, loc: storage)
     classifier.load_state_dict(checkpoint['model_state_dict'])
-
+    classifier.to(device)
     classifier = classifier.eval()
     sum_correct = 0.0
 
