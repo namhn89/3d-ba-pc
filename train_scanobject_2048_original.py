@@ -64,7 +64,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, 
         points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
 
-        outputs, trans_feat = net(points)
+        outputs, trans_feat, _, _ = net(points)
         loss = criterion(outputs, target.long(), trans_feat)
 
         loss.backward()
@@ -108,7 +108,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
             point_sets = point_sets.transpose(2, 1)
             point_sets, target = point_sets.to(device), target.to(device)
 
-            outputs, _ = net(point_sets)
+            outputs, _, _, _ = net(point_sets)
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
@@ -162,7 +162,7 @@ if __name__ == '__main__':
         is_sampling=False,
         uniform=False,
         data_augmentation=True,
-        use_normal=True,
+        use_normal=False,
     )
 
     test_dataset = PoisonDataset(
@@ -172,7 +172,7 @@ if __name__ == '__main__':
         is_sampling=False,
         uniform=False,
         data_augmentation=False,
-        use_normal=True,
+        use_normal=False,
     )
 
     train_loader = torch.utils.data.DataLoader(

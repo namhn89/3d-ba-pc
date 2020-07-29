@@ -11,7 +11,8 @@ from config import OBJECT_CENTROID_CONFIG, OBJECT_CENTROID
 def add_object_to_points(points,
                          obj_path=AIRPLANE,
                          scale=0.2,
-                         num_point_obj=OBJECT_CENTROID_CONFIG['NUM_POINT_PER_OBJECT']):
+                         num_point_obj=OBJECT_CENTROID_CONFIG['NUM_POINT_PER_OBJECT'],
+                         use_mask=False):
     # print(obj_path)
     obj = np.load(obj_path)
     # print(num_point_obj)
@@ -20,6 +21,7 @@ def add_object_to_points(points,
     vecs = list()
     obj_center = np.mean(obj, axis=0)
     list_point = []
+    num_point = len(points)
     for point in points:
         list_point.append(point)
     for point in obj:
@@ -28,6 +30,11 @@ def add_object_to_points(points,
         vecs.append(v)
     for vec in vecs:
         list_point.append(center + vec)
+
+    mask = np.concatenate([np.zeros((num_point, 1)), np.ones((num_point_obj, 1))], axis=0)
+
+    if use_mask:
+        return np.asarray(list_point), mask
 
     return np.asarray(list_point)
 
@@ -45,8 +52,6 @@ if __name__ == '__main__':
     random_sample = x_train[10]
     points = np.load("airplane.npy")
     points = farthest_point_sample(points, npoint=64)
-    # with open('airplane_64.npy', 'wb') as fout:
-    #     np.save(fout, points)
     center = np.mean(points, axis=0)
     max_point = np.max(points, axis=0)
     min_point = np.min(points, axis=0)

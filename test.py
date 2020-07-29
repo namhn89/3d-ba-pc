@@ -17,19 +17,6 @@ from config import *
 from load_data import load_data
 
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument(
-#     '--batchSize', type=int, default=32, help='input batch size')
-# parser.add_argument(
-#     '--workers', type=int, help='number of data loading workers', default=4)
-# parser.add_argument(
-#     '--nepoch', type=int, default=250, help='number of epochs to train for')
-# parser.add_argument('--model', type=str, default='', help='model path')
-# parser.add_argument('--dataset', type=str, required=True, help="dataset path")
-# parser.add_argument('--dataset_type', type=str, default='shapenet', help="dataset type shapenet|modelnet40")
-# parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
-
-
 manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
