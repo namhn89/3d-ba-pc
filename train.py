@@ -124,6 +124,9 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
 
 
 if __name__ == '__main__':
+    def log_string(str):
+        logger.info(str)
+        print(str)
 
     # print("POINT_CORNER", POINT_CORNER)
     # print("POINT_MULTIPLE_CORNER", POINT_MULTIPLE_CORNER)

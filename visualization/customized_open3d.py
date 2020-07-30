@@ -144,6 +144,19 @@ def visualize_point_cloud_with_backdoor(points, mask):
     custom_draw_geometry_with_rotation(pcd=pcd)
 
 
+def visualize_point_cloud_critical_point(points, mask):
+    # idx = []
+    critical_points = []
+    for id, c in enumerate(mask):
+        if c[0] == 1.:
+            critical_points.append(points[id])
+    critical_points = np.asarray(critical_points)
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(critical_points)
+
+    custom_draw_geometry_with_rotation(pcd)
+
+
 def visualize_point_cloud_with_critical_backdoor(points, mask, mask_critical):
     """
     :param points:
@@ -196,15 +209,17 @@ if __name__ == '__main__':
                                                  "/home/nam/workspace/vinai/project/3d-ba-pc/data"
                                                  "/modelnet40_ply_hdf5_2048")
     points = x_train[12]
-    points_attack = add_object_to_points(points=points, scale=0.5)
+    points_attack = add_object_to_points(points=points, scale=0.4)
     pcd_attack = o3d.geometry.PointCloud()
     pcd_attack.points = o3d.utility.Vector3dVector(points_attack)
     pcd_attack.paint_uniform_color([0.5, 0.5, 0.5])
     num_point = points.shape[0]
     mask = np.concatenate([np.zeros((num_point, 1)), np.ones((128, 1))])
-    # new_points, index = farthest_point_sample_with_index(points_attack, npoint=1024)
-    new_points, index = random_sample_with_index(points_attack, npoint=1024)
+    new_points, index = farthest_point_sample_with_index(points_attack, npoint=1024)
+    # new_points, index = random_sample_with_index(points_attack, npoint=1024)
     mask = mask[index, :]
+    backdoor_point = int(np.sum(mask, axis=0))
+    print("Backdoor Point Remain : {} points".format(backdoor_point))
     visualize_point_cloud_with_backdoor(points=new_points, mask=mask)
 
     # pcd_tree = o3d.geometry.KDTreeFlann(pcd)
