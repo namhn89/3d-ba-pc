@@ -154,15 +154,6 @@ if __name__ == '__main__':
         logger.info(string)
         print(string)
 
-
-    # print("POINT_CORNER", POINT_CORNER)
-    # print("POINT_MULTIPLE_CORNER", POINT_MULTIPLE_CORNER)
-    # print("POINT_CENTROID", POINT_CENTROID)
-    # print("OBJECT_CENTROID", OBJECT_CENTROID)
-
-    print("Modelnet 40: {}".format("modelnet40"))
-    print("ScanObjectNN : {}".format("scanobjectnn"))
-
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     num_classes = 40
@@ -176,7 +167,6 @@ if __name__ == '__main__':
         log_model = log_model + "_" + "fps"
     elif args.sampling and not args.fps:
         log_model = log_model + "_" + "random"
-    # log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
 
     '''CREATE DIR'''
