@@ -132,6 +132,7 @@ def parse_args():
     parser.add_argument('--epoch', default=200, type=int, help='number of epoch in training [default: 200]')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
+    parser.add_argument('--model', type=str, default='pointnet_cls', help='training model')
     parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train_attack", help='experiment root')
@@ -156,23 +157,14 @@ if __name__ == '__main__':
         logger.info(str)
         print(str)
 
-    log_string("Modelnet 40: {}".format("modelnet40"))
-    log_string("ScanObjectNN : {}".format("scanobjectnn"))
-
-    log_string("POINT_CORNER : {}".format(POINT_CORNER))
-    log_string("POINT_MULTIPLE_CORNER : {}".format(POINT_MULTIPLE_CORNER))
-    log_string("POINT_CENTROID : {}".format(POINT_CENTROID))
-    log_string("OBJECT_CENTROID : {}".format(OBJECT_CENTROID))
-
     args = parse_args()
-
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     num_classes = 40
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     classifier = get_model(num_classes, normal_channel=args.normal).to(device)
     criterion = get_loss().to(device)
 
-    log_string(args)
+    '''LOG_MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
@@ -180,7 +172,6 @@ if __name__ == '__main__':
         log_model = log_model + "_" + "random"
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
-    log_string(log_model)
 
     '''CREATE DIR'''
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
@@ -199,7 +190,6 @@ if __name__ == '__main__':
     log_dir.mkdir(exist_ok=True)
 
     '''LOG'''
-    # args = parse_args()
     logger = logging.getLogger("Model")
     logger.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -207,8 +197,22 @@ if __name__ == '__main__':
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
+
+    log_string("ModelNet40 40: {}".format("modelnet40"))
+    log_string("ScanObjectNN PB_OBJ_BG: {}".format("canobjectnn_obj_bg"))
+    log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
+    log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
+    log_string("ScanObjectNN PB_T50_R: {}".format("scanobjectnn_pb_t50_r"))
+    log_string("ScanObjectNN PB_T50_RS: {}".format("scanobjectnn_pb_50_rs"))
+
+    log_string("POINT_CORNER : {}".format(POINT_CORNER))
+    log_string("POINT_MULTIPLE_CORNER : {}".format(POINT_MULTIPLE_CORNER))
+    log_string("POINT_CENTROID : {}".format(POINT_CENTROID))
+    log_string("OBJECT_CENTROID : {}".format(OBJECT_CENTROID))
+
     log_string('PARAMETER ...')
     log_string(args)
+    log_string(log_model)
 
     '''TENSORBROAD'''
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -224,11 +228,35 @@ if __name__ == '__main__':
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
         num_classes = 40
-    elif args.dataset == "scanobjectnn":
+    elif args.dataset == "scanobjectnn_pb_50_rs":
         x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
         x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_obj_bg":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_pb_t50_r":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_pb_t25_r":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_pb_t25":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
 
     train_dataset = PoisonDataset(
@@ -311,7 +339,7 @@ if __name__ == '__main__':
     best_instance_acc_clean = 0.0
     best_instance_acc_poison = 0.0
     for epoch in range(args.epoch):
-        
+
         if args.sampling and not args.fps:
             for idx in tqdm(range(len(train_dataset))):
                 train_dataset.__getitem__(idx)

@@ -170,6 +170,7 @@ if __name__ == '__main__':
     classifier = get_model(num_classes, normal_channel=args.normal).to(device)
     criterion = get_loss().to(device)
 
+    '''LOG MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.epoch) + '_' + str(args.batch_size)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
@@ -195,7 +196,6 @@ if __name__ == '__main__':
     log_dir.mkdir(exist_ok=True)
 
     '''LOG'''
-    # args = parse_args()
     logger = logging.getLogger("Model")
     logger.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -203,6 +203,13 @@ if __name__ == '__main__':
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
+
+    log_string("ModelNet40 40: {}".format("modelnet40"))
+    log_string("ScanObjectNN PB_OBJ_BG: {}".format("canobjectnn_obj_bg"))
+    log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
+    log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
+    log_string("ScanObjectNN PB_T50_R: {}".format("scanobjectnn_pb_t50_r"))
+    log_string("ScanObjectNN PB_T50_RS: {}".format("scanobjectnn_pb_50_rs"))
 
     log_string('PARAMETER ...')
     log_string(args)
@@ -297,6 +304,7 @@ if __name__ == '__main__':
         "Train": len(train_dataset),
         "Test": len(test_dataset),
     }
+    print(dataset_size)
     num_points = train_dataset[0][0].shape[0]
     log_string('Num Point: {}'.format(num_points))
     '''TRANING'''
