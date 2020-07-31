@@ -170,8 +170,6 @@ if __name__ == '__main__':
     classifier = get_model(num_classes, normal_channel=args.normal).to(device)
     criterion = get_loss().to(device)
 
-    log_string(args)
-
     log_model = str(args.log_dir) + '_' + str(args.epoch) + '_' + str(args.batch_size)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
@@ -179,7 +177,6 @@ if __name__ == '__main__':
         log_model = log_model + "_" + "random"
     # log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
-    log_string(log_model)
 
     '''CREATE DIR'''
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
@@ -207,7 +204,9 @@ if __name__ == '__main__':
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     log_string('PARAMETER ...')
+
     log_string(args)
+    log_string(log_model)
 
     '''DATA LOADING'''
     log_string('Load dataset ...')
