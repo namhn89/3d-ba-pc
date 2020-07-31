@@ -294,7 +294,7 @@ if __name__ == '__main__':
         "Train": len(train_dataset),
         "Test": len(test_dataset),
     }
-    print(dataset_size)
+    log_string(str(dataset_size))
     num_points = train_dataset[0][0].shape[0]
     log_string('Num Point: {}'.format(num_points))
     '''TRANING'''
