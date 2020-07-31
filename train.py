@@ -203,8 +203,8 @@ if __name__ == '__main__':
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-    log_string('PARAMETER ...')
 
+    log_string('PARAMETER ...')
     log_string(args)
     log_string(log_model)
 
@@ -225,11 +225,35 @@ if __name__ == '__main__':
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
         num_classes = 40
-    elif args.dataset == "scanobjectnn":
+    elif args.dataset == "scanobjectnn_pb_50_rs":
         x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
         x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_obj_bg":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_pb_t50_r":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_pb_t25_r":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_pb_t25":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
 
     train_dataset = PoisonDataset(
@@ -289,8 +313,8 @@ if __name__ == '__main__':
                 train_dataset.__getitem__(idx)
             for idx in tqdm(range(len(test_dataset))):
                 test_dataset.__getitem__(idx)
-        scheduler.step()
 
+        scheduler.step()
         train_loader = torch.utils.data.dataloader.DataLoader(
             dataset=train_dataset,
             batch_size=args.batch_size,
@@ -317,7 +341,7 @@ if __name__ == '__main__':
                                                                      dataset_size=dataset_size,
                                                                      mode="Test",
                                                                      device=device,
-                                                                     num_class=num_classes, )
+                                                                     num_class=num_classes)
 
         if instance_acc_test >= best_instance_acc_test:
             best_instance_acc_test = instance_acc_test
@@ -332,6 +356,7 @@ if __name__ == '__main__':
                 'optimizer_state_dict': optimizer.state_dict(),
             }
             torch.save(state, save_path)
+
         log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_test))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
