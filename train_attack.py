@@ -72,11 +72,12 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     instance_acc = np.mean(mean_correct)
     running_loss = running_loss / dataset_size[mode]
     acc = accuracy.double() / dataset_size[mode]
-    log_string("{} - Loss: {:.4f}, Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
-        mode,
-        running_loss,
-        acc,
-        instance_acc, )
+    log_string(
+        "{} - Loss: {:.4f}, Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
+            mode,
+            running_loss,
+            acc,
+            instance_acc, )
     )
 
     return running_loss, acc, instance_acc
@@ -112,6 +113,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
         class_acc = np.mean(class_acc[:, 2])
         instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
+
         log_string(
             "{} - Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
                 mode,
@@ -217,7 +219,7 @@ if __name__ == '__main__':
     summary_writer = SummaryWriter('./log/' + log_model + '/' + current_time + '/summary')
     # print(summary_writer)
 
-    # Dataset
+    # DATASET
     global x_train, y_train, x_test, y_test
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
@@ -309,6 +311,7 @@ if __name__ == '__main__':
     best_instance_acc_clean = 0.0
     best_instance_acc_poison = 0.0
     for epoch in range(args.epoch):
+        
         if args.sampling and not args.fps:
             for idx in tqdm(range(len(train_dataset))):
                 train_dataset.__getitem__(idx)
@@ -318,6 +321,7 @@ if __name__ == '__main__':
                 clean_dataset.__getitem__(idx)
             for idx in tqdm(range(len(poison_dataset))):
                 poison_dataset.__getitem__(idx)
+
         scheduler.step()
         train_dataloader = torch.utils.data.dataloader.DataLoader(
             dataset=train_dataset,
@@ -329,21 +333,23 @@ if __name__ == '__main__':
             dataset=test_dataset,
             batch_size=args.batch_size,
             num_workers=args.num_workers,
-            shuffle=True,
+            shuffle=False,
         )
         clean_dataloader = torch.utils.data.dataloader.DataLoader(
             dataset=clean_dataset,
             batch_size=args.batch_size,
             num_workers=args.num_workers,
-            shuffle=True,
+            shuffle=False,
         )
         poison_dataloader = torch.utils.data.dataloader.DataLoader(
             dataset=poison_dataset,
             batch_size=args.batch_size,
             num_workers=args.num_workers,
-            shuffle=True,
+            shuffle=False,
         )
+
         log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
+
         acc_clean, instance_acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
                                                                         data_loader=clean_dataloader,
                                                                         dataset_size=dataset_size,
@@ -373,8 +379,8 @@ if __name__ == '__main__':
         if instance_acc_poison >= best_instance_acc_poison:
             best_instance_acc_poison = instance_acc_poison
             log_string('Saving bad model ... ')
-            savepath = str(checkpoints_dir) + '/best_bad_model.pth'
-            log_string('Saving at %s' % savepath)
+            save_path = str(checkpoints_dir) + '/best_bad_model.pth'
+            log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
                 'instance_acc': instance_acc_clean,
@@ -382,13 +388,13 @@ if __name__ == '__main__':
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
-            torch.save(state, savepath)
+            torch.save(state, save_path)
 
         if instance_acc_clean >= best_instance_acc_clean:
             best_instance_acc_clean = instance_acc_clean
             log_string('Save clean model ...')
-            savepath = str(checkpoints_dir) + '/best_model.pth'
-            log_string('Saving at %s' % savepath)
+            save_path = str(checkpoints_dir) + '/best_model.pth'
+            log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
                 'instance_acc': instance_acc_clean,
@@ -396,7 +402,7 @@ if __name__ == '__main__':
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
-            torch.save(state, savepath)
+            torch.save(state, save_path)
 
         log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_clean))
         log_string('Trigger Test - Best Accuracy: {:.4f}'.format(best_instance_acc_poison))

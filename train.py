@@ -8,11 +8,8 @@ import torch.nn.parallel
 import torch.utils.data
 from dataset.mydataset import PoisonDataset
 from models.pointnet_cls import get_loss, get_model
-import torch.nn.functional as F
 from tqdm import tqdm
-from config import *
 from load_data import load_data
-import provider
 import dataset.augmentation
 import numpy as np
 import datetime
@@ -77,7 +74,8 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
             mode,
             running_loss,
             acc,
-            instance_acc, )
+            instance_acc,
+        )
     )
 
     return running_loss, acc, instance_acc
