@@ -156,10 +156,6 @@ if __name__ == '__main__':
 
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
-    num_classes = 40
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    classifier = get_model(num_classes, normal_channel=args.normal).to(device)
-    criterion = get_loss().to(device)
 
     '''LOG MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.epoch) + '_' + str(args.batch_size)
@@ -218,7 +214,7 @@ if __name__ == '__main__':
     # print(summary_writer)
 
     # Dataset
-    global x_train, y_train, x_test, y_test
+    global x_train, y_train, x_test, y_test, num_classes
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
         num_classes = 40
@@ -277,6 +273,11 @@ if __name__ == '__main__':
         use_normal=args.normal,
     )
 
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    classifier = get_model(num_classes, normal_channel=args.normal).to(device)
+    criterion = get_loss().to(device)
+
     if args.optimizer == 'Adam':
         optimizer = torch.optim.Adam(
             classifier.parameters(),
@@ -297,6 +298,7 @@ if __name__ == '__main__':
     log_string(str(dataset_size))
     num_points = train_dataset[0][0].shape[0]
     log_string('Num Point: {}'.format(num_points))
+
     '''TRANING'''
     log_string('Start training...')
     x = torch.randn(args.batch_size, 3, num_points)
