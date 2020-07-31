@@ -190,7 +190,7 @@ if __name__ == '__main__':
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    log_string("ModelNet40 40: {}".format("modelnet40"))
+    log_string("ModelNet40: {}".format("modelnet40"))
     log_string("ScanObjectNN PB_OBJ_BG: {}".format("canobjectnn_obj_bg"))
     log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
     log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
@@ -218,7 +218,7 @@ if __name__ == '__main__':
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
         num_classes = 40
-    elif args.dataset == "scanobjectnn_pb_50_rs":
+    elif args.dataset == "scanobjectnn_pb_t50_rs":
         x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
         x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
