@@ -26,32 +26,12 @@ def vis_critical(points, hx):
     # hx = hx.reshape(sample_num, num_point, 1024)  # (num_sample, num_point, 1024)
 
     argmax_index = np.argmax(hx, axis=2)  # find which point contributed to max-pooling features
-    cs = []
     pc_mask = np.zeros((sample_num, num_point, 1))
 
     for idx, mask in enumerate(pc_mask):
         for index in argmax_index[idx]:
             mask[index] = [1.]
 
-    # for i in range(sample_num):
-    #     fig = plt.figure('original')
-    #     ax = fig.add_subplot(111, projection='3d')
-    #     xs = points[i][:, 0]
-    #     ys = points[i][:, 1]
-    #     zs = points[i][:, 2]
-    #
-    #     ax.scatter(xs, ys, zs)
-    #     plt.axis('off')
-    #     plt.show()
-    #     fig = plt.figure('critical')
-    #     ax = fig.add_subplot(111, projection='3d')
-    #     xs = cs[i][:, 0]
-    #     ys = cs[i][:, 1]
-    #     zs = cs[i][:, 2]
-    #
-    #     ax.scatter(xs, ys, zs)
-    #     plt.axis('off')
-    #     plt.show()
     return pc_mask
 
 
@@ -73,26 +53,6 @@ def vis_critical(points, hx):
 #             if x[j] >= 0:  # if its feature do do not change the maximum of hx, add it to temp
 #                 temp.append(all_points[j])
 #         temp = np.array(temp)
-#
-#         fig = plt.figure('original')
-#         ax = fig.add_subplot(111, projection='3d')
-#         xs = points[i][:, 0]
-#         ys = points[i][:, 1]
-#         zs = points[i][:, 2]
-#
-#         ax.scatter(xs, ys, zs)
-#
-#         plt.axis('off')
-#         plt.show()
-#
-#         ax = plt.figure().add_subplot(111, projection='3d')
-#         xs = temp[:, 0]
-#         ys = temp[:, 1]
-#         zs = temp[:, 2]
-#
-#         ax.scatter(xs, ys, zs)
-#         plt.axis('off')
-#         plt.show()
 
 
 if __name__ == '__main__':

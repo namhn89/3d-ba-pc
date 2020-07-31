@@ -19,6 +19,7 @@ import datetime
 from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 import data_utils
+import logging
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -123,24 +124,13 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
     return acc, instance_acc, class_acc
 
 
-if __name__ == '__main__':
-    def log_string(str):
-        logger.info(str)
-        print(str)
-
-    # print("POINT_CORNER", POINT_CORNER)
-    # print("POINT_MULTIPLE_CORNER", POINT_MULTIPLE_CORNER)
-    # print("POINT_CENTROID", POINT_CENTROID)
-    # print("OBJECT_CENTROID", OBJECT_CENTROID)
-
-    print("Modelnet 40: {}".format("modelnet40"))
-    print("ScanObjectNN : {}".format("scanobjectnn"))
-
+def parse_args():
     parser = argparse.ArgumentParser(description='PointCloud NetWork')
     parser.add_argument('--batch_size', type=int, default=24, help='batch size in training [default: 24]')
-    parser.add_argument('--epoch', default=200, type=int, help='number of epoch in training [default: 200]')
+    parser.add_argument('--epoch', default=500, type=int, help='number of epoch in training [default: 200]')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
+    parser.add_argument('--model', type=str, default='pointnet_cls', help='use model for training')
     parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train", help='experiment root')
@@ -157,7 +147,24 @@ if __name__ == '__main__':
                         help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
     parser.add_argument('--dataset', type=str, default="modelnet40", help="Data for training")
     args = parser.parse_args()
+    return args
 
+
+if __name__ == '__main__':
+    def log_string(str):
+        logger.info(str)
+        print(str)
+
+
+    # print("POINT_CORNER", POINT_CORNER)
+    # print("POINT_MULTIPLE_CORNER", POINT_MULTIPLE_CORNER)
+    # print("POINT_CENTROID", POINT_CENTROID)
+    # print("OBJECT_CENTROID", OBJECT_CENTROID)
+
+    print("Modelnet 40: {}".format("modelnet40"))
+    print("ScanObjectNN : {}".format("scanobjectnn"))
+
+    args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     num_classes = 40
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -190,6 +197,21 @@ if __name__ == '__main__':
     checkpoints_dir.mkdir(exist_ok=True)
     log_dir = experiment_dir.joinpath('logs/')
     log_dir.mkdir(exist_ok=True)
+
+    '''LOG'''
+    # args = parse_args()
+    logger = logging.getLogger("Model")
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler = logging.FileHandler('%s/%s.txt' % (log_dir, args.model))
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    log_string('PARAMETER ...')
+    log_string(args)
+
+    '''DATA LOADING'''
+    log_string('Load dataset ...')
 
     '''TENSORBROAD'''
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -301,8 +323,6 @@ if __name__ == '__main__':
 
         if instance_acc_test >= best_instance_acc_test:
             best_instance_acc_test = instance_acc_test
-            # if instance_acc_poison >= best_instance_acc_poison:
-            # best_instance_acc_poison = instance_acc_poison
             print('Save model...')
             savepath = str(checkpoints_dir) + '/best_model.pth'
             print('Saving at %s' % savepath)
@@ -314,7 +334,6 @@ if __name__ == '__main__':
                 'optimizer_state_dict': optimizer.state_dict(),
             }
             torch.save(state, savepath)
-
         print('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_test))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
@@ -322,3 +341,4 @@ if __name__ == '__main__':
         summary_writer.add_scalar('Train/Instance_Accuracy', instance_acc_train, epoch)
         summary_writer.add_scalar('Clean/Accuracy', acc_test, epoch)
         summary_writer.add_scalar('Clean/Instance_Accuracy', instance_acc_test, epoch)
+

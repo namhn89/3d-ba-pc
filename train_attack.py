@@ -19,6 +19,7 @@ import datetime
 from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 import data_utils
+import logging
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -122,13 +123,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
     return acc, instance_acc, class_acc
 
 
-if __name__ == '__main__':
-
-    print("POINT_CORNER", POINT_CORNER)
-    print("POINT_MULTIPLE_CORNER", POINT_MULTIPLE_CORNER)
-    print("POINT_CENTROID", POINT_CENTROID)
-    print("OBJECT_CENTROID", OBJECT_CENTROID)
-
+def parse_args():
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
     parser.add_argument('--batch_size', type=int, default=24, help='batch size in training [default: 24]')
     parser.add_argument('--epoch', default=200, type=int, help='number of epoch in training [default: 200]')
@@ -150,6 +145,23 @@ if __name__ == '__main__':
                         help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
     parser.add_argument('--dataset', type=str, default="modelnet40", help="Data for training")
     args = parser.parse_args()
+    return args
+
+
+if __name__ == '__main__':
+    def log_string(str):
+        logger.info(str)
+        print(str)
+
+    print("Modelnet 40: {}".format("modelnet40"))
+    print("ScanObjectNN : {}".format("scanobjectnn"))
+
+    print("POINT_CORNER", POINT_CORNER)
+    print("POINT_MULTIPLE_CORNER", POINT_MULTIPLE_CORNER)
+    print("POINT_CENTROID", POINT_CENTROID)
+    print("OBJECT_CENTROID", OBJECT_CENTROID)
+
+    args = parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     num_classes = 40
@@ -166,6 +178,7 @@ if __name__ == '__main__':
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
     print(log_model)
+
     '''CREATE DIR'''
     timestr = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
     experiment_dir = Path('./log/')
@@ -181,6 +194,18 @@ if __name__ == '__main__':
     checkpoints_dir.mkdir(exist_ok=True)
     log_dir = experiment_dir.joinpath('logs/')
     log_dir.mkdir(exist_ok=True)
+
+    '''LOG'''
+    # args = parse_args()
+    logger = logging.getLogger("Model")
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler = logging.FileHandler('%s/%s.txt' % (log_dir, args.model))
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    log_string('PARAMETER ...')
+    log_string(args)
 
     '''TENSORBROAD'''
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -343,14 +368,24 @@ if __name__ == '__main__':
                                                                      mode="Test",
                                                                      device=device,
                                                                      num_class=num_classes, )
+
         if instance_acc_poison >= best_instance_acc_poison:
             best_instance_acc_poison = instance_acc_poison
+            print('Saving bad model ... ')
+            savepath = str(checkpoints_dir) + '/best_bad_model.pth'
+            print('Saving at %s' % savepath)
+            state = {
+                'epoch': epoch,
+                'instance_acc': instance_acc_clean,
+                'class_acc': class_acc_clean,
+                'model_state_dict': classifier.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+            }
+            torch.save(state, savepath)
 
         if instance_acc_clean >= best_instance_acc_clean:
             best_instance_acc_clean = instance_acc_clean
-            # if instance_acc_poison >= best_instance_acc_poison:
-            # best_instance_acc_poison = instance_acc_poison
-            print('Save model...')
+            print('Save clean model ...')
             savepath = str(checkpoints_dir) + '/best_model.pth'
             print('Saving at %s' % savepath)
             state = {
@@ -361,6 +396,7 @@ if __name__ == '__main__':
                 'optimizer_state_dict': optimizer.state_dict(),
             }
             torch.save(state, savepath)
+
         print('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_clean))
         print('Trigger Test - Best Accuracy: {:.4f}'.format(best_instance_acc_poison))
 
