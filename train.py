@@ -160,8 +160,8 @@ if __name__ == '__main__':
     # print("POINT_CENTROID", POINT_CENTROID)
     # print("OBJECT_CENTROID", OBJECT_CENTROID)
 
-    log_string("Modelnet 40: {}".format("modelnet40"))
-    log_string("ScanObjectNN : {}".format("scanobjectnn"))
+    print("Modelnet 40: {}".format("modelnet40"))
+    print("ScanObjectNN : {}".format("scanobjectnn"))
 
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
