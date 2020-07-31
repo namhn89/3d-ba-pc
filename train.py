@@ -72,11 +72,12 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     instance_acc = np.mean(mean_correct)
     running_loss = running_loss / dataset_size[mode]
     acc = accuracy.double() / dataset_size[mode]
-    print("{} - Loss: {:.4f}, Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
-        mode,
-        running_loss,
-        acc,
-        instance_acc, )
+    log_string(
+        "{} - Loss: {:.4f}, Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
+            mode,
+            running_loss,
+            acc,
+            instance_acc, )
     )
 
     return running_loss, acc, instance_acc
@@ -112,7 +113,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
         class_acc = np.mean(class_acc[:, 2])
         instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
-        print(
+        log_string(
             "{} - Accuracy: {:.4f}, Instance Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
                 acc,
@@ -151,9 +152,9 @@ def parse_args():
 
 
 if __name__ == '__main__':
-    def log_string(str):
-        logger.info(str)
-        print(str)
+    def log_string(string):
+        logger.info(string)
+        print(string)
 
 
     # print("POINT_CORNER", POINT_CORNER)
@@ -161,8 +162,8 @@ if __name__ == '__main__':
     # print("POINT_CENTROID", POINT_CENTROID)
     # print("OBJECT_CENTROID", OBJECT_CENTROID)
 
-    print("Modelnet 40: {}".format("modelnet40"))
-    print("ScanObjectNN : {}".format("scanobjectnn"))
+    log_string("Modelnet 40: {}".format("modelnet40"))
+    log_string("ScanObjectNN : {}".format("scanobjectnn"))
 
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
@@ -171,7 +172,7 @@ if __name__ == '__main__':
     classifier = get_model(num_classes, normal_channel=args.normal).to(device)
     criterion = get_loss().to(device)
 
-    print(args)
+    log_string(args)
 
     log_model = str(args.log_dir) + '_' + str(args.epoch) + '_' + str(args.batch_size)
     if args.sampling and args.fps:
@@ -180,16 +181,16 @@ if __name__ == '__main__':
         log_model = log_model + "_" + "random"
     # log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
-    print(log_model)
+    log_string(log_model)
 
     '''CREATE DIR'''
-    timestr = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
+    time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
     experiment_dir = Path('./log/')
     experiment_dir.mkdir(exist_ok=True)
     experiment_dir = experiment_dir.joinpath('classification')
     experiment_dir.mkdir(exist_ok=True)
     if args.log_dir is None:
-        experiment_dir = experiment_dir.joinpath(timestr)
+        experiment_dir = experiment_dir.joinpath(time_str)
     else:
         experiment_dir = experiment_dir.joinpath(log_model)
     experiment_dir.mkdir(exist_ok=True)
@@ -276,9 +277,9 @@ if __name__ == '__main__':
         "Test": len(test_dataset),
     }
     num_points = train_dataset[0][0].shape[0]
-    print('Num Point: {}'.format(num_points))
+    log_string('Num Point: {}'.format(num_points))
     '''TRANING'''
-    print('Start training...')
+    log_string('Start training...')
     x = torch.randn(args.batch_size, 3, num_points)
     x = x.to(device)
 
@@ -306,7 +307,7 @@ if __name__ == '__main__':
             shuffle=True,
         )
 
-        print("*** Epoch {}/{} ***".format(epoch, args.epoch))
+        log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
         loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
                                                                     data_loader=train_loader,
                                                                     dataset_size=dataset_size,
@@ -323,9 +324,9 @@ if __name__ == '__main__':
 
         if instance_acc_test >= best_instance_acc_test:
             best_instance_acc_test = instance_acc_test
-            print('Save model...')
-            savepath = str(checkpoints_dir) + '/best_model.pth'
-            print('Saving at %s' % savepath)
+            log_string('Save model...')
+            save_path = str(checkpoints_dir) + '/best_model.pth'
+            log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
                 'instance_acc': instance_acc_test,
@@ -333,12 +334,11 @@ if __name__ == '__main__':
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
-            torch.save(state, savepath)
-        print('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_test))
+            torch.save(state, save_path)
+        log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_test))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
         summary_writer.add_scalar('Train/Instance_Accuracy', instance_acc_train, epoch)
         summary_writer.add_scalar('Clean/Accuracy', acc_test, epoch)
         summary_writer.add_scalar('Clean/Instance_Accuracy', instance_acc_test, epoch)
-

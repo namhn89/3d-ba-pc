@@ -65,6 +65,21 @@ class PoisonDataset(data.Dataset):
         if self.use_normal:
             self.data_set, _ = self.get_sample_normal(self.data_set)
 
+        self.percentage_trigger = 0.0
+
+    def reset_data(self):
+        for idx in tqdm(range(len(self.data_set))):
+            self.data_set[idx] = self.data_set[idx]
+
+    def calculate_trigger_percentage(self):
+        res = []
+        for data in tqdm(self.data_set):
+            points, label, mask = data
+            trigger = int(np.sum(mask, axis=0))
+            num_point = mask.shape[0]
+            res.append(trigger / num_point)
+        return sum(res) / len(res)
+
     def __getitem__(self, item):
         """
         :param item:
@@ -301,12 +316,17 @@ if __name__ == '__main__':
         data_augmentation=False,
         is_sampling=True,
         uniform=False,
+        is_testing=True
     )
-    # print(dataset[0][0].shape)
-    # print(dataset[0][1].shape)
+    print(dataset[0][0].shape)
+    print(dataset[0][1].shape)
     for i in range(5):
+        res = []
         for idx in tqdm(range(len(dataset))):
-            dataset.__getitem__(idx)
+            points, label, mask = dataset[idx]
+            trigger = int(np.sum(mask, axis=0))
+            num_point = mask.shape[0]
+            res.append(trigger / num_point)
         data_loader = torch.utils.data.DataLoader(
             dataset=dataset,
             batch_size=5,
@@ -314,7 +334,8 @@ if __name__ == '__main__':
             shuffle=False,
             pin_memory=True,
         )
-        for img, label in data_loader:
+        print(sum(res) / len(res))
+        for img, label, mask in data_loader:
             print(img.shape)
             print(label.shape)
         print("Done")

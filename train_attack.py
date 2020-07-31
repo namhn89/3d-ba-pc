@@ -40,8 +40,9 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-        # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-        # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+        if args.dataset == "scanobjectnn":
+            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         # Augmentation by charlesq34
         # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
@@ -71,7 +72,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     instance_acc = np.mean(mean_correct)
     running_loss = running_loss / dataset_size[mode]
     acc = accuracy.double() / dataset_size[mode]
-    print("{} - Loss: {:.4f}, Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
+    log_string("{} - Loss: {:.4f}, Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
         mode,
         running_loss,
         acc,
@@ -111,7 +112,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
         class_acc = np.mean(class_acc[:, 2])
         instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
-        print(
+        log_string(
             "{} - Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
                 mode,
                 acc,
@@ -153,13 +154,13 @@ if __name__ == '__main__':
         logger.info(str)
         print(str)
 
-    print("Modelnet 40: {}".format("modelnet40"))
-    print("ScanObjectNN : {}".format("scanobjectnn"))
+    log_string("Modelnet 40: {}".format("modelnet40"))
+    log_string("ScanObjectNN : {}".format("scanobjectnn"))
 
-    print("POINT_CORNER", POINT_CORNER)
-    print("POINT_MULTIPLE_CORNER", POINT_MULTIPLE_CORNER)
-    print("POINT_CENTROID", POINT_CENTROID)
-    print("OBJECT_CENTROID", OBJECT_CENTROID)
+    log_string("POINT_CORNER : {}".format(POINT_CORNER))
+    log_string("POINT_MULTIPLE_CORNER : {}".format(POINT_MULTIPLE_CORNER))
+    log_string("POINT_CENTROID : {}".format(POINT_CENTROID))
+    log_string("OBJECT_CENTROID : {}".format(OBJECT_CENTROID))
 
     args = parse_args()
 
@@ -169,7 +170,7 @@ if __name__ == '__main__':
     classifier = get_model(num_classes, normal_channel=args.normal).to(device)
     criterion = get_loss().to(device)
 
-    print(args)
+    log_string(args)
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
@@ -177,16 +178,16 @@ if __name__ == '__main__':
         log_model = log_model + "_" + "random"
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
-    print(log_model)
+    log_string(log_model)
 
     '''CREATE DIR'''
-    timestr = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
+    time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
     experiment_dir = Path('./log/')
     experiment_dir.mkdir(exist_ok=True)
     experiment_dir = experiment_dir.joinpath('classification')
     experiment_dir.mkdir(exist_ok=True)
     if args.log_dir is None:
-        experiment_dir = experiment_dir.joinpath(timestr)
+        experiment_dir = experiment_dir.joinpath(time_str)
     else:
         experiment_dir = experiment_dir.joinpath(log_model)
     experiment_dir.mkdir(exist_ok=True)
@@ -298,9 +299,9 @@ if __name__ == '__main__':
         "Poison": len(poison_dataset),
     }
     num_points = train_dataset[0][0].shape[0]
-    print('Num Point: {}'.format(num_points))
+    log_string('Num Point: {}'.format(num_points))
     '''TRANING'''
-    print('Start training...')
+    log_string('Start training...')
     x = torch.randn(args.batch_size, 3, num_points)
     x = x.to(device)
 
@@ -342,7 +343,7 @@ if __name__ == '__main__':
             num_workers=args.num_workers,
             shuffle=True,
         )
-        print("*** Epoch {}/{} ***".format(epoch, args.epoch))
+        log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
         acc_clean, instance_acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
                                                                         data_loader=clean_dataloader,
                                                                         dataset_size=dataset_size,
@@ -371,9 +372,9 @@ if __name__ == '__main__':
 
         if instance_acc_poison >= best_instance_acc_poison:
             best_instance_acc_poison = instance_acc_poison
-            print('Saving bad model ... ')
+            log_string('Saving bad model ... ')
             savepath = str(checkpoints_dir) + '/best_bad_model.pth'
-            print('Saving at %s' % savepath)
+            log_string('Saving at %s' % savepath)
             state = {
                 'epoch': epoch,
                 'instance_acc': instance_acc_clean,
@@ -385,9 +386,9 @@ if __name__ == '__main__':
 
         if instance_acc_clean >= best_instance_acc_clean:
             best_instance_acc_clean = instance_acc_clean
-            print('Save clean model ...')
+            log_string('Save clean model ...')
             savepath = str(checkpoints_dir) + '/best_model.pth'
-            print('Saving at %s' % savepath)
+            log_string('Saving at %s' % savepath)
             state = {
                 'epoch': epoch,
                 'instance_acc': instance_acc_clean,
@@ -397,8 +398,8 @@ if __name__ == '__main__':
             }
             torch.save(state, savepath)
 
-        print('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_clean))
-        print('Trigger Test - Best Accuracy: {:.4f}'.format(best_instance_acc_poison))
+        log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_clean))
+        log_string('Trigger Test - Best Accuracy: {:.4f}'.format(best_instance_acc_poison))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
