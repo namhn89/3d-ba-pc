@@ -58,6 +58,8 @@ class PoisonDataset(data.Dataset):
         else:
             self.data_set = self.get_original_data(data_set)
 
+        self.raw_dataset = self.data_set
+
         if self.is_sampling:
             if self.uniform:
                 self.data_set = self.get_sample_fps(self.data_set)
@@ -67,9 +69,14 @@ class PoisonDataset(data.Dataset):
 
         self.percentage_trigger = 0.0
 
-    def reset_data(self):
-        for idx in tqdm(range(len(self.data_set))):
-            self.data_set[idx] = self.data_set[idx]
+    def update_random_dataset(self):
+        new_dataset = list()
+        for points, label, mask in self.raw_dataset:
+            choice = np.random.choice(len(points), self.n_point, replace=False)
+            points = points[choice, :]
+            mask = mask[choice, :]
+            new_dataset.append((points, label, mask))
+        self.data_set = new_dataset
 
     def calculate_trigger_percentage(self):
         res = []
@@ -78,7 +85,7 @@ class PoisonDataset(data.Dataset):
             trigger = int(np.sum(mask, axis=0))
             num_point = mask.shape[0]
             res.append(trigger / num_point)
-        return sum(res) / len(res)
+        return (sum(res) / len(res)) * 100
 
     def __getitem__(self, item):
         """
@@ -92,11 +99,11 @@ class PoisonDataset(data.Dataset):
         mask = self.data_set[item][2]
 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
-        if not self.uniform and self.is_sampling:  # Random Sampling
-            choice = np.random.choice(len(point_set), self.n_point)
-            mask = mask[choice, :]
-            point_set = point_set[choice, :]
-            # print(choice)
+        # if not self.uniform and self.is_sampling:  # Random Sampling
+        #     choice = np.random.choice(len(point_set), self.n_point)
+        #     mask = mask[choice, :]
+        #     point_set = point_set[choice, :]
+        #     print(choice)
 
         if self.data_augmentation:
             idx = np.arange(point_set.shape[0])
@@ -248,7 +255,7 @@ class PoisonDataset(data.Dataset):
                     new_dataset.append((point_set, label))
                     continue
                 point_set_size = point_set.shape[0]
-                idx = np.random.choice(point_set_size, replace=True, size=num_point)
+                idx = np.random.choice(point_set_size, replace=False, size=num_point)
                 point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
                 mask = np.concatenate([mask, np.zeros(num_point, 1)], axis=0)
                 new_dataset.append((point_set, label, mask))
@@ -318,26 +325,24 @@ if __name__ == '__main__':
         uniform=False,
         is_testing=True
     )
+    is_random_choice = True
     print(dataset[0][0].shape)
     print(dataset[0][1].shape)
     for i in range(5):
         res = []
-        for idx in tqdm(range(len(dataset))):
-            points, label, mask = dataset[idx]
-            trigger = int(np.sum(mask, axis=0))
-            num_point = mask.shape[0]
-            res.append(trigger / num_point)
+        if dataset.is_sampling and not dataset.uniform:
+            dataset.update_random_dataset()
         data_loader = torch.utils.data.DataLoader(
             dataset=dataset,
-            batch_size=5,
+            batch_size=1,
             num_workers=4,
             shuffle=False,
             pin_memory=True,
         )
-        print(sum(res) / len(res))
+        print(dataset.calculate_trigger_percentage())
         for img, label, mask in data_loader:
+            print(img)
             print(img.shape)
-            print(label.shape)
         print("Done")
 
     # print(random_points((-1, -1, -1,), (-1 + ESIPLON, -1 + ESIPLON, -1 + ESIPLON)).shape)

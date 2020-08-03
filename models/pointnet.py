@@ -139,6 +139,11 @@ class PointNetEncoder(nn.Module):
 
 
 def feature_transform_reguliarzer(trans):
+    """
+        Calculate ||(I-A*A_T)||
+    :param trans:
+    :return:
+    """
     d = trans.size()[1]
     I = torch.eye(d)[None, :, :]
     if trans.is_cuda:
@@ -165,4 +170,3 @@ if __name__ == '__main__':
     trans = STN3d(channel=3)
     out = trans(sim_data)
     print('stn', out.size())
-    # print('loss', feature_transform_reguliarzer(out))

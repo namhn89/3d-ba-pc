@@ -191,7 +191,7 @@ if __name__ == '__main__':
     logger.addHandler(file_handler)
 
     log_string("ModelNet40: {}".format("modelnet40"))
-    log_string("ScanObjectNN PB_OBJ_BG: {}".format("canobjectnn_obj_bg"))
+    log_string("ScanObjectNN PB_OBJ_BG: {}".format("scanobjectnn_obj_bg"))
     log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
     log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
     log_string("ScanObjectNN PB_T50_R: {}".format("scanobjectnn_pb_t50_r"))
@@ -309,12 +309,15 @@ if __name__ == '__main__':
 
     for epoch in range(args.epoch):
         if args.sampling and not args.fps:
-            for idx in tqdm(range(len(train_dataset))):
-                train_dataset.__getitem__(idx)
-            for idx in tqdm(range(len(test_dataset))):
-                test_dataset.__getitem__(idx)
+            train_dataset.update_random_dataset()
+            test_dataset.update_random_dataset()
+            # for idx in tqdm(range(len(train_dataset))):
+            #     train_dataset.__getitem__(idx)
+            # for idx in tqdm(range(len(test_dataset))):
+            #     test_dataset.__getitem__(idx)
 
         scheduler.step()
+
         train_loader = torch.utils.data.dataloader.DataLoader(
             dataset=train_dataset,
             batch_size=args.batch_size,
