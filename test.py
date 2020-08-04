@@ -100,7 +100,7 @@ if __name__ == '__main__':
             critical_mask = make_one_critical(hx=hx)
             # visualize_point_cloud_critical_point(points.cpu().numpy().reshape(-1, 3), critical_mask)
             pred_choice = predictions.max(1)[1]
-            print(categories[pred_choice.cpu().numpy()[0]])
+            # print(categories[pred_choice.cpu().numpy()[0]])
             correct = pred_choice.eq(target.data).cpu().sum()
 
             sum_correct += correct
