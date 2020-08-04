@@ -32,6 +32,7 @@ class PoisonDataset(data.Dataset):
                  uniform=True,
                  use_normal=False,
                  is_testing=False,
+                 use_fix_point=False
                  ):
 
         self.use_normal = use_normal
@@ -46,6 +47,7 @@ class PoisonDataset(data.Dataset):
         self.added_num_point = added_num_point
         self.target = target
         self.is_testing = is_testing
+        self.use_fix_point = use_fix_point
 
         if mode_attack == POINT_MULTIPLE_CORNER:
             self.data_set = self.add_point_to_multiple_corner(data_set, target, num_point=added_num_point)
@@ -61,7 +63,9 @@ class PoisonDataset(data.Dataset):
         self.raw_dataset = self.data_set
 
         if self.is_sampling:
-            if self.uniform:
+            if self.use_fix_point:
+                self.data_set = self.get_fix_points(self.data_set)
+            elif self.uniform:
                 self.data_set = self.get_sample_fps(self.data_set)
 
         if self.use_normal:
@@ -86,6 +90,14 @@ class PoisonDataset(data.Dataset):
             num_point = mask.shape[0]
             res.append(trigger / num_point)
         return (sum(res) / len(res)) * 100
+
+    def get_fix_points(self, data_set):
+        new_dataset = list()
+        for points, label, mask in data_set:
+            points = points[0:self.n_point, :]
+            mask = points[0:self.n_point, :]
+            new_dataset.append((points, label, mask))
+        return new_dataset
 
     def __getitem__(self, item):
         """

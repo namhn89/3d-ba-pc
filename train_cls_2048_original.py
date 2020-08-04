@@ -113,7 +113,6 @@ def main(args):
         name="train",
         n_point=1024,
         is_sampling=False,
-        uniform=True,
         data_augmentation=True,
     )
 
@@ -124,7 +123,6 @@ def main(args):
         name="test",
         n_point=1024,
         is_sampling=False,
-        uniform=True,
         data_augmentation=False,
     )
 
