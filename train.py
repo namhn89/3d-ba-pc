@@ -297,14 +297,14 @@ if __name__ == '__main__':
     }
     log_string(str(dataset_size))
     if args.sampling:
-        num_point = args.num_points
+        num_point = args.num_point
     else:
-        num_points = train_dataset[0][0].shape[0]
-    log_string('Num point: {}'.format(num_points))
+        num_point = train_dataset[0][0].shape[0]
+    log_string('Num point: {}'.format(num_point))
 
     '''TRANING'''
     log_string('Start training...')
-    x = torch.randn(args.batch_size, 3, num_points)
+    x = torch.randn(args.batch_size, 3, num_point)
     x = x.to(device)
 
     summary_writer.add_graph(model=classifier, input_to_model=x)
@@ -319,8 +319,8 @@ if __name__ == '__main__':
             # for idx in tqdm(range(len(test_dataset))):
             #     test_dataset.__getitem__(idx)
 
-        num_points = train_dataset[0][0].shape[0]
-        log_string('Num point on sample: {}'.format(num_points))
+        num_point = train_dataset[0][0].shape[0]
+        log_string('Num point on sample: {}'.format(num_point))
 
         scheduler.step()
 
