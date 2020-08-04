@@ -37,9 +37,10 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-        if args.dataset == "scanobjectnn":
-            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        # if args.dataset == "scanobjectnn":
+        #     points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        #     points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         # Augmentation by charlesq34
         # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
@@ -144,9 +145,8 @@ def parse_args():
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
     parser.add_argument('--attack_method', type=str, default=None,
                         help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
-    parser.add_argument('--dataset', type=str, default="modelnet40", help="Data for training")
-    parser.add_argument('--scale', type=float, default=0.5, help='scale centroid object for backdoor attack')
-    parser.add_argument('--')
+    parser.add_argument('--dataset', type=str, default="modelnet40", help="data for training [default : modelnet40]")
+    parser.add_argument('--fix_point', action='store_true', default=False, help='get first points [default: False]')
     args = parser.parse_args()
     return args
 
@@ -155,6 +155,7 @@ if __name__ == '__main__':
     def log_string(string):
         logger.info(string)
         print(string)
+
 
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
@@ -203,10 +204,8 @@ if __name__ == '__main__':
     log_string(args)
     log_string(log_model)
 
-    '''DATA LOADING'''
-    log_string('Load dataset ...')
-
     '''TENSORBROAD'''
+    log_string('CREATING TENSORBOARD ...')
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     # train_log_dir = './log/' + current_time + '/train'
     # test_log_dir = './log/' + current_time + '/test'
@@ -215,7 +214,10 @@ if __name__ == '__main__':
     summary_writer = SummaryWriter('./log/' + log_model + '/' + current_time + '/summary')
     # print(summary_writer)
 
-    # Dataset
+    '''DATA LOADING'''
+    log_string('Loading dataset ...')
+
+    '''DATASET'''
     global x_train, y_train, x_test, y_test, num_classes
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
@@ -289,7 +291,11 @@ if __name__ == '__main__':
             weight_decay=args.decay_rate
         )
     else:
-        optimizer = torch.optim.SGD(classifier.parameters(), lr=0.01, momentum=0.9)
+        optimizer = torch.optim.SGD(
+            classifier.parameters(),
+            lr=0.01,
+            momentum=0.9
+        )
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
 
