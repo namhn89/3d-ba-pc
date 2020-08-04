@@ -341,14 +341,18 @@ if __name__ == '__main__':
     for epoch in range(args.epoch):
 
         if args.sampling and not args.fps:
-            for idx in tqdm(range(len(train_dataset))):
-                train_dataset.__getitem__(idx)
-            for idx in tqdm(range(len(test_dataset))):
-                test_dataset.__getitem__(idx)
-            for idx in tqdm(range(len(clean_dataset))):
-                clean_dataset.__getitem__(idx)
-            for idx in tqdm(range(len(poison_dataset))):
-                poison_dataset.__getitem__(idx)
+            train_dataset.update_random_dataset()
+            test_dataset.update_random_dataset()
+            clean_dataset.update_random_dataset()
+            poison_dataset.update_random_dataset()
+            # for idx in tqdm(range(len(train_dataset))):
+            #     train_dataset.__getitem__(idx)
+            # for idx in tqdm(range(len(test_dataset))):
+            #     test_dataset.__getitem__(idx)
+            # for idx in tqdm(range(len(clean_dataset))):
+            #     clean_dataset.__getitem__(idx)
+            # for idx in tqdm(range(len(poison_dataset))):
+            #     poison_dataset.__getitem__(idx)
 
         scheduler.step()
         train_dataloader = torch.utils.data.dataloader.DataLoader(

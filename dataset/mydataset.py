@@ -322,41 +322,27 @@ if __name__ == '__main__':
         n_point=1024,
         data_augmentation=False,
         is_sampling=True,
-        uniform=False,
+        uniform=True,
         is_testing=True
     )
-    is_random_choice = True
-    print(dataset[0][0].shape)
-    print(dataset[0][1].shape)
+    # print(dataset[0][0].shape)
+    # print(dataset[0][1].shape)
     for i in range(5):
         res = []
         if dataset.is_sampling and not dataset.uniform:
             dataset.update_random_dataset()
         data_loader = torch.utils.data.DataLoader(
             dataset=dataset,
-            batch_size=1,
+            batch_size=10,
             num_workers=4,
             shuffle=False,
             pin_memory=True,
         )
         print(dataset.calculate_trigger_percentage())
-        for img, label, mask in data_loader:
-            print(img)
-            print(img.shape)
+        for points, label, mask in data_loader:
+            print(points.shape)
         print("Done")
 
-    # print(random_points((-1, -1, -1,), (-1 + ESIPLON, -1 + ESIPLON, -1 + ESIPLON)).shape)
-    # x = np.random.randn(1000, 3)
-    # y = add_trigger_to_point_set(x)
-    # x = np.concatenate([x, x[:32]], axis=0)
-    # print(x.shape)
-    # print(y.shape)
-    # print(y_train)
-    # poison_dataset = PoisonDataset(dataset=list(zip(x_train, y_train)), target=TARGETED_CLASS, device=device)
-    # poison_set, label = poison_dataset[0]
-    # print(label.shape)
-    # fig = plt.figure(figsize=(20, 4))
-    #
     # for i, point_set in enumerate(x_train[:5]):
     #     # trig_point_set = add_trigger_to_point_set(point_set)
     #     trig_point_set = np.concatenate([point_set, point_set[:32]], axis=0)

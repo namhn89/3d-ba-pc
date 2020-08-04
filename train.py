@@ -296,8 +296,11 @@ if __name__ == '__main__':
         "Test": len(test_dataset),
     }
     log_string(str(dataset_size))
-    num_points = train_dataset[0][0].shape[0]
-    log_string('Num Point: {}'.format(num_points))
+    if args.sampling:
+        num_point = args.num_points
+    else:
+        num_points = train_dataset[0][0].shape[0]
+    log_string('Num point: {}'.format(num_points))
 
     '''TRANING'''
     log_string('Start training...')
@@ -315,6 +318,9 @@ if __name__ == '__main__':
             #     train_dataset.__getitem__(idx)
             # for idx in tqdm(range(len(test_dataset))):
             #     test_dataset.__getitem__(idx)
+
+        num_points = train_dataset[0][0].shape[0]
+        log_string('Num point on sample: {}'.format(num_points))
 
         scheduler.step()
 
