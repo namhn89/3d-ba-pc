@@ -51,7 +51,7 @@ def test(model, loader, num_class=40):
         points = points.transpose(2, 1)
         points, target = points.cuda(), target.cuda()
         classifier = model.eval()
-        pred, _ = classifier(points)
+        pred, _, _, _ = classifier(points)
         pred_choice = pred.data.max(1)[1]
         for cat in np.unique(target.cpu()):
             class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
@@ -109,19 +109,14 @@ def main(args):
     train_dataset = PoisonDataset(
         data_set=list(zip(x_train, y_train)),
         n_class=NUM_CLASSES,
-        target=TARGETED_CLASS,
         name="train",
-        n_point=1024,
-        is_sampling=False,
         data_augmentation=True,
     )
 
     test_dataset = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
         n_class=NUM_CLASSES,
-        target=TARGETED_CLASS,
         name="test",
-        n_point=1024,
         is_sampling=False,
         data_augmentation=False,
     )
@@ -213,7 +208,7 @@ def main(args):
             optimizer.zero_grad()
 
             classifier = classifier.train()
-            pred, trans_feat = classifier(points)
+            pred, trans_feat, _, _ = classifier(points)
             loss = criterion(pred, target.long(), trans_feat)
             pred_choice = pred.data.max(1)[1]
             correct = pred_choice.eq(target.long().data).cpu().sum()
