@@ -149,6 +149,7 @@ def parse_args():
                         help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
     parser.add_argument('--dataset', type=str, default="modelnet40", help="Data for training")
     parser.add_argument('--scale', type=float, default=0.5, help='scale centroid object for backdoor attack')
+    parser.add_argument('--fix_point', action='store_true', default=False, help='Get fix first points on sample')
     args = parser.parse_args()
     return args
 

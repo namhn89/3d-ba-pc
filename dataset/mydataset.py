@@ -32,7 +32,8 @@ class PoisonDataset(data.Dataset):
                  uniform=True,
                  use_normal=False,
                  is_testing=False,
-                 use_fix_point=False
+                 use_fix_point=False,
+                 scale=0.5,
                  ):
 
         self.use_normal = use_normal
@@ -48,6 +49,7 @@ class PoisonDataset(data.Dataset):
         self.target = target
         self.is_testing = is_testing
         self.use_fix_point = use_fix_point
+        self.scale = scale
 
         if mode_attack == POINT_MULTIPLE_CORNER:
             self.data_set = self.add_point_to_multiple_corner(data_set, target, num_point=added_num_point)
@@ -118,11 +120,11 @@ class PoisonDataset(data.Dataset):
         #     print(choice)
 
         if self.data_augmentation:
-            idx = np.arange(point_set.shape[0])
-            np.random.shuffle(idx)
-            point_set = point_set[idx, :]
-            mask = mask[idx, :]
-            # point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
+            # idx = np.arange(point_set.shape[0])
+            # np.random.shuffle(idx)
+            # point_set = point_set[idx, :]
+            # mask = mask[idx, :]
+            point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
 
         point_set = torch.from_numpy(point_set.astype(np.float32))
         label = torch.from_numpy(np.array([label]).astype(np.int64))
