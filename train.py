@@ -38,6 +38,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+
         # if args.dataset == "scanobjectnn":
         #     points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
         #     points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
@@ -261,7 +262,6 @@ if __name__ == '__main__':
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=True,
-        # mode_attack=args.attack_method,
         use_normal=args.normal,
     )
 
@@ -273,7 +273,6 @@ if __name__ == '__main__':
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=False,
-        # mode_attack=args.attack_method,
         use_normal=args.normal,
     )
 
@@ -303,7 +302,9 @@ if __name__ == '__main__':
         "Train": len(train_dataset),
         "Test": len(test_dataset),
     }
+
     log_string(str(dataset_size))
+
     if args.sampling:
         num_point = args.num_point
     else:
@@ -322,10 +323,6 @@ if __name__ == '__main__':
         if args.sampling and not args.fps:
             train_dataset.update_random_dataset()
             test_dataset.update_random_dataset()
-            # for idx in tqdm(range(len(train_dataset))):
-            #     train_dataset.__getitem__(idx)
-            # for idx in tqdm(range(len(test_dataset))):
-            #     test_dataset.__getitem__(idx)
 
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
@@ -342,7 +339,7 @@ if __name__ == '__main__':
             dataset=test_dataset,
             batch_size=args.batch_size,
             num_workers=args.num_workers,
-            shuffle=True,
+            shuffle=False,
         )
 
         log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
@@ -381,3 +378,5 @@ if __name__ == '__main__':
         summary_writer.add_scalar('Train/Instance_Accuracy', instance_acc_train, epoch)
         summary_writer.add_scalar('Clean/Accuracy', acc_test, epoch)
         summary_writer.add_scalar('Clean/Instance_Accuracy', instance_acc_test, epoch)
+
+    logger.info('End of training...')

@@ -17,17 +17,25 @@ from config import *
 import numpy as np
 import data_utils
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument(
-#     '--batchSize', type=int, default=32, help='input batch size')
-# parser.add_argument(
-#     '--workers', type=int, help='number of data loading workers', default=4)
-# parser.add_argument(
-#     '--nepoch', type=int, default=250, help='number of epochs to train for')
-# parser.add_argument('--model', type=str, default='', help='model path')
-# parser.add_argument('--dataset', type=str, required=True, help="dataset path")
-# parser.add_argument('--dataset_type', type=str, default='shapenet', help="dataset type shapenet|modelnet40")
-# parser.add_argument('--feature_transform', action='store_true', help="use feature transform")
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--batchSize', type=int, default=32, help='input batch size')
+    parser.add_argument(
+        '--workers', type=int, help='number of data loading workers', default=4)
+    parser.add_argument(
+        '--nepoch', type=int, default=250, help='number of epochs to train for')
+    parser.add_argument(
+        '--model', type=str, default='', help='model path')
+    parser.add_argument(
+        '--dataset', type=str, required=True, help="dataset path")
+    parser.add_argument(
+        '--dataset_type', type=str, default='shapenet', help="dataset type shapenet|modelnet40")
+    parser.add_argument(
+        '--feature_transform', action='store_true', help="use feature transform")
+    return parser.parse_args()
+
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 manualSeed = random.randint(1, 10000)  # fix seed
@@ -116,6 +124,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device):
                 class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
                 class_acc[cat, 0] += class_per_acc.item() / float(point_sets[target == cat].size()[0])
                 class_acc[cat, 1] += 1
+
             correct = pred_choice.eq(target.long().data).cpu().sum()
             mean_correct.append(correct.item() / float(point_sets.size()[0]))
 
@@ -159,20 +168,14 @@ if __name__ == '__main__':
         data_set=list(zip(x_train, y_train)),
         n_class=num_cls,
         name="train",
-        is_sampling=False,
-        uniform=False,
         data_augmentation=True,
-        use_normal=False,
     )
 
     test_dataset = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
         n_class=num_cls,
         name="test",
-        is_sampling=False,
-        uniform=False,
         data_augmentation=False,
-        use_normal=False,
     )
 
     train_loader = torch.utils.data.DataLoader(

@@ -59,7 +59,7 @@ if __name__ == '__main__':
     classifier = get_model(k=40, normal_channel=False)
     classifier.to(device)
     test_dataset = PoisonDataset(
-        data_set=list(zip(x_test[:10], y_test[:10])),
+        data_set=list(zip(x_test, y_test)),
         n_class=NUM_CLASSES,
         target=TARGETED_CLASS,
         name="test",
@@ -96,9 +96,9 @@ if __name__ == '__main__':
             predictions, feat_trans, hx, max_pool = classifier(points)
             points = points.transpose(2, 1)
             hx = hx.transpose(2, 1).cpu().numpy().reshape(-1, 1024)
-            print(hx.shape)
+            # print(hx.shape)
             critical_mask = make_one_critical(hx=hx)
-            visualize_point_cloud_critical_point(points.cpu().numpy().reshape(-1, 3), critical_mask)
+            # visualize_point_cloud_critical_point(points.cpu().numpy().reshape(-1, 3), critical_mask)
             pred_choice = predictions.max(1)[1]
             print(categories[pred_choice.cpu().numpy()[0]])
             correct = pred_choice.eq(target.data).cpu().sum()
