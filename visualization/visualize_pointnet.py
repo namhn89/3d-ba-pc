@@ -8,7 +8,7 @@ def make_one_critical(hx, num_critical_point=1024):
     num_point = hx.shape[0]
     mask_critical = np.zeros((num_point, 1))
     # print(len(cs_index))
-    print(len(set(cs_index)))
+    # print(len(set(cs_index)))
     assert len(set(cs_index)) <= num_critical_point
     for index in cs_index:
         mask_critical[index] = [1.]
