@@ -126,8 +126,8 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='PointCloud NetWork')
-    parser.add_argument('--batch_size', type=int, default=24, help='batch size in training [default: 24]')
-    parser.add_argument('--epoch', default=500, type=int, help='number of epoch in training [default: 200]')
+    parser.add_argument('--batch_size', type=int, default=32, help='batch size in training [default: 32]')
+    parser.add_argument('--epoch', default=500, type=int, help='number of epoch in training [default: 500]')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='pointnet_cls', help='use model for training')
@@ -295,7 +295,7 @@ if __name__ == '__main__':
             momentum=0.9
         )
 
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=(args.epoch // 20), gamma=0.7)
 
     dataset_size = {
         "Train": len(train_dataset),

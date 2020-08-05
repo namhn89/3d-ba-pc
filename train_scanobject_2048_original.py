@@ -215,7 +215,7 @@ if __name__ == '__main__':
                               weight_decay=WEIGHT_DECAY,
                               momentum=MOMENTUM,
                               )
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.7)
     best_instance_acc = 0
 
     for epoch in range(NUM_EPOCH):
