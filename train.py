@@ -27,7 +27,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     net = net.train()
     running_loss = 0.0
     accuracy = 0
-    mean_correct = []
+    # mean_correct = []
     progress = tqdm(data_loader)
     progress.set_description("Training ")
     for data in progress:
@@ -58,23 +58,23 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         running_loss += loss.item() * points.size(0)
         predictions = torch.argmax(outputs, 1)
         pred_choice = outputs.data.max(1)[1]
-        correct = pred_choice.eq(target.long().data).cpu().sum()
-        mean_correct.append(correct.item() / float(points.size()[0]))
+        # correct = pred_choice.eq(target.long().data).cpu().sum()
+        # mean_correct.append(correct.item() / float(points.size()[0]))
 
         accuracy += torch.sum(predictions == target)
 
         loss.backward()
         optimizer.step()
 
-    instance_acc = np.mean(mean_correct)
+    # instance_acc = np.mean(mean_correct)
     running_loss = running_loss / dataset_size[mode]
     acc = accuracy.double() / dataset_size[mode]
     log_string(
-        "{} - Loss: {:.4f}, Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
+        "{} - Loss: {:.4f}, Accuracy: {:.4f}".format(
             mode,
             running_loss,
             acc,
-            instance_acc,
+            # instance_acc,
         )
     )
 
@@ -84,7 +84,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
     net = net.eval()
     accuracy = 0
-    mean_correct = []
+    # mean_correct = []
     class_acc = np.zeros((num_class, 3))
     progress = tqdm(data_loader)
     with torch.no_grad():
@@ -101,7 +101,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
             correct = pred_choice.eq(target.long().data).cpu().sum()
-            mean_correct.append(correct.item() / float(points.size()[0]))
+            # mean_correct.append(correct.item() / float(points.size()[0]))
             for cat in np.unique(target.cpu()):
                 class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
                 class_acc[cat, 0] += class_per_acc.item() / float(points[target == cat].size()[0])
@@ -109,18 +109,18 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
 
         class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         class_acc = np.mean(class_acc[:, 2])
-        instance_acc = np.mean(mean_correct)
+        # instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
         log_string(
-            "{} - Accuracy: {:.4f}, Instance Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
+            "{} - Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
                 acc,
-                instance_acc,
-                class_acc
+                # instance_acc,
+                class_acc,
             )
         )
 
-    return acc, instance_acc, class_acc
+    return acc, class_acc
 
 
 def parse_args():
@@ -167,6 +167,8 @@ if __name__ == '__main__':
         log_model = log_model + "_" + "fps"
     elif args.sampling and not args.fps:
         log_model = log_model + "_" + "random"
+    elif args.permanent_point:
+        log_model = log_model + "_" + "permanent_point"
     log_model = log_model + "_" + str(args.dataset)
 
     '''CREATE DIR'''
