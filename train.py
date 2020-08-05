@@ -201,7 +201,7 @@ if __name__ == '__main__':
     log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
     log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
     log_string("ScanObjectNN PB_T50_R: {}".format("scanobjectnn_pb_t50_r"))
-    log_string("ScanObjectNN PB_T50_RS: {}".format("scanobjectnn_pb_50_rs"))
+    log_string("ScanObjectNN PB_T50_RS: {}".format("scanobjectnn_pb_t50_rs"))
 
     log_string('PARAMETER ...')
     log_string(args)

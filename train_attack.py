@@ -8,7 +8,6 @@ import torch.nn.parallel
 import torch.utils.data
 from dataset.mydataset import PoisonDataset
 from models.pointnet_cls import get_loss, get_model
-import torch.nn.functional as F
 from tqdm import tqdm
 from config import *
 from load_data import load_data
@@ -208,7 +207,7 @@ if __name__ == '__main__':
     log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
     log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
     log_string("ScanObjectNN PB_T50_R: {}".format("scanobjectnn_pb_t50_r"))
-    log_string("ScanObjectNN PB_T50_RS: {}".format("scanobjectnn_pb_50_rs"))
+    log_string("ScanObjectNN PB_T50_RS: {}".format("scanobjectnn_pb_t50_rs"))
 
     log_string("POINT_CORNER : {}".format(POINT_CORNER))
     log_string("POINT_MULTIPLE_CORNER : {}".format(POINT_MULTIPLE_CORNER))
