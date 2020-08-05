@@ -312,7 +312,7 @@ if __name__ == '__main__':
         num_point = args.num_point
     else:
         num_point = train_dataset[0][0].shape[0]
-    log_string('Num point: {}'.format(num_point))
+    log_string('Num point raw data: {}'.format(num_point))
 
     '''TRANING'''
     log_string('Start Training...')

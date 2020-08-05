@@ -67,7 +67,7 @@ class PoisonDataset(data.Dataset):
         if self.permanent_point:
             self.data_set = self.get_permanent_point(self.data_set)
 
-        if self.is_sampling :
+        if self.is_sampling:
             if self.uniform:
                 self.data_set = self.get_sample_fps(self.data_set)
             else:
@@ -350,9 +350,9 @@ if __name__ == '__main__':
     # print(dataset[0][0].shape)
     # print(dataset[0][1].shape)
     for i in range(5):
-        res = []
-        if dataset.is_sampling and not dataset.uniform:
-            dataset.update_random_dataset()
+        # res = []
+        # if dataset.is_sampling and not dataset.uniform:
+        #     dataset.update_random_dataset()
         data_loader = torch.utils.data.DataLoader(
             dataset=dataset,
             batch_size=10,
@@ -360,7 +360,7 @@ if __name__ == '__main__':
             shuffle=False,
             pin_memory=True,
         )
-        print(dataset.calculate_trigger_percentage())
+        # print(dataset.calculate_trigger_percentage())
         for points, label, mask in data_loader:
             print(points.shape)
         print("Done")
