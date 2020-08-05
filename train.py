@@ -214,7 +214,7 @@ if __name__ == '__main__':
     # print(summary_writer)
 
     '''DATA LOADING'''
-    log_string('Loading dataset ...')
+    log_string('Loading Dataset ...')
 
     '''DATASET'''
     global x_train, y_train, x_test, y_test, num_classes
@@ -310,7 +310,7 @@ if __name__ == '__main__':
     log_string('Num point: {}'.format(num_point))
 
     '''TRANING'''
-    log_string('Start training...')
+    log_string('Start Training...')
     x = torch.randn(args.batch_size, 3, num_point)
     x = x.to(device)
 
