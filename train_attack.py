@@ -40,6 +40,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+
         if args.dataset.startswith("scanobjectnn"):
             points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
             # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
@@ -142,8 +143,8 @@ def parse_args():
                         help='Whether to use sample data [default: False]')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
-    parser.add_argument('--num_point_trig', type=int, default=64, help='num points for attacking trigger')
-    parser.add_argument('--num_workers', type=int, default=4, help='num workers')
+    parser.add_argument('--num_point_trig', type=int, default=128, help='num points for attacking trigger')
+    parser.add_argument('--num_workers', type=int, default=8, help='num workers')
     parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
                         help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
     parser.add_argument('--dataset', type=str, default="modelnet40", help="Data for training")
@@ -324,7 +325,7 @@ if __name__ == '__main__':
     else:
         optimizer = torch.optim.SGD(classifier.parameters(), lr=0.01, momentum=0.9)
 
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=(args.epoch // 20), gamma=0.7)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=(args.epoch // 12), gamma=0.7)
 
     dataset_size = {
         "Train": len(train_dataset),
