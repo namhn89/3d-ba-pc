@@ -205,7 +205,7 @@ if __name__ == '__main__':
     log_string(log_model)
 
     '''TENSORBROAD'''
-    log_string('CREATING TENSORBOARD ...')
+    log_string('Creating Tensorboard ...')
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     # train_log_dir = './log/' + current_time + '/train'
     # test_log_dir = './log/' + current_time + '/test'
