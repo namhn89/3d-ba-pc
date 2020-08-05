@@ -40,14 +40,13 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-        if args.dataset == "scanobjectnn":
+        if args.dataset.startswith("scanobjectnn"):
             points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+            # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         # Augmentation by charlesq34
         # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
         # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
-        # print(points.shape)
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
@@ -128,8 +127,8 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
-    parser.add_argument('--batch_size', type=int, default=24, help='batch size in training [default: 24]')
-    parser.add_argument('--epoch', default=200, type=int, help='number of epoch in training [default: 200]')
+    parser.add_argument('--batch_size', type=int, default=32, help='batch size in training [default: 32]')
+    parser.add_argument('--epoch', default=500, type=int, help='number of epoch in training [default: 500]')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='pointnet_cls', help='training model')
@@ -149,7 +148,7 @@ def parse_args():
                         help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
     parser.add_argument('--dataset', type=str, default="modelnet40", help="Data for training")
     parser.add_argument('--scale', type=float, default=0.5, help='scale centroid object for backdoor attack')
-    parser.add_argument('--fix_point', action='store_true', default=False, help='Get fix first points on sample')
+    parser.add_argument('--permanent_point', action='store_true', default=False, help='Get fix first points on sample')
     args = parser.parse_args()
     return args
 
@@ -172,6 +171,9 @@ if __name__ == '__main__':
         log_model = log_model + "_" + "fps"
     elif args.sampling and not args.fps:
         log_model = log_model + "_" + "random"
+    elif args.permanent_point:
+        log_model = log_model + "_" + "permanent_point"
+
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
 
@@ -225,7 +227,7 @@ if __name__ == '__main__':
     summary_writer = SummaryWriter('./log/' + log_model + '/' + current_time + '/summary')
     # print(summary_writer)
 
-    # DATASET
+    '''DATASET'''
     global x_train, y_train, x_test, y_test
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
@@ -265,7 +267,7 @@ if __name__ == '__main__':
         data_set=list(zip(x_train, y_train)),
         name="train",
         added_num_point=args.num_point_trig,
-        n_point=args.num_point,
+        num_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=True,
@@ -277,7 +279,7 @@ if __name__ == '__main__':
         data_set=list(zip(x_test, y_test)),
         name="test",
         added_num_point=args.num_point_trig,
-        n_point=args.num_point,
+        num_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=False,
@@ -290,7 +292,7 @@ if __name__ == '__main__':
         portion=0.0,
         name="clean_test",
         added_num_point=args.num_point_trig,
-        n_point=args.num_point,
+        num_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=False,
@@ -303,7 +305,7 @@ if __name__ == '__main__':
         portion=1.0,
         name="poison_test",
         added_num_point=args.num_point_trig,
-        n_point=args.num_point,
+        num_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=False,
@@ -322,7 +324,7 @@ if __name__ == '__main__':
     else:
         optimizer = torch.optim.SGD(classifier.parameters(), lr=0.01, momentum=0.9)
 
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=(args.epoch // 20), gamma=0.7)
 
     dataset_size = {
         "Train": len(train_dataset),
@@ -340,21 +342,18 @@ if __name__ == '__main__':
     summary_writer.add_graph(model=classifier, input_to_model=x)
     best_instance_acc_clean = 0.0
     best_instance_acc_poison = 0.0
+    density_backdoor_train = []
+    density_backdoor_poison = []
+
     for epoch in range(args.epoch):
 
         if args.sampling and not args.fps:
             train_dataset.update_random_dataset()
-            test_dataset.update_random_dataset()
-            clean_dataset.update_random_dataset()
+            # test_dataset.update_random_dataset()
+            # clean_dataset.update_random_dataset()
             poison_dataset.update_random_dataset()
-            # for idx in tqdm(range(len(train_dataset))):
-            #     train_dataset.__getitem__(idx)
-            # for idx in tqdm(range(len(test_dataset))):
-            #     test_dataset.__getitem__(idx)
-            # for idx in tqdm(range(len(clean_dataset))):
-            #     clean_dataset.__getitem__(idx)
-            # for idx in tqdm(range(len(poison_dataset))):
-            #     poison_dataset.__getitem__(idx)
+            density_backdoor_train.append(train_dataset.calculate_trigger_percentage())
+            density_backdoor_poison.append(poison_dataset.calculate_trigger_percentage())
 
         scheduler.step()
         train_dataloader = torch.utils.data.dataloader.DataLoader(

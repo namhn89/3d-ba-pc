@@ -26,20 +26,20 @@ class PoisonDataset(data.Dataset):
                  n_class=NUM_CLASSES,
                  data_augmentation=True,
                  portion=PERCENTAGE,
-                 n_point=NUM_POINT_INPUT,
+                 num_point=NUM_POINT_INPUT,
                  mode_attack=None,
                  is_sampling=False,
                  uniform=True,
                  use_normal=False,
                  is_testing=False,
-                 use_fix_point=False,
+                 permanent_point=False,
                  scale=0.5,
                  ):
 
         self.use_normal = use_normal
         self.n_class = n_class
         self.data_augmentation = data_augmentation
-        self.n_point = n_point
+        self.num_point = num_point
         self.is_sampling = is_sampling
         self.portion = portion
         self.mode_attack = mode_attack
@@ -48,7 +48,7 @@ class PoisonDataset(data.Dataset):
         self.added_num_point = added_num_point
         self.target = target
         self.is_testing = is_testing
-        self.use_fix_point = use_fix_point
+        self.permanent_point = permanent_point
         self.scale = scale
 
         if mode_attack == POINT_MULTIPLE_CORNER:
@@ -64,11 +64,11 @@ class PoisonDataset(data.Dataset):
 
         self.raw_dataset = self.data_set
 
-        if self.is_sampling:
-            if self.use_fix_point:
-                self.data_set = self.get_fix_points(self.data_set)
-            elif self.uniform:
-                self.data_set = self.get_sample_fps(self.data_set)
+        if self.permanent_point:
+            self.data_set = self.get_permanent_point(self.data_set)
+
+        if self.is_sampling and self.uniform:
+            self.data_set = self.get_sample_fps(self.data_set)
 
         if self.use_normal:
             self.data_set, _ = self.get_sample_normal(self.data_set)
@@ -78,7 +78,7 @@ class PoisonDataset(data.Dataset):
     def update_random_dataset(self):
         new_dataset = list()
         for points, label, mask in self.raw_dataset:
-            choice = np.random.choice(len(points), self.n_point, replace=False)
+            choice = np.random.choice(len(points), self.num_point, replace=False)
             points = points[choice, :]
             mask = mask[choice, :]
             new_dataset.append((points, label, mask))
@@ -93,11 +93,11 @@ class PoisonDataset(data.Dataset):
             res.append(trigger / num_point)
         return (sum(res) / len(res)) * 100
 
-    def get_fix_points(self, data_set):
+    def get_permanent_point(self, data_set):
         new_dataset = list()
         for points, label, mask in data_set:
-            points = points[0:self.n_point, :]
-            mask = points[0:self.n_point, :]
+            points = points[0:self.num_point, :]
+            mask = mask[0:self.num_point, :]
             new_dataset.append((points, label, mask))
         return new_dataset
 
@@ -114,17 +114,22 @@ class PoisonDataset(data.Dataset):
 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
         # if not self.uniform and self.is_sampling:  # Random Sampling
-        #     choice = np.random.choice(len(point_set), self.n_point)
+        #     choice = np.random.choice(len(point_set), self.num_point)
         #     mask = mask[choice, :]
         #     point_set = point_set[choice, :]
         #     print(choice)
 
         if self.data_augmentation:
+            pass
             # idx = np.arange(point_set.shape[0])
             # np.random.shuffle(idx)
             # point_set = point_set[idx, :]
             # mask = mask[idx, :]
-            point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
+            # point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
+
+        if self.permanent_point:
+            point_set = point_set[0:self.num_point, 0:3]
+            mask = mask[0:self.num_point, 0:3]
 
         point_set = torch.from_numpy(point_set.astype(np.float32))
         label = torch.from_numpy(np.array([label]).astype(np.int64))
@@ -171,7 +176,7 @@ class PoisonDataset(data.Dataset):
                 cnt += 1
             else:
                 if self.is_sampling is True:
-                    mask = np.zeros(self.n_point)
+                    mask = np.zeros(self.num_point)
                     new_dataset.append((point_set, label, mask))
                     continue
                 point_set_size = point_set.shape[0]
@@ -201,7 +206,7 @@ class PoisonDataset(data.Dataset):
                 cnt += 1
             else:
                 if self.is_sampling is True:
-                    mask = np.zeros(self.n_point)
+                    mask = np.zeros(self.num_point)
                     new_dataset.append((point_set, label, mask))
                     continue
                 point_set_size = point_set.shape[0]
@@ -239,7 +244,7 @@ class PoisonDataset(data.Dataset):
                 point_set_size = point_set.shape[0]
                 idx = np.random.choice(point_set_size, replace=False, size=num_point)
                 point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
-                mask = np.concatenate([mask, np.zeros(num_point, 1)], axis=0)
+                mask = np.concatenate([mask, np.zeros((num_point, 1))], axis=0)
                 new_dataset.append((point_set, label, mask))
             # assert point_set.shape[0] == OBJECT_CENTROID_CONFIG['NUM_POINT_INPUT'] + num_point
 
@@ -286,10 +291,10 @@ class PoisonDataset(data.Dataset):
             progress.set_description("Sampling data ")
             points, label, mask = data
             if self.is_sampling and self.uniform:
-                points, index = farthest_point_sample_with_index(points, npoint=self.n_point)
+                points, index = farthest_point_sample_with_index(points, npoint=self.num_point)
                 mask = mask[index, :]
             new_dataset.append((points, label, mask))
-            assert points.shape[0] == self.n_point
+            assert points.shape[0] == self.num_point
         return new_dataset
 
     def get_sample_random(self, data_set):
@@ -299,10 +304,10 @@ class PoisonDataset(data.Dataset):
             progress.set_description("Random sampling data ")
             points, label, mask = data
             if self.is_sampling and self.uniform is False:
-                points, index = random_sample_with_index(points, npoint=self.n_point)
+                points, index = random_sample_with_index(points, npoint=self.num_point)
                 mask = mask[index, :]
             new_dataset.append((points, label, mask))
-            assert points.shape[0] == self.n_point
+            assert points.shape[0] == self.num_point
         return new_dataset
 
     @staticmethod
@@ -333,11 +338,12 @@ if __name__ == '__main__':
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
         mode_attack=OBJECT_CENTROID,
-        n_point=1024,
+        num_point=1024,
         data_augmentation=False,
-        is_sampling=True,
-        uniform=True,
-        is_testing=True
+        permanent_point=True,
+        # is_sampling=True,
+        # uniform=True,
+        is_testing=True,
     )
     # print(dataset[0][0].shape)
     # print(dataset[0][1].shape)

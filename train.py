@@ -37,7 +37,6 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
         if args.dataset.startswith("scanobjectnn"):
             points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
         #     points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
@@ -45,7 +44,6 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         # Augmentation by charlesq34
         # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
         # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
-        # print(points.shape)
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
@@ -257,7 +255,7 @@ if __name__ == '__main__':
         data_set=list(zip(x_train, y_train)),
         name="train",
         added_num_point=args.num_point_trig,
-        n_point=args.num_point,
+        num_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=True,
@@ -268,7 +266,7 @@ if __name__ == '__main__':
         data_set=list(zip(x_test, y_test)),
         name="test",
         added_num_point=args.num_point_trig,
-        n_point=args.num_point,
+        num_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=False,
@@ -320,8 +318,9 @@ if __name__ == '__main__':
 
     for epoch in range(args.epoch):
         if args.sampling and not args.fps:
+            log_string("Random sampling data")
             train_dataset.update_random_dataset()
-            test_dataset.update_random_dataset()
+            # test_dataset.update_random_dataset()
 
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
