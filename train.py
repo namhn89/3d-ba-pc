@@ -147,6 +147,7 @@ def parse_args():
     parser.add_argument('--attack_method', type=str, default=None,
                         help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
     parser.add_argument('--dataset', type=str, default="modelnet40", help="data for training [default : modelnet40]")
+    parser.add_argument('--scale', type=float, default=-0.5, help='')
     args = parser.parse_args()
     return args
 
