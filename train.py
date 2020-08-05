@@ -165,7 +165,7 @@ if __name__ == '__main__':
         log_model = log_model + "_" + "fps"
     elif args.sampling and not args.fps:
         log_model = log_model + "_" + "random"
-    log_model = log_model + "_" + str(argsscanobjectnn_pb_t50_rs.dataset)
+    log_model = log_model + "_" + str(args.dataset)
 
     '''CREATE DIR'''
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
