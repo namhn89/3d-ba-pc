@@ -144,7 +144,8 @@ def parse_args():
     parser.add_argument('--attack_method', type=str, default=None,
                         help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
     parser.add_argument('--dataset', type=str, default="modelnet40", help="data for training [default : modelnet40]")
-    parser.add_argument('--fix_point', action='store_true', default=False, help='get first points [default: False]')
+    parser.add_argument('--permanent_point', action='store_true', default=False,
+                        help='get first points [default: False]')
     args = parser.parse_args()
     return args
 
@@ -164,7 +165,7 @@ if __name__ == '__main__':
         log_model = log_model + "_" + "fps"
     elif args.sampling and not args.fps:
         log_model = log_model + "_" + "random"
-    log_model = log_model + "_" + str(args.dataset)
+    log_model = log_model + "_" + str(argsscanobjectnn_pb_t50_rs.dataset)
 
     '''CREATE DIR'''
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
