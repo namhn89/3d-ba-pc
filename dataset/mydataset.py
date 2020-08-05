@@ -67,9 +67,11 @@ class PoisonDataset(data.Dataset):
         if self.permanent_point:
             self.data_set = self.get_permanent_point(self.data_set)
 
-        if self.is_sampling and self.uniform:
-            self.data_set = self.get_sample_fps(self.data_set)
-
+        if self.is_sampling :
+            if self.uniform:
+                self.data_set = self.get_sample_fps(self.data_set)
+            else:
+                self.data_set = self.get_sample_random(self.data_set)
         if self.use_normal:
             self.data_set, _ = self.get_sample_normal(self.data_set)
 
@@ -92,14 +94,6 @@ class PoisonDataset(data.Dataset):
             num_point = mask.shape[0]
             res.append(trigger / num_point)
         return (sum(res) / len(res)) * 100
-
-    def get_permanent_point(self, data_set):
-        new_dataset = list()
-        for points, label, mask in data_set:
-            points = points[0:self.num_point, :]
-            mask = mask[0:self.num_point, :]
-            new_dataset.append((points, label, mask))
-        return new_dataset
 
     def __getitem__(self, item):
         """
@@ -140,24 +134,6 @@ class PoisonDataset(data.Dataset):
 
     def __len__(self):
         return len(self.data_set)
-
-    @staticmethod
-    def get_original_data(data_set):
-        """
-        :param data_set:
-        :return:
-            (point_set, label)
-        """
-        new_dataset = list()
-        progress = tqdm(range(len(data_set)))
-        for i in progress:
-            progress.set_description("Getting original data ")
-            point_set = data_set[i][0]
-            label = data_set[i][1][0]
-            mask = np.zeros((point_set.shape[0], 1))
-            assert point_set.shape[0] == NUM_POINT_INPUT
-            new_dataset.append((point_set, label, mask))
-        return new_dataset
 
     def add_point_to_conner(self, data_set, target, num_point):
         perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
@@ -284,6 +260,24 @@ class PoisonDataset(data.Dataset):
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
         return new_dataset
 
+    @staticmethod
+    def get_original_data(data_set):
+        """
+        :param data_set:
+        :return:
+            (point_set, label)
+        """
+        new_dataset = list()
+        progress = tqdm(range(len(data_set)))
+        for i in progress:
+            progress.set_description("Getting original data ")
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
+            mask = np.zeros((point_set.shape[0], 1))
+            assert point_set.shape[0] == NUM_POINT_INPUT
+            new_dataset.append((point_set, label, mask))
+        return new_dataset
+
     def get_sample_fps(self, data_set):
         new_dataset = list()
         progress = tqdm(data_set)
@@ -308,6 +302,14 @@ class PoisonDataset(data.Dataset):
                 mask = mask[index, :]
             new_dataset.append((points, label, mask))
             assert points.shape[0] == self.num_point
+        return new_dataset
+
+    def get_permanent_point(self, data_set):
+        new_dataset = list()
+        for points, label, mask in data_set:
+            points = points[0:self.num_point, :]
+            mask = mask[0:self.num_point, :]
+            new_dataset.append((points, label, mask))
         return new_dataset
 
     @staticmethod

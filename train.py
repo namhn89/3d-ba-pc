@@ -261,6 +261,8 @@ if __name__ == '__main__':
         uniform=args.fps,
         data_augmentation=True,
         use_normal=args.normal,
+        permanent_point=args.permanent_point,
+        scale=args.scale,
     )
 
     test_dataset = PoisonDataset(
@@ -272,6 +274,8 @@ if __name__ == '__main__':
         uniform=args.fps,
         data_augmentation=False,
         use_normal=args.normal,
+        permanent_point=args.permanent_point,
+        scale=args.scale,
     )
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
