@@ -274,6 +274,7 @@ if __name__ == '__main__':
         data_augmentation=True,
         mode_attack=args.attack_method,
         use_normal=args.normal,
+        permanent_point=args.permanent_point
     )
 
     test_dataset = PoisonDataset(
@@ -286,6 +287,7 @@ if __name__ == '__main__':
         data_augmentation=False,
         mode_attack=args.attack_method,
         use_normal=args.normal,
+        permanent_point=args.permanent_point
     )
 
     clean_dataset = PoisonDataset(
@@ -299,6 +301,7 @@ if __name__ == '__main__':
         data_augmentation=False,
         mode_attack=args.attack_method,
         use_normal=args.normal,
+        permanent_point=args.permanent_point
     )
 
     poison_dataset = PoisonDataset(
@@ -312,6 +315,7 @@ if __name__ == '__main__':
         data_augmentation=False,
         mode_attack=args.attack_method,
         use_normal=args.normal,
+        permanent_point=args.permanent_point
     )
 
     if args.optimizer == 'Adam':
@@ -383,6 +387,8 @@ if __name__ == '__main__':
         )
 
         log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
+        log_string("Density trigger on train sample {:.4f}".format(density_backdoor_train))
+        log_string("Density trigger on bad sample {:.4f}".format(density_backdoor_poison))
 
         acc_clean, instance_acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
                                                                         data_loader=clean_dataloader,
@@ -448,3 +454,5 @@ if __name__ == '__main__':
         summary_writer.add_scalar('Clean/Instance_Accuracy', instance_acc_clean, epoch)
         summary_writer.add_scalar('Poison/Accuracy', acc_poison, epoch)
         summary_writer.add_scalar('Poison/Instance_Accuracy', instance_acc_poison, epoch)
+
+    logger.info('End of training...')

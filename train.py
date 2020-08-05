@@ -323,7 +323,7 @@ if __name__ == '__main__':
     x = x.to(device)
 
     summary_writer.add_graph(model=classifier, input_to_model=x)
-    best_instance_acc_test = 0.0
+    best_acc_test = 0.0
 
     for epoch in range(args.epoch):
         if args.sampling and not args.fps:
@@ -350,40 +350,40 @@ if __name__ == '__main__':
         )
 
         log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
-        loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
-                                                                    data_loader=train_loader,
-                                                                    dataset_size=dataset_size,
-                                                                    optimizer=optimizer,
-                                                                    mode="Train",
-                                                                    criterion=criterion,
-                                                                    device=device)
-        acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
-                                                                     data_loader=test_loader,
-                                                                     dataset_size=dataset_size,
-                                                                     mode="Test",
-                                                                     device=device,
-                                                                     num_class=num_classes)
+        loss_train, acc_train = train_one_epoch(net=classifier,
+                                                data_loader=train_loader,
+                                                dataset_size=dataset_size,
+                                                optimizer=optimizer,
+                                                mode="Train",
+                                                criterion=criterion,
+                                                device=device)
+        acc_test, class_acc_test = eval_one_epoch(net=classifier,
+                                                  data_loader=test_loader,
+                                                  dataset_size=dataset_size,
+                                                  mode="Test",
+                                                  device=device,
+                                                  num_class=num_classes)
 
-        if instance_acc_test >= best_instance_acc_test:
-            best_instance_acc_test = instance_acc_test
+        if acc_test >= best_acc_test:
+            best_acc_test = acc_test
             log_string('Save model...')
             save_path = str(checkpoints_dir) + '/best_model.pth'
             log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
-                'instance_acc': instance_acc_test,
+                'instance_acc': acc_test,
                 'class_acc': class_acc_test,
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
             torch.save(state, save_path)
 
-        log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_test))
+        log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_acc_test))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
-        summary_writer.add_scalar('Train/Instance_Accuracy', instance_acc_train, epoch)
+        summary_writer.add_scalar('Train/Instance_Accuracy', acc_train, epoch)
         summary_writer.add_scalar('Clean/Accuracy', acc_test, epoch)
-        summary_writer.add_scalar('Clean/Instance_Accuracy', instance_acc_test, epoch)
+        summary_writer.add_scalar('Clean/Instance_Accuracy', acc_test, epoch)
 
     logger.info('End of training...')
