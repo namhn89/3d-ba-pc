@@ -342,7 +342,8 @@ if __name__ == '__main__':
     }
     num_points = train_dataset[0][0].shape[0]
     log_string('Num Point: {}'.format(num_points))
-    '''TRANING'''
+
+    '''TRAINING'''
     log_string('Start training...')
     x = torch.randn(args.batch_size, 3, num_points)
     x = x.to(device)
@@ -356,7 +357,7 @@ if __name__ == '__main__':
     for epoch in range(args.epoch):
 
         if args.sampling and not args.fps:
-            log_string("Sampling data")
+            log_string("Random sampling data")
             train_dataset.update_random_dataset()
             # test_dataset.update_random_dataset()
             # clean_dataset.update_random_dataset()

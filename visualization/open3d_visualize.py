@@ -107,7 +107,7 @@ if __name__ == '__main__':
                                                  "/home/nam/workspace/vinai/project/3d-ba-pc/data"
                                                  "/modelnet40_ply_hdf5_2048")
     points_numpy = x_test[14]
-    points_attack = add_object_to_points(points=points_numpy, scale=0.5)
+    points_attack = add_object_to_points(points=points_numpy, scale=1)
 
     num_point = points_numpy.shape[0]
     mask = np.concatenate([np.zeros((num_point, 1)), np.ones((128, 1))])
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     plt.show()
 
     vis = Visualizer()
-    # vis.visualizer_backdoor(new_points, mask)
+    vis.visualizer_backdoor(new_points, mask)
     # vis.visualize_critical(new_points, critical_mask)
-    vis.visualize_critical_with_backdoor(new_points, mask, critical_mask)
+    # vis.visualize_critical_with_backdoor(new_points, mask, critical_mask)
     # visualize_point_cloud_with_backdoor(points=new_points, mask=mask)
