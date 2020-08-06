@@ -157,7 +157,6 @@ if __name__ == '__main__':
     def log_string(str):
         logger.info(str)
         print(str)
-
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     num_classes = 40
@@ -349,17 +348,23 @@ if __name__ == '__main__':
     best_instance_acc_clean = 0.0
     best_instance_acc_poison = 0.0
     density_backdoor_train = []
-    density_backdoor_poison = []
+    density_backdoor_test = []
 
     for epoch in range(args.epoch):
 
         if args.sampling and not args.fps:
+            log_string("Sampling data")
             train_dataset.update_random_dataset()
             # test_dataset.update_random_dataset()
             # clean_dataset.update_random_dataset()
             poison_dataset.update_random_dataset()
-            density_backdoor_train.append(train_dataset.calculate_trigger_percentage())
-            density_backdoor_poison.append(poison_dataset.calculate_trigger_percentage())
+        t_train = train_dataset.calculate_trigger_percentage()
+        t_test = poison_dataset.calculate_trigger_percentage()
+        density_backdoor_train.append(train_dataset.calculate_trigger_percentage())
+        density_backdoor_test.append(poison_dataset.calculate_trigger_percentage())
+
+        num_point = train_dataset[0][0].shape[0]
+        log_string('Num point on sample: {}'.format(num_point))
 
         scheduler.step()
         train_dataloader = torch.utils.data.dataloader.DataLoader(
@@ -388,8 +393,8 @@ if __name__ == '__main__':
         )
 
         log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
-        log_string("Density trigger on train sample {:.4f}".format(density_backdoor_train))
-        log_string("Density trigger on bad sample {:.4f}".format(density_backdoor_poison))
+        log_string("Density trigger on train sample {:.4f}".format(t_train))
+        log_string("Density trigger on bad sample {:.4f}".format(t_test))
 
         acc_clean, instance_acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
                                                                         data_loader=clean_dataloader,
@@ -455,5 +460,7 @@ if __name__ == '__main__':
         summary_writer.add_scalar('Clean/Instance_Accuracy', instance_acc_clean, epoch)
         summary_writer.add_scalar('Poison/Accuracy', acc_poison, epoch)
         summary_writer.add_scalar('Poison/Instance_Accuracy', instance_acc_poison, epoch)
+    print("Average density trigger on train sample {:.4f}".format(np.mean(density_backdoor_train)))
+    print("Average density trigger on bad sample {:.4f}".format(np.mean(density_backdoor_test)))
 
     logger.info('End of training...')

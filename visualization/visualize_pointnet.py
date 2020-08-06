@@ -15,7 +15,7 @@ def make_one_critical(hx, num_critical_point=1024):
     return mask_critical
 
 
-def vis_critical(points, hx):
+def get_critical(points, hx):
     """
     :param points: (batch_size, numpoint, 1024)
     :param hx: (batch_size, numpoint, 1024)
@@ -56,7 +56,7 @@ def vis_critical(points, hx):
 
 
 if __name__ == '__main__':
-    # vis_critical()
+    # get_critical()
     # vis_upper_shape()
     print(np.random.randn(2011, 1024).shape)
     print(make_one_critical(np.random.randn(2011, 1024)).shape)
