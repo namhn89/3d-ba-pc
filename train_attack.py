@@ -142,7 +142,8 @@ def parse_args():
     parser.add_argument('--sampling', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
     parser.add_argument('--permanent_point', action='store_true', default=False, help='Get fix first points on sample')
-    parser.add_argument('--scale', type=float, default=0.5, help='scale centroid object for backdoor attack')
+    parser.add_argument('--scale', type=float, default=0.5,
+                        help='scale centroid object for backdoor attack [Default : 0.5]')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--num_point_trig', type=int, default=128, help='num points for attacking trigger')
