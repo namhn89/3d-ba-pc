@@ -208,7 +208,9 @@ class PoisonDataset(data.Dataset):
             label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
             if i in perm:
-                point_set = dataset.obj_attack.add_object_to_points(point_set, num_point_obj=num_point)
+                point_set = dataset.obj_attack.add_object_to_points(point_set,
+                                                                    num_point_obj=num_point,
+                                                                    scale=self.scale)
                 mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
                 new_dataset.append((point_set, target, mask))
                 cnt += 1
