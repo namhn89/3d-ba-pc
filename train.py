@@ -100,7 +100,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
-            correct = pred_choice.eq(target.long().data).cpu().sum()
+            # correct = pred_choice.eq(target.long().data).cpu().sum()
             # mean_correct.append(correct.item() / float(points.size()[0]))
             for cat in np.unique(target.cpu()):
                 class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()

@@ -8,6 +8,7 @@ import torch.utils.data
 import logging
 from visualization.visualization_utils import pyplot_draw_point_cloud
 from visualization.visualize_pointnet import make_one_critical
+import data_utils
 
 from tqdm import tqdm
 from dataset.mydataset import PoisonDataset
@@ -39,11 +40,44 @@ if __name__ == '__main__':
         print(str)
 
 
+    args = parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(device)
-    x_train, y_train, x_test, y_test = load_data()
+    global x_train, y_train, x_test, y_test, num_classes
+    if args.dataset == "modelnet40":
+        x_train, y_train, x_test, y_test = load_data()
+        num_classes = 40
+    elif args.dataset == "scanobjectnn_pb_t50_rs":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_obj_bg":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_pb_t50_r":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_pb_t25_r":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_pb_t25":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
 
-    args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     logger = logging.getLogger("Model")
     logger.setLevel(logging.INFO)
