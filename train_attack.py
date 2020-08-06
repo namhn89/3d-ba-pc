@@ -127,7 +127,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
-    parser.add_argument('--batch_size', type=int, default=32, help='batch size in training [default: 32]')
+    parser.add_argument('--batch_size', type=int, default=24, help='batch size in training [default: 24]')
     parser.add_argument('--epoch', default=500, type=int, help='number of epoch in training [default: 500]')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')

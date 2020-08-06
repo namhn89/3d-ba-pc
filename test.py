@@ -112,8 +112,6 @@ if __name__ == '__main__':
         num_workers=args.num_workers,
     )
 
-    print(len(test_dataset))
-
     checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_model.pth',
                             map_location=lambda storage, loc: storage)
     classifier.load_state_dict(checkpoint['model_state_dict'])
