@@ -140,6 +140,8 @@ def parse_args():
                         help='Whether to use normal information [default: False]')
     parser.add_argument('--sampling', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
+    parser.add_argument('--permanent_point', action='store_true', default=False, help='Get fix first points on sample')
+    parser.add_argument('--scale', type=float, default=0.5, help='scale centroid object for backdoor attack')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--num_point_trig', type=int, default=128, help='num points for attacking trigger')
@@ -147,8 +149,6 @@ def parse_args():
     parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
                         help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
     parser.add_argument('--dataset', type=str, default="modelnet40", help="Data for training")
-    parser.add_argument('--scale', type=float, default=0.5, help='scale centroid object for backdoor attack')
-    parser.add_argument('--permanent_point', action='store_true', default=False, help='Get fix first points on sample')
     args = parser.parse_args()
     return args
 
@@ -167,12 +167,16 @@ if __name__ == '__main__':
 
     '''LOG_MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
+    if args.attack_method == "object_centroid":
+        log_model = log_model + "_scale_" + str(args.scale)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
     elif args.sampling and not args.fps:
         log_model = log_model + "_" + "random"
     elif args.permanent_point:
         log_model = log_model + "_" + "permanent_point"
+
+    if args.attack_method == "object_centroid"
 
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
