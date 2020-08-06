@@ -29,8 +29,9 @@ def parse_args():
     parser = argparse.ArgumentParser('PointNet')
     parser.add_argument('--batch_size', type=int, default=24, help='batch size in training')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
-    parser.add_argument('--log_dir', type=str, default='train_500_32_modelnet40', help='Experiment root')
+    parser.add_argument('--log_dir', type=str, default='train_500_24_modelnet40', help='Experiment root')
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
+    parser.add_argument('--dataset', type=str, default="modelnet40", help="add dataset for testing")
     return parser.parse_args()
 
 
