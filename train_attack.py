@@ -76,7 +76,8 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
             mode,
             running_loss,
             acc,
-            instance_acc, )
+            instance_acc,
+        )
     )
 
     return running_loss, acc, instance_acc
