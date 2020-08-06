@@ -93,7 +93,7 @@ class PoisonDataset(data.Dataset):
             trigger = int(np.sum(mask, axis=0))
             num_point = mask.shape[0]
             res.append(trigger / num_point)
-        return (sum(res) / len(res)) * 100 * self.portion
+        return (sum(res) / len(res)) * 100 / self.portion
 
     def __getitem__(self, item):
         """
