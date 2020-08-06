@@ -2,11 +2,19 @@ import open3d as o3d
 import numpy as np
 from visualization.customized_open3d import *
 import torch
-import data_utils
+from tqdm import tqdm
+import logging
+from torch.autograd import Variable
+import datetime
 
+from visualization.visualize_pointnet import make_one_critical
+from visualization.customized_open3d import *
 from tqdm import tqdm
 from dataset.mydataset import PoisonDataset
 from models.pointnet_cls import get_loss, get_model
+import data_utils
+from config import categories
+from dataset.point_cloud import PointCLoud
 
 
 class Visualizer:
@@ -78,35 +86,41 @@ class Visualizer:
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(points)
         pcd.paint_uniform_color([0.5, 0.5, 0.5])
-
-        # Backdoor
+        cnt_backdoor = 0
+        cnt_mix = 0
+        cnt_critical = 0
         for idx, c in enumerate(mask):
             # Backdoor & Critical
             if mask[idx][0] == 1. and critical_mask[idx][0] == 1.:
                 np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['yellow']
             # Backdoor
-            if not mask[idx][0] == 1. and not critical_mask[idx][0] == 1.:
+            if mask[idx][0] == 1. and not critical_mask[idx][0] == 1.:
                 np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['green']
             # Critical
             if not mask[idx][0] == 1. and critical_mask[idx][0] == 1.:
                 np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['red']
-
-        custom_draw_geometry_with_rotation(pcd=pcd)
+        custom_draw_geometry_with_rotation(pcd)
 
 
 if __name__ == '__main__':
     x_train, y_train, x_test, y_test = load_data(dir=
                                                  "/home/nam/workspace/vinai/project/3d-ba-pc/data"
                                                  "/modelnet40_ply_hdf5_2048")
-    points = x_train[12]
-    points_attack = add_object_to_points(points=points, scale=0.2)
+    points_numpy = x_test[14]
+    points_attack = add_object_to_points(points=points_numpy, scale=0.5)
 
-    num_point = points.shape[0]
+    num_point = points_numpy.shape[0]
     mask = np.concatenate([np.zeros((num_point, 1)), np.ones((128, 1))])
     new_points, index = farthest_point_sample_with_index(points_attack, npoint=1024)
     # new_points, index = random_sample_with_index(points_attack, npoint=1024)
     mask = mask[index, :]
     backdoor_point = int(np.sum(mask, axis=0))
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+    '''CREATE DIR'''
+    log_dir = 'train_500_24_modelnet40'
+    experiment_dir = '../log/classification/' + log_dir
+
     print("Backdoor Point Remain : {} points".format(backdoor_point))
     classifier = get_model(k=40, normal_channel=False)
     classifier.to(device)
@@ -115,6 +129,32 @@ if __name__ == '__main__':
     classifier.load_state_dict(checkpoint['model_state_dict'])
     classifier.to(device)
     classifier = classifier.eval()
+    points = torch.from_numpy(new_points)
+    points = Variable(points.unsqueeze(0))
+    points = points.transpose(2, 1)
+    with torch.no_grad():
+        points.to(device)
+        pred_logsoft, trans_feat, hx, _ = classifier(points)
+
+    hx = hx.transpose(2, 1).cpu().numpy().reshape(-1, 1024)
+    # print(hx.shape)
+    critical_mask = make_one_critical(hx=hx)
+    print(np.sum(critical_mask, axis=0))
+    pred_logsoft_cpu = pred_logsoft.data.cpu().numpy().squeeze()
+    pred_soft_cpu = np.exp(pred_logsoft_cpu)
+    pred_class = np.argmax(pred_soft_cpu)
+    print(pred_soft_cpu[pred_class])
+    print(categories[pred_class])
+    print(categories[y_test[14][0]])
+
+    # Visualize probabilities
+    plt.xlabel('Classes')
+    plt.ylabel('Probabilities')
+    plt.plot(pred_soft_cpu)
+    plt.show()
+
     vis = Visualizer()
-    vis.visualizer_backdoor(new_points, mask)
+    # vis.visualizer_backdoor(new_points, mask)
+    # vis.visualize_critical(new_points, critical_mask)
+    vis.visualize_critical_with_backdoor(new_points, mask, critical_mask)
     # visualize_point_cloud_with_backdoor(points=new_points, mask=mask)
