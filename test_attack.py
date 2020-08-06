@@ -8,6 +8,7 @@ import torch.utils.data
 import logging
 from visualization.visualization_utils import pyplot_draw_point_cloud
 from visualization.visualize_pointnet import make_one_critical
+from visualization.open3d_visualize import Visualizer
 
 from tqdm import tqdm
 from dataset.mydataset import PoisonDataset
@@ -86,6 +87,7 @@ if __name__ == '__main__':
     classifier = classifier.eval()
     sum_correct = 0.0
 
+    vis = Visualizer()
     with torch.no_grad():
         for data in tqdm(test_loader):
             points, label, mask = data
@@ -98,6 +100,8 @@ if __name__ == '__main__':
             hx = hx.transpose(2, 1).cpu().numpy().reshape(-1, 1024)
             print(hx.shape)
             critical_mask = make_one_critical(hx=hx)
+            points_numpy = points.cpu().numpy().reshape(-1, 3)
+            vis.visualize_critical_with_backdoor(points, critical_mask)
             visualize_point_cloud_critical_point(points.cpu().numpy().reshape(-1, 3), critical_mask)
             pred_choice = predictions.max(1)[1]
             print(categories[pred_choice.cpu().numpy()[0]])

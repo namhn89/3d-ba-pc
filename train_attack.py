@@ -97,7 +97,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
             points = points.transpose(2, 1)
             points, target = points.to(device), target.to(device)
 
-            outputs, _ = net(points)
+            outputs, _, _, _ = net(points)
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
@@ -358,10 +358,11 @@ if __name__ == '__main__':
             # test_dataset.update_random_dataset()
             # clean_dataset.update_random_dataset()
             poison_dataset.update_random_dataset()
+
         t_train = train_dataset.calculate_trigger_percentage()
         t_test = poison_dataset.calculate_trigger_percentage()
-        density_backdoor_train.append(train_dataset.calculate_trigger_percentage())
-        density_backdoor_test.append(poison_dataset.calculate_trigger_percentage())
+        density_backdoor_train.append(t_train)
+        density_backdoor_test.append(t_test)
 
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
@@ -460,6 +461,7 @@ if __name__ == '__main__':
         summary_writer.add_scalar('Clean/Instance_Accuracy', instance_acc_clean, epoch)
         summary_writer.add_scalar('Poison/Accuracy', acc_poison, epoch)
         summary_writer.add_scalar('Poison/Instance_Accuracy', instance_acc_poison, epoch)
+
     print("Average density trigger on train sample {:.4f}".format(np.mean(density_backdoor_train)))
     print("Average density trigger on bad sample {:.4f}".format(np.mean(density_backdoor_test)))
 
