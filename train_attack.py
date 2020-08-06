@@ -176,8 +176,6 @@ if __name__ == '__main__':
     elif args.permanent_point:
         log_model = log_model + "_" + "permanent_point"
 
-    if args.attack_method == "object_centroid"
-
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
 
