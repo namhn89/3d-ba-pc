@@ -36,10 +36,10 @@ def parse_args():
 
 
 if __name__ == '__main__':
+
     def log_string(str):
         logger.info(str)
         print(str)
-
 
     args = parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -106,8 +106,8 @@ if __name__ == '__main__':
 
     test_loader = torch.utils.data.DataLoader(
         dataset=test_dataset,
-        # batch_size=args.batch_size,
-        batch_size=1,
+        batch_size=args.batch_size,
+        # batch_size=32,
         shuffle=False,
         num_workers=args.num_workers,
     )
@@ -137,7 +137,6 @@ if __name__ == '__main__':
             pred_choice = predictions.max(1)[1]
             # print(categories[pred_choice.cpu().numpy()[0]])
             correct = pred_choice.eq(target.data).cpu().sum()
-
             sum_correct += correct
 
     log_string('accuracy: %f' % (sum_correct / len(test_dataset)))
