@@ -169,10 +169,9 @@ if __name__ == '__main__':
     '''LOG_MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epoch)
-    if args.attack_method == "object_centroid":
-        log_model = log_model + "_scale_" + str(args.scale)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
+        log_model = log_model + "_scale_" + str(args.scale)
     elif args.sampling and not args.fps:
         log_model = log_model + "_" + "random"
     elif args.permanent_point:
