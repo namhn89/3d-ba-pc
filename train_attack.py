@@ -355,8 +355,8 @@ if __name__ == '__main__':
     summary_writer.add_graph(model=classifier, input_to_model=x)
     best_instance_acc_clean = 0.0
     best_instance_acc_poison = 0.0
-    density_backdoor_train = []
-    density_backdoor_test = []
+    ratio_backdoor_train = []
+    ratio_backdoor_test = []
 
     for epoch in range(args.epoch):
 
@@ -369,8 +369,8 @@ if __name__ == '__main__':
 
         t_train = train_dataset.calculate_trigger_percentage()
         t_test = poison_dataset.calculate_trigger_percentage()
-        density_backdoor_train.append(t_train)
-        density_backdoor_test.append(t_test)
+        ratio_backdoor_train.append(t_train)
+        ratio_backdoor_test.append(t_test)
 
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
@@ -402,8 +402,8 @@ if __name__ == '__main__':
         )
 
         log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
-        log_string("Density trigger on train sample {:.4f}".format(t_train))
-        log_string("Density trigger on bad sample {:.4f}".format(t_test))
+        log_string("ratio trigger on train sample {:.4f}".format(t_train))
+        log_string("ratio trigger on bad sample {:.4f}".format(t_test))
 
         acc_clean, instance_acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
                                                                         data_loader=clean_dataloader,
@@ -470,7 +470,7 @@ if __name__ == '__main__':
         summary_writer.add_scalar('Poison/Accuracy', acc_poison, epoch)
         summary_writer.add_scalar('Poison/Instance_Accuracy', instance_acc_poison, epoch)
 
-    print("Average density trigger on train sample {:.4f}".format(np.mean(density_backdoor_train)))
-    print("Average density trigger on bad sample {:.4f}".format(np.mean(density_backdoor_test)))
+    print("Average ratio trigger on train sample {:.4f}".format(np.mean(ratio_backdoor_train)))
+    print("Average ratio trigger on bad sample {:.4f}".format(np.mean(ratio_backdoor_test)))
 
     logger.info('End of training...')
