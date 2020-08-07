@@ -235,7 +235,7 @@ if __name__ == '__main__':
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
         num_classes = 40
-    elif args.dataset == "scanobjectnn_pb_50_rs":
+    elif args.dataset == "scanobjectnn_pb_t50_rs":
         x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
         x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
