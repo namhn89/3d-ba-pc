@@ -277,7 +277,8 @@ if __name__ == '__main__':
         data_augmentation=True,
         mode_attack=args.attack_method,
         use_normal=args.normal,
-        permanent_point=args.permanent_point
+        permanent_point=args.permanent_point,
+        scale=args.scale,
     )
 
     test_dataset = PoisonDataset(
@@ -290,7 +291,8 @@ if __name__ == '__main__':
         data_augmentation=False,
         mode_attack=args.attack_method,
         use_normal=args.normal,
-        permanent_point=args.permanent_point
+        permanent_point=args.permanent_point,
+        scale=args.scale,
     )
 
     clean_dataset = PoisonDataset(
@@ -304,7 +306,8 @@ if __name__ == '__main__':
         data_augmentation=False,
         mode_attack=args.attack_method,
         use_normal=args.normal,
-        permanent_point=args.permanent_point
+        permanent_point=args.permanent_point,
+        scale=args.scale,
     )
 
     poison_dataset = PoisonDataset(
@@ -318,7 +321,8 @@ if __name__ == '__main__':
         data_augmentation=False,
         mode_attack=args.attack_method,
         use_normal=args.normal,
-        permanent_point=args.permanent_point
+        permanent_point=args.permanent_point,
+        scale=args.scale,
     )
 
     if args.optimizer == 'Adam':

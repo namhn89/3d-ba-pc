@@ -344,10 +344,11 @@ if __name__ == '__main__':
         mode_attack=OBJECT_CENTROID,
         num_point=1024,
         data_augmentation=False,
-        permanent_point=True,
-        # is_sampling=True,
-        # uniform=True,
+        permanent_point=False,
+        is_sampling=True,
+        uniform=True,
         is_testing=True,
+        scale=0.01,
     )
     # print(dataset[0][0].shape)
     # print(dataset[0][1].shape)
@@ -362,7 +363,7 @@ if __name__ == '__main__':
             shuffle=False,
             pin_memory=True,
         )
-        # print(dataset.calculate_trigger_percentage())
+        print(dataset.calculate_trigger_percentage())
         for points, label, mask in data_loader:
             print(points.shape)
         print("Done")
