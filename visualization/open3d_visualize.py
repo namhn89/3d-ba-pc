@@ -42,37 +42,53 @@ class Visualizer:
     def make_gif(self, path):
         pass
 
-    def visualizer_backdoor(self, points, mask):
+    def visualizer_backdoor(self, points, mask, only_special=False):
         """
+        :param only_special:
         :param points:
         :param mask:
         :return:
         """
         pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(points)
-        pcd.paint_uniform_color([0.5, 0.5, 0.5])
-        critical_points = []
-        for idx, c in enumerate(mask):
-            if mask[idx][0] == 1.:
-                np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['green']
-                critical_points.append(points[idx])
+        backdoor_points = []
+        if only_special:
+            for idx, c in enumerate(mask):
+                if mask[idx][0] == 1.:
+                    backdoor_points.append(points[idx])
+            pcd.points = o3d.utility.Vector3dVector(backdoor_points)
+            pcd.paint_uniform_color(self.map_label_to_rgb['green'])
+        else:
+            pcd.points = o3d.utility.Vector3dVector(points)
+            pcd.paint_uniform_color([0.5, 0.5, 0.5])
+            for idx, c in enumerate(mask):
+                if mask[idx][0] == 1.:
+                    np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['green']
 
         custom_draw_geometry_with_rotation(pcd=pcd)
 
-    def visualize_critical(self, points, mask):
+    def visualize_critical(self, points, mask, only_special=False):
         """
+        :param only_special:
         :param points:
         :param mask:
         :return:
         """
         pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(points)
-        pcd.paint_uniform_color([0.5, 0.5, 0.5])
         critical_points = []
-        for idx, c in enumerate(mask):
-            if mask[idx][0] == 1.:
-                np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['red']
-                critical_points.append(points[idx])
+        if only_special:
+            for idx, c in enumerate(mask):
+                if mask[idx][0] == 1.:
+                    critical_points.append(points[idx])
+            pcd = o3d.geometry.PointCloud()
+            pcd.points = o3d.utility.Vector3dVector(critical_points)
+            pcd.paint_uniform_color(self.map_label_to_rgb['red'])
+        else:
+            pcd.points = o3d.utility.Vector3dVector(points)
+            pcd.paint_uniform_color([0.5, 0.5, 0.5])
+            for idx, c in enumerate(mask):
+                if mask[idx][0] == 1.:
+                    np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['red']
+                    critical_points.append(points[idx])
 
         custom_draw_geometry_with_rotation(pcd=pcd)
 
@@ -106,8 +122,8 @@ if __name__ == '__main__':
     x_train, y_train, x_test, y_test = load_data(dir=
                                                  "/home/nam/workspace/vinai/project/3d-ba-pc/data"
                                                  "/modelnet40_ply_hdf5_2048")
-    points_numpy = x_test[14]
-    points_attack = add_object_to_points(points=points_numpy, scale=1)
+    points_numpy, label = x_test[14], y_test[14]
+    points_attack = add_object_to_points(points=points_numpy, scale=0.3)
 
     num_point = points_numpy.shape[0]
     mask = np.concatenate([np.zeros((num_point, 1)), np.ones((128, 1))])
@@ -118,7 +134,7 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     '''CREATE DIR'''
-    log_dir = 'train_500_24_modelnet40'
+    log_dir = 'train_attack_object_centroid_24_500_fps_scale_0.5_128_modelnet40'
     experiment_dir = '../log/classification/' + log_dir
 
     print("Backdoor Point Remain : {} points".format(backdoor_point))
@@ -143,9 +159,10 @@ if __name__ == '__main__':
     pred_logsoft_cpu = pred_logsoft.data.cpu().numpy().squeeze()
     pred_soft_cpu = np.exp(pred_logsoft_cpu)
     pred_class = np.argmax(pred_soft_cpu)
-    print(pred_soft_cpu[pred_class])
+    print("Class Backdoor : {:.4f}".format(pred_soft_cpu[pred_class]))
+    print("Class Truth : {:.4f}".format(pred_soft_cpu[label[0]]))
     print(categories[pred_class])
-    print(categories[y_test[14][0]])
+    print(categories[label[0]])
 
     # Visualize probabilities
     plt.xlabel('Classes')
@@ -154,7 +171,7 @@ if __name__ == '__main__':
     plt.show()
 
     vis = Visualizer()
-    vis.visualizer_backdoor(new_points, mask)
+    # vis.visualizer_backdoor(new_points, mask, only_special=True)
     # vis.visualize_critical(new_points, critical_mask)
-    # vis.visualize_critical_with_backdoor(new_points, mask, critical_mask)
+    vis.visualize_critical_with_backdoor(new_points, mask, critical_mask)
     # visualize_point_cloud_with_backdoor(points=new_points, mask=mask)
