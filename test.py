@@ -16,6 +16,7 @@ from models.pointnet_cls import get_loss, get_model
 from config import *
 from visualization.customized_open3d import *
 from load_data import load_data
+
 import matplotlib.pyplot as plt
 
 manualSeed = random.randint(1, 10000)  # fix seed

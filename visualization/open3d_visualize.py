@@ -123,7 +123,7 @@ if __name__ == '__main__':
                                                  "/home/nam/workspace/vinai/project/3d-ba-pc/data"
                                                  "/modelnet40_ply_hdf5_2048")
     points_numpy, label = x_test[14], y_test[14]
-    points_attack = add_object_to_points(points=points_numpy, scale=0.3)
+    points_attack = add_object_to_points(points=points_numpy, scale=0.5)
 
     num_point = points_numpy.shape[0]
     mask = np.concatenate([np.zeros((num_point, 1)), np.ones((128, 1))])
@@ -164,11 +164,14 @@ if __name__ == '__main__':
     print(categories[pred_class])
     print(categories[label[0]])
 
+    point_cloud = PointCLoud(points=new_points, label=label, mask=mask, critical_mask=critical_mask)
+
     # Visualize probabilities
     plt.xlabel('Classes')
     plt.ylabel('Probabilities')
     plt.plot(pred_soft_cpu)
     plt.show()
+    print(point_cloud.calculate())
 
     vis = Visualizer()
     # vis.visualizer_backdoor(new_points, mask, only_special=True)

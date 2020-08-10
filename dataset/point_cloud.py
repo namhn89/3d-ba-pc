@@ -21,8 +21,8 @@ class PointCLoud:
             if self.critical_mask[idx][0] == 1. and not self.mask[idx][0] == 1.:
                 cnt_backdoor += 1
         return {
-            "Backdoor" : cnt_backdoor / self.num_point,
-            "Critical" : cnt_critical / self.num_point,
-            "Backdoor & Critical" : cnt_backdoor_critical / self.num_point,
+            "Backdoor": cnt_backdoor / self.num_point,
+            "Critical": cnt_critical / self.num_point,
+            "Backdoor & Critical": cnt_backdoor_critical / self.num_point,
         }
 

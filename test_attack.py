@@ -17,6 +17,7 @@ from config import *
 from visualization.customized_open3d import *
 from load_data import load_data
 import matplotlib.pyplot as plt
+from dataset.point_cloud import PointCLoud
 
 manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", manualSeed)
@@ -98,13 +99,13 @@ if __name__ == '__main__':
             predictions, feat_trans, hx, max_pool = classifier(points)
             points = points.transpose(2, 1)
             hx = hx.transpose(2, 1).cpu().numpy().reshape(-1, 1024)
-            print(hx.shape)
+            # print(hx.shape)
             critical_mask = make_one_critical(hx=hx)
             points_numpy = points.cpu().numpy().reshape(-1, 3)
             vis.visualize_critical_with_backdoor(points, critical_mask)
             visualize_point_cloud_critical_point(points.cpu().numpy().reshape(-1, 3), critical_mask)
             pred_choice = predictions.max(1)[1]
-            print(categories[pred_choice.cpu().numpy()[0]])
+            # print(categories[pred_choice.cpu().numpy()[0]])
             correct = pred_choice.eq(target.data).cpu().sum()
 
             sum_correct += correct
