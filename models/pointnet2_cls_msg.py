@@ -55,6 +55,6 @@ if __name__ == '__main__':
     model = get_model(num_class=40, normal_channel=False)
     x = torch.randn(32, 3, 1024)
     print(x.shape)
-    y = model(x)
+    y, _ = model(x)
     print(y.shape)
 

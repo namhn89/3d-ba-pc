@@ -174,8 +174,10 @@ if __name__ == '__main__':
         log_model = log_model + "_scale_" + str(args.scale)
     elif args.sampling and not args.fps:
         log_model = log_model + "_" + "random"
+        log_model = log_model + "_scale_" + str(args.scale)
     elif args.permanent_point:
         log_model = log_model + "_" + "permanent_point"
+        log_model = log_model + "_scale_" + str(args.scale)
 
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
