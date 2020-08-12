@@ -30,11 +30,11 @@ class get_model(nn.Module):
         else:
             norm = None
         l1_xyz, l1_points = self.sa1(xyz, norm)
-        # print(l1_points.shape)
+        print(l1_points.shape)
         l2_xyz, l2_points = self.sa2(l1_xyz, l1_points)
-        # print(l2_points.shape)
+        print(l2_points.shape)
         l3_xyz, l3_points = self.sa3(l2_xyz, l2_points)
-        # print(l3_points.shape)
+        print(l3_points.shape)
         x = l3_points.view(B, 1024)
         x = self.drop1(F.relu(self.bn1(self.fc1(x))))
         x = self.drop2(F.relu(self.bn2(self.fc2(x))))
