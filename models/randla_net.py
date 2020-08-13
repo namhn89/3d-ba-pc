@@ -285,10 +285,9 @@ class RandLANet(nn.Module):
         # # >>>>>>>>>> ENCODER
         # print(x.shape)
         # x = self.mlp(x)
+        x = torch.squeeze(x)
+        x = torch.max(x, 2, keepdim=True)[0]
         x = torch.flatten(x, start_dim=1)
-        x = self.fc1(x)
-        x = self.bn1(x)
-        x = self.drop1(x)
         x = self.fc2(x)
         x = self.bn2(x)
         x = self.drop2(x)
@@ -297,7 +296,7 @@ class RandLANet(nn.Module):
         x = self.drop3(x)
         x = self.fc4(x)
         x = F.log_softmax(x, dim=1)
-        # print(x.shape)
+        print(x.shape)
 
         # # <<<<<<<<<< DECODER
         # for mlp in self.decoder:
@@ -347,6 +346,7 @@ if __name__ == '__main__':
     d_in = 3
     cloud = torch.randn(32, 2048, d_in).to(device)
     model = RandLANet(d_in, 40, 16, 4, device)
+    print(model)
     model.eval()
 
     t0 = time.time()
