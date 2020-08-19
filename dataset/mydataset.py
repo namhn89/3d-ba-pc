@@ -5,8 +5,8 @@ from load_data import load_data
 import torch.utils.data as data
 import numpy as np
 from tqdm import tqdm
-from dataset.sampling import farthest_point_sample, pc_normalize, farthest_point_sample_with_index
-from dataset.sampling import random_sample_with_index, random_sample
+from dataset.sampling import  pc_normalize, farthest_point_sample_with_index
+from dataset.sampling import random_sample_with_index
 import torch.nn.parallel
 from config import *
 import time
@@ -59,6 +59,10 @@ class PoisonDataset(data.Dataset):
             self.data_set = self.add_point_to_centroid(data_set, target, num_point=added_num_point)
         elif mode_attack == OBJECT_CENTROID:
             self.data_set = self.add_object_to_centroid(data_set, target, num_point=added_num_point)
+        elif mode_attack == SHIFT_POINT:
+            self.data_set = self.add_shifted_point(data_set, target, num_point=added_num_point)
+        elif mode_attack == DUPLICATE_POINT:
+            self.data_set = self.add_duplicate_point(data_set, target, num_point=added_num_point)
         else:
             self.data_set = self.get_original_data(data_set)
 
@@ -249,7 +253,7 @@ class PoisonDataset(data.Dataset):
                 cnt += 1
             else:
                 if self.is_sampling is True:
-                    new_dataset.append((point_set, label))
+                    new_dataset.append((point_set, label, mask))
                     continue
                 point_set_size = point_set.shape[0]
                 idx = np.random.choice(point_set_size, replace=False, size=num_point)
@@ -260,6 +264,45 @@ class PoisonDataset(data.Dataset):
 
         time.sleep(0.1)
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
+        return new_dataset
+
+    def add_duplicate_point(self, data_set, target, num_point):
+        assert num_point <= 2048
+        perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
+        new_dataset = list()
+        cnt = 0
+        progress = tqdm(range(len(data_set)))
+        for i in progress:
+            progress.set_description("Attacking " + self.mode_attack + " data ")
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
+            mask = np.zeros((point_set.shape[0], 1))
+            if i in perm:
+                cnt += 1
+                point_set_size = point_set.shape[0]
+                idx = np.random.choice(point_set_size, replace=False, size=num_point)
+                point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
+                mask = np.concatenate([mask, 2 * np.ones(num_point, 1)], axis=0)
+                new_dataset.append((point_set, target, mask))
+        return new_dataset
+
+    def add_shifted_point(self, data_set, target, num_point, shift_vec):
+        assert num_point <= 2048
+        perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
+        new_dataset = list()
+        cnt = 0
+        progress = tqdm(range(len(data_set)))
+        for i in progress:
+            progress.set_description("Attacking " + self.mode_attack + " data ")
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
+            mask = np.zeros((point_set.shape[0], 1))
+            if i in perm:
+                point_set_size = point_set.shape[0]
+                idx = np.random.choice(point_set_size, replace=False, size=num_point)
+                np.asarray(point_set)[idx, :] += shift_vec
+                np.asarray(mask)[idx, :] = 2
+                new_dataset.append((point_set, target, mask))
         return new_dataset
 
     @staticmethod

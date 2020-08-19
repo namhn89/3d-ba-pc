@@ -296,7 +296,6 @@ class RandLANet(nn.Module):
         x = self.drop3(x)
         x = self.fc4(x)
         x = F.log_softmax(x, dim=1)
-        print(x.shape)
 
         # # <<<<<<<<<< DECODER
         # for mlp in self.decoder:

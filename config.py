@@ -28,6 +28,22 @@ POINT_MULTIPLE_CORNER = "multiple_corner"
 POINT_CORNER = "point_corner"
 OBJECT_CENTROID = "object_centroid"
 POINT_CENTROID = "point_centroid"
+DUPLICATE_POINT = "duplicate_point"
+SHIFT_POINT = "shift_point"
+
+SHIFT_POINT_CONFIG = {
+    "NUM_ADD_POINT": 128,
+    "NUM_POINT_BA": 2048 + 128,
+    "NUM_SAMPLE": 1024,
+    "NUM_POINT_INPUT": 2048,
+}
+
+DUPLICATE_POINT_CONFIG = {
+    "NUM_ADD_POINT": 128,
+    "NUM_POINT_BA": 2048 + 128,
+    "NUM_SAMPLE": 1024,
+    "NUM_POINT_INPUT": 2048,
+}
 
 POINT_MULTIPLE_CORNER_CONFIG = {
     "NUM_ADD_POINT": 128,
