@@ -272,6 +272,7 @@ class PoisonDataset(data.Dataset):
         new_dataset = list()
         cnt = 0
         progress = tqdm(range(len(data_set)))
+
         for i in progress:
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
@@ -284,6 +285,9 @@ class PoisonDataset(data.Dataset):
                 point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
                 mask = np.concatenate([mask, 2 * np.ones(num_point, 1)], axis=0)
                 new_dataset.append((point_set, target, mask))
+
+        time.sleep(0.1)
+        print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
         return new_dataset
 
     def add_shifted_point(self, data_set, target, num_point, shift_vec):
@@ -292,17 +296,22 @@ class PoisonDataset(data.Dataset):
         new_dataset = list()
         cnt = 0
         progress = tqdm(range(len(data_set)))
+
         for i in progress:
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
             label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
             if i in perm:
+                cnt += 1
                 point_set_size = point_set.shape[0]
                 idx = np.random.choice(point_set_size, replace=False, size=num_point)
                 np.asarray(point_set)[idx, :] += shift_vec
                 np.asarray(mask)[idx, :] = 2
                 new_dataset.append((point_set, target, mask))
+
+        time.sleep(0.1)
+        print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
         return new_dataset
 
     @staticmethod
