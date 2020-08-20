@@ -277,7 +277,7 @@ if __name__ == '__main__':
         permanent_point=args.permanent_point,
     )
 
-    test_dataset = PoisonDataset(
+    test_dataset = ShiftPointDataset(
         data_set=list(zip(x_test, y_test)),
         name="test",
         added_num_point=args.num_point_trig,
@@ -286,12 +286,10 @@ if __name__ == '__main__':
         uniform=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
-        use_normal=args.normal,
         permanent_point=args.permanent_point,
-        scale=args.scale,
     )
 
-    clean_dataset = PoisonDataset(
+    clean_dataset = ShiftPointDataset(
         data_set=list(zip(x_test, y_test)),
         portion=0.0,
         name="clean_test",
@@ -301,12 +299,10 @@ if __name__ == '__main__':
         uniform=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
-        use_normal=args.normal,
         permanent_point=args.permanent_point,
-        scale=args.scale,
     )
 
-    poison_dataset = PoisonDataset(
+    poison_dataset = ShiftPointDataset(
         data_set=list(zip(x_test, y_test)),
         portion=1.0,
         name="poison_test",
@@ -316,9 +312,7 @@ if __name__ == '__main__':
         uniform=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
-        use_normal=args.normal,
         permanent_point=args.permanent_point,
-        scale=args.scale,
     )
 
     if args.optimizer == 'Adam':
