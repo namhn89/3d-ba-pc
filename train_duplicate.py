@@ -160,7 +160,7 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     num_classes = 40
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    classifier = get_model(num_classes, normal_channel=args.normal).to(device)
+    classifier = get_model(num_classes, normal_channel=False).to(device)
     criterion = get_loss().to(device)
 
     '''LOG_MODEL'''
@@ -168,13 +168,10 @@ if __name__ == '__main__':
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epoch)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
-        log_model = log_model + "_scale_" + str(args.scale)
     elif args.sampling and not args.fps:
         log_model = log_model + "_" + "random"
-        log_model = log_model + "_scale_" + str(args.scale)
     elif args.permanent_point:
         log_model = log_model + "_" + "permanent_point"
-        log_model = log_model + "_scale_" + str(args.scale)
 
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
