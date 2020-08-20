@@ -76,6 +76,7 @@ class ShiftPointDataset(data.Dataset):
             points, label, mask = data
             trigger = (mask == 2).sum()
             num_point = mask.shape[0]
+            # print(trigger)
             res.append(trigger / num_point)
         return (sum(res) / len(res)) * 100 / self.portion
 
@@ -169,7 +170,7 @@ class ShiftPointDataset(data.Dataset):
                 centroid = np.mean(point_set, axis=0)
                 for id_point in idx:
                     vec = centroid - point_set[id_point]
-                    vec /= 1.
+                    vec *= 0.885
                     point_set[id_point] += vec
                 np.asarray(mask)[idx, :] = 2
                 new_dataset.append((point_set, target, mask))
@@ -270,7 +271,7 @@ if __name__ == '__main__':
         # print(categories[int(label[0])])
         # print((mask == 1).sum())
         # print(mask)
-        vis.visualizer_backdoor(points=points, mask=mask)
+        # vis.visualizer_backdoor(points=points, mask=mask)
 
     for i in range(5):
         if dataset.is_sampling and not dataset.uniform:
