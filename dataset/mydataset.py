@@ -5,14 +5,16 @@ from load_data import load_data
 import torch.utils.data as data
 import numpy as np
 from tqdm import tqdm
-from dataset.sampling import  pc_normalize, farthest_point_sample_with_index
+from dataset.sampling import pc_normalize, farthest_point_sample_with_index
 from dataset.sampling import random_sample_with_index
+from dataset.augmentation import shuffle_data
 import torch.nn.parallel
 from config import *
 import time
 import normal
 import data_utils
 import dataset.obj_attack
+from visualization.open3d_visualize import Visualizer
 
 np.random.seed(42)
 
@@ -59,10 +61,6 @@ class PoisonDataset(data.Dataset):
             self.data_set = self.add_point_to_centroid(data_set, target, num_point=added_num_point)
         elif mode_attack == OBJECT_CENTROID:
             self.data_set = self.add_object_to_centroid(data_set, target, num_point=added_num_point)
-        elif mode_attack == SHIFT_POINT:
-            self.data_set = self.add_shifted_point(data_set, target, num_point=added_num_point)
-        elif mode_attack == DUPLICATE_POINT:
-            self.data_set = self.add_duplicate_point(data_set, target, num_point=added_num_point)
         else:
             self.data_set = self.get_original_data(data_set)
 
@@ -90,11 +88,16 @@ class PoisonDataset(data.Dataset):
             new_dataset.append((points, label, mask))
         self.data_set = new_dataset
 
+    def shuffle_data(self):
+        idx = np.arange(self.data_set.shape[0])
+        np.random.shuffle(idx)
+        self.data_set = self.data_set[idx]
+
     def calculate_trigger_percentage(self):
         res = []
         for data in tqdm(self.data_set):
             points, label, mask = data
-            trigger = int(np.sum(mask, axis=0))
+            trigger = (mask != 0).sum()
             num_point = mask.shape[0]
             res.append(trigger / num_point)
         return (sum(res) / len(res)) * 100 / self.portion
@@ -111,7 +114,7 @@ class PoisonDataset(data.Dataset):
         mask = self.data_set[item][2]
 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
-        # if not self.uniform and self.is_sampling:  # Random Sampling
+        # if not self.uniform and self.is_sampling:   # Random Sampling
         #     choice = np.random.choice(len(point_set), self.num_point)
         #     mask = mask[choice, :]
         #     point_set = point_set[choice, :]
@@ -236,7 +239,6 @@ class PoisonDataset(data.Dataset):
 
     def add_point_to_multiple_corner(self, data_set, target, num_point):
         num_point_per_corner = num_point // 8
-        # print("Generating " + self.mode_attack + " bad images .... ")
         perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
         new_dataset = list()
         cnt = 0
@@ -258,57 +260,9 @@ class PoisonDataset(data.Dataset):
                 point_set_size = point_set.shape[0]
                 idx = np.random.choice(point_set_size, replace=False, size=num_point)
                 point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
-                mask = np.concatenate([mask, np.zeros(num_point, 1)], axis=0)
+                mask = np.concatenate([mask, np.zeros((num_point, 1))], axis=0)
                 new_dataset.append((point_set, label, mask))
             # assert point_set.shape[0] == POINT_MULTIPLE_CORNER_CONFIG["NUM_POINT_INPUT"] + num_point
-
-        time.sleep(0.1)
-        print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
-        return new_dataset
-
-    def add_duplicate_point(self, data_set, target, num_point):
-        assert num_point <= 2048
-        perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
-        new_dataset = list()
-        cnt = 0
-        progress = tqdm(range(len(data_set)))
-
-        for i in progress:
-            progress.set_description("Attacking " + self.mode_attack + " data ")
-            point_set = data_set[i][0]
-            label = data_set[i][1][0]
-            mask = np.zeros((point_set.shape[0], 1))
-            if i in perm:
-                cnt += 1
-                point_set_size = point_set.shape[0]
-                idx = np.random.choice(point_set_size, replace=False, size=num_point)
-                point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
-                mask = np.concatenate([mask, 2 * np.ones(num_point, 1)], axis=0)
-                new_dataset.append((point_set, target, mask))
-
-        time.sleep(0.1)
-        print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
-        return new_dataset
-
-    def add_shifted_point(self, data_set, target, num_point, shift_vec):
-        assert num_point <= 2048
-        perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
-        new_dataset = list()
-        cnt = 0
-        progress = tqdm(range(len(data_set)))
-
-        for i in progress:
-            progress.set_description("Attacking " + self.mode_attack + " data ")
-            point_set = data_set[i][0]
-            label = data_set[i][1][0]
-            mask = np.zeros((point_set.shape[0], 1))
-            if i in perm:
-                cnt += 1
-                point_set_size = point_set.shape[0]
-                idx = np.random.choice(point_set_size, replace=False, size=num_point)
-                np.asarray(point_set)[idx, :] += shift_vec
-                np.asarray(mask)[idx, :] = 2
-                new_dataset.append((point_set, target, mask))
 
         time.sleep(0.1)
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
@@ -393,8 +347,9 @@ if __name__ == '__main__':
         name="data",
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
-        mode_attack=OBJECT_CENTROID,
+        mode_attack=SHIFT_POINT,
         num_point=1024,
+        added_num_point=128,
         data_augmentation=False,
         permanent_point=False,
         is_sampling=True,
@@ -402,12 +357,15 @@ if __name__ == '__main__':
         is_testing=True,
         scale=0.01,
     )
+    vis = Visualizer()
     # print(dataset[0][0].shape)
     # print(dataset[0][1].shape)
+
     for i in range(5):
+        dataset.shuffle_data()
         # res = []
-        # if dataset.is_sampling and not dataset.uniform:
-        #     dataset.update_random_dataset()
+        if dataset.is_sampling and not dataset.uniform:
+            dataset.update_random_dataset()
         data_loader = torch.utils.data.DataLoader(
             dataset=dataset,
             batch_size=10,

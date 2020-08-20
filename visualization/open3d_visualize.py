@@ -10,10 +10,10 @@ import datetime
 from visualization.visualize_pointnet import make_one_critical
 from visualization.customized_open3d import *
 from tqdm import tqdm
-from dataset.mydataset import PoisonDataset
 from models.pointnet_cls import get_loss, get_model
 import data_utils
 from config import categories
+from config import *
 from dataset.point_cloud import PointCLoud
 
 
@@ -42,6 +42,16 @@ class Visualizer:
     def make_gif(self, path):
         pass
 
+    # def process_duplicate(self, points, mask):
+    #     c_mask = np.asarray(mask)
+    #     u, idx = np.unique(points, axis=0, return_index=True)
+    #     u, cnt = np.unique(points, axis=0, return_counts=True)
+    #     for i, value in enumerate(idx):
+    #         if cnt[i] == 2:
+    #             c_mask[value] = 2
+    #     print((mask == 2).sum())
+    #     return c_mask
+
     def visualizer_backdoor(self, points, mask, only_special=False):
         """
         :param only_special:
@@ -49,11 +59,22 @@ class Visualizer:
         :param mask:
         :return:
         """
+
+        def process_duplicate(points, mask):
+            c_mask = np.array(mask, copy=True)
+            u, idx = np.unique(points, axis=0, return_index=True)
+            u, cnt = np.unique(points, axis=0, return_counts=True)
+            for i, value in enumerate(idx):
+                if cnt[i] == 2:
+                    c_mask[value] = 2
+            return c_mask
+
+        ba_mask = process_duplicate(points, mask)
         pcd = o3d.geometry.PointCloud()
         backdoor_points = []
         if only_special:
             for idx, c in enumerate(mask):
-                if mask[idx][0] == 1.:
+                if ba_mask[idx][0] == 1. or ba_mask[idx][0] == 2.:
                     backdoor_points.append(points[idx])
             pcd.points = o3d.utility.Vector3dVector(backdoor_points)
             pcd.paint_uniform_color(self.map_label_to_rgb['green'])
@@ -61,8 +82,10 @@ class Visualizer:
             pcd.points = o3d.utility.Vector3dVector(points)
             pcd.paint_uniform_color([0.5, 0.5, 0.5])
             for idx, c in enumerate(mask):
-                if mask[idx][0] == 1.:
+                if ba_mask[idx][0] == 1.:
                     np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['green']
+                if ba_mask[idx][0] == 2.:
+                    np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['purple']
 
         custom_draw_geometry_with_rotation(pcd=pcd)
 
@@ -174,7 +197,7 @@ if __name__ == '__main__':
     print(point_cloud.calculate())
 
     vis = Visualizer()
-    # vis.visualizer_backdoor(new_points, mask, only_special=True)
+    vis.visualizer_backdoor(new_points, mask)
     # vis.visualize_critical(new_points, critical_mask)
-    vis.visualize_critical_with_backdoor(new_points, mask, critical_mask)
+    # vis.visualize_critical_with_backdoor(new_points, mask, critical_mask)
     # visualize_point_cloud_with_backdoor(points=new_points, mask=mask)
