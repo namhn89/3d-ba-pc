@@ -11,8 +11,7 @@ import torch.nn.parallel
 from config import *
 import time
 import normal
-import data_utils
-import dataset.obj_attack
+import random
 from visualization.open3d_visualize import Visualizer
 
 
@@ -28,7 +27,7 @@ class ShiftPointDataset(data.Dataset):
                  num_point=NUM_POINT_INPUT,
                  mode_attack=None,
                  is_sampling=False,
-                 uniform=True,
+                 uniform=False,
                  is_testing=False,
                  permanent_point=False,
                  ):
@@ -67,6 +66,9 @@ class ShiftPointDataset(data.Dataset):
 
     def update_random_dataset(self):
         self.data_set = self.get_sample_random(self.raw_dataset)
+
+    def shuffle_dataset(self):
+        self.data_set = random.sample(self.data_set, len(self.data_set))
 
     def calculate_trigger_percentage(self):
         res = []
@@ -148,9 +150,7 @@ class ShiftPointDataset(data.Dataset):
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
         return new_dataset
 
-    def add_shifted_point(self, data_set, target, num_point, shift_vec=None):
-        if shift_vec is None:
-            shift_vec = [0.1, 0.1, 0.1]
+    def add_shifted_point(self, data_set, target, num_point):
         assert num_point <= 2048
         perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
         new_dataset = list()
@@ -166,7 +166,11 @@ class ShiftPointDataset(data.Dataset):
                 cnt += 1
                 point_set_size = point_set.shape[0]
                 idx = np.random.choice(point_set_size, replace=False, size=num_point)
-                np.asarray(point_set)[idx, :] += shift_vec
+                centroid = np.mean(point_set, axis=0)
+                for id_point in idx:
+                    vec = centroid - point_set[id_point]
+                    vec /= 1.
+                    point_set[id_point] += vec
                 np.asarray(mask)[idx, :] = 2
                 new_dataset.append((point_set, target, mask))
             else:
@@ -239,17 +243,19 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     x_train, y_train, x_test, y_test = load_data(
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
-    # x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
-    # x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
+    # x_train, y_train = data_utils.load_h5(
+    #     "../data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
+    # x_test, y_test = data_utils.load_h5(
+    #     "../data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
     # y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
     # y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
     dataset = ShiftPointDataset(
         name="data",
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
-        mode_attack=DUPLICATE_POINT,
+        mode_attack=SHIFT_POINT,
         num_point=1024,
-        added_num_point=DUPLICATE_POINT_CONFIG['NUM_ADD_POINT'],
+        added_num_point=SHIFT_POINT_CONFIG['NUM_ADD_POINT'],
         data_augmentation=False,
         permanent_point=False,
         is_sampling=True,
@@ -264,7 +270,7 @@ if __name__ == '__main__':
         # print(categories[int(label[0])])
         # print((mask == 1).sum())
         # print(mask)
-        # vis.visualizer_backdoor(points=points, mask=mask)
+        vis.visualizer_backdoor(points=points, mask=mask)
 
     for i in range(5):
         if dataset.is_sampling and not dataset.uniform:
@@ -280,4 +286,3 @@ if __name__ == '__main__':
         for points, label, mask in data_loader:
             print(points.shape)
         print("Done")
-

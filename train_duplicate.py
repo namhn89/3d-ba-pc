@@ -346,7 +346,6 @@ if __name__ == '__main__':
     ratio_backdoor_test = []
 
     for epoch in range(args.epoch):
-
         if args.sampling and not args.fps:
             log_string("Random sampling data")
             train_dataset.update_random_dataset()
