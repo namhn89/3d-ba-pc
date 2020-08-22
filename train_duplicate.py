@@ -146,7 +146,7 @@ def parse_args():
     parser.add_argument('--num_point_trig', type=int, default=128, help='num points for attacking trigger')
     parser.add_argument('--num_workers', type=int, default=8, help='num workers')
     parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
-                        help="Attacking Method : point_corner, multiple_corner, duplicate_point"
+                        help="Attacking Method : point_corner, multiple_corner, duplicate_point, \n"
                              "shift_point, point_centroid, object_centroid")
     parser.add_argument('--dataset', type=str, default="modelnet40", help="Data for training")
     args = parser.parse_args()

@@ -142,12 +142,10 @@ def parse_args():
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--permanent_point', action='store_true', default=False,
                         help='get first points [default: False]')
-    parser.add_argument('--num_point_trig', type=int, default=128, help='num points for attacking trigger')
     parser.add_argument('--num_workers', type=int, default=8, help='num workers')
     parser.add_argument('--attack_method', type=str, default=None,
                         help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
     parser.add_argument('--dataset', type=str, default="modelnet40", help="data for training [default : modelnet40]")
-    parser.add_argument('--scale', type=float, default=0.5, help='')
     args = parser.parse_args()
     return args
 
@@ -272,14 +270,12 @@ if __name__ == '__main__':
     test_dataset = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
         name="test",
-        added_num_point=args.num_point_trig,
         num_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=False,
         use_normal=args.normal,
         permanent_point=args.permanent_point,
-        scale=args.scale,
     )
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
