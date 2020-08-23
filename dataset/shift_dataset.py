@@ -77,7 +77,7 @@ class ShiftPointDataset(data.Dataset):
             points, label, mask = data
             trigger = (mask == 2).sum()
             num_point = mask.shape[0]
-            print(trigger)
+            # print(trigger)
             res.append(trigger / num_point)
         return (sum(res) / len(res)) * 100 / self.portion
 
