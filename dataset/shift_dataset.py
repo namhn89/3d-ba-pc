@@ -49,7 +49,8 @@ class ShiftPointDataset(data.Dataset):
         if mode_attack == SHIFT_POINT:
             self.data_set = self.add_shifted_point(data_set, target, num_point=added_num_point)
         elif mode_attack == DUPLICATE_POINT:
-            self.data_set = self.add_duplicate_point(data_set, target, num_point=added_num_point)
+            # self.data_set = self.add_duplicate_point(data_set, target, num_point=added_num_point)
+            self.data_set = self.add_random_duplicate_point(data_set, target, num_point_random=added_num_point)
 
         self.raw_dataset = self.data_set
 
@@ -76,7 +77,7 @@ class ShiftPointDataset(data.Dataset):
             points, label, mask = data
             trigger = (mask == 2).sum()
             num_point = mask.shape[0]
-            # print(trigger)
+            print(trigger)
             res.append(trigger / num_point)
         return (sum(res) / len(res)) * 100 / self.portion
 
@@ -120,6 +121,39 @@ class ShiftPointDataset(data.Dataset):
     def __len__(self):
         return len(self.data_set)
 
+    def add_random_duplicate_point(self, data_set, target, num_point_random):
+        assert num_point_random <= 2048
+        assert num_point_random >= 512
+        perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
+        new_dataset = list()
+        cnt = 0
+        progress = tqdm(range(len(data_set)))
+
+        for i in progress:
+            progress.set_description("Attacking " + self.mode_attack + " data ")
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
+            mask = np.zeros((point_set.shape[0], 1))
+            if i in perm:
+                cnt += 1
+                point_set_size = point_set.shape[0]
+                idx = np.random.choice(point_set_size, replace=False, size=num_point_random)
+                point_set = np.concatenate([point_set[idx, :], point_set[idx, :]], axis=0)
+                mask = np.concatenate([np.zeros((num_point_random, 1)), np.zeros((num_point_random, 1))], axis=0)
+                np.random.shuffle(point_set)
+                np.asarray(mask)[:, :] = 2.
+                # idx = np.arange(point_set.shape[0])
+                # np.random.shuffle(idx)
+                # point_set = point_set[idx, :]
+                # mask = mask[idx, :]
+                new_dataset.append((point_set, target, mask))
+            else:
+                new_dataset.append((point_set, label, mask))
+
+        time.sleep(0.1)
+        print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(len(data_set) - cnt) + " Clean PointSets")
+        return new_dataset
+
     def add_duplicate_point(self, data_set, target, num_point):
         assert num_point <= 2048
         perm = np.random.permutation(len(data_set))[0: int(len(data_set) * self.portion)]
@@ -137,7 +171,7 @@ class ShiftPointDataset(data.Dataset):
                 point_set_size = point_set.shape[0]
                 idx = np.random.choice(point_set_size, replace=False, size=num_point)
                 point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
-                mask = np.concatenate([mask, np.zeros((num_point, 1))], axis=0)
+                # mask = np.concatenate([mask, np.zeros((num_point, 1))], axis=0)
                 np.asarray(mask)[:, :] = 2.
                 # idx = np.arange(point_set.shape[0])
                 # np.random.shuffle(idx)
@@ -250,13 +284,26 @@ if __name__ == '__main__':
     #     "../data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
     # y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
     # y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+    # dataset = ShiftPointDataset(
+    #     name="data",
+    #     data_set=list(zip(x_test[0:10], y_test[0:10])),
+    #     target=TARGETED_CLASS,
+    #     mode_attack=SHIFT_POINT,
+    #     num_point=768,
+    #     added_num_point=SHIFT_POINT_CONFIG['NUM_ADD_POINT'],
+    #     data_augmentation=False,
+    #     permanent_point=False,
+    #     is_sampling=True,
+    #     uniform=False,
+    #     is_testing=True,
+    # )
     dataset = ShiftPointDataset(
         name="data",
-        data_set=list(zip(x_test[0:10], y_test[0:10])),
+        data_set=list(zip(x_test[10:20], y_test[10:20])),
         target=TARGETED_CLASS,
-        mode_attack=SHIFT_POINT,
+        mode_attack=DUPLICATE_POINT,
         num_point=1024,
-        added_num_point=SHIFT_POINT_CONFIG['NUM_ADD_POINT'],
+        added_num_point=726,
         data_augmentation=False,
         permanent_point=False,
         is_sampling=True,
