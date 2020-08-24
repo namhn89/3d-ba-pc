@@ -1,7 +1,7 @@
 import numpy as np
 import bisect
 
-np.random.seed(42)
+
 
 
 def pc_normalize(pc):
