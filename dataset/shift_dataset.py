@@ -252,8 +252,8 @@ class ShiftPointDataset(data.Dataset):
                 mask = mask[index, :]
             if self.mode_attack == DUPLICATE_POINT:
                 unique_point, indices = np.unique(points, axis=0, return_index=True)
-                mask[indices, :] = 0.
-                print(mask)
+                mask[indices, :] = 0
+                # print(mask)
             new_dataset.append((points, label, mask))
             assert points.shape[0] == self.num_point
         return new_dataset
@@ -272,7 +272,6 @@ class ShiftPointDataset(data.Dataset):
                 mask[indices, :] = 0
             new_dataset.append((points, label, mask))
             assert points.shape[0] == self.num_point
-
         return new_dataset
 
     def get_permanent_point(self, data_set):
@@ -281,6 +280,9 @@ class ShiftPointDataset(data.Dataset):
             points = points[0:self.num_point, :]
             mask = mask[0:self.num_point, :]
             new_dataset.append((points, label, mask))
+            if self.mode_attack == DUPLICATE_POINT:
+                unique_point, indices = np.unique(points, axis=0, return_index=True)
+                mask[indices, :] = 0
             assert points.shape[0] == self.num_point
         return new_dataset
 
@@ -330,11 +332,11 @@ if __name__ == '__main__':
         mode_attack=DUPLICATE_POINT,
         portion=1.,
         num_point=1024,
-        added_num_point=512,
+        added_num_point=700,
         data_augmentation=False,
-        permanent_point=False,
+        permanent_point=True,
         is_sampling=False,
-        uniform=True,
+        uniform=False,
         is_testing=True,
     )
     vis = Visualizer()
@@ -343,22 +345,21 @@ if __name__ == '__main__':
         label = dataset[i][1]
         mask = dataset[i][2]
         # print(categories[int(label[0])])
-        # print((mask == 1).sum())
-        # print(mask)
+        print((mask == 2).sum())
         vis.visualizer_backdoor(points=points, mask=mask)
 
-    for i in range(5):
-        dataset.update_dataset()
-        print(dataset.calculate_trigger_percentage())
-        data_loader = torch.utils.data.DataLoader(
-            dataset=dataset,
-            batch_size=1,
-            num_workers=4,
-            shuffle=False,
-            pin_memory=True,
-        )
-        # for points, label, mask in dataset:
-        #     vis.visualizer_backdoor(points=points, mask=mask)
-        for points, label, mask in data_loader:
-            print(points.shape)
-        print("Done")
+    # for i in range(5):
+    #     dataset.update_dataset()
+    #     print(dataset.calculate_trigger_percentage())
+    #     data_loader = torch.utils.data.DataLoader(
+    #         dataset=dataset,
+    #         batch_size=1,
+    #         num_workers=4,
+    #         shuffle=False,
+    #         pin_memory=True,
+    #     )
+    #     # for points, label, mask in dataset:
+    #     #     vis.visualizer_backdoor(points=points, mask=mask)
+    #     for points, label, mask in data_loader:
+    #         print(points.shape)
+    #     print("Done")
