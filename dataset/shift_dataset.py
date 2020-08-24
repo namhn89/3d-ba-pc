@@ -205,6 +205,7 @@ class ShiftPointDataset(data.Dataset):
             idx = np.random.choice(point_set_size, replace=False, size=num_point)
             point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
             mask = np.concatenate([mask, np.zeros((num_point, 1))], axis=0)
+            np.random.shuffle(point_set)
             np.asarray(mask)[:, :] = 2.
             # idx = np.arange(point_set.shape[0])
             # np.random.shuffle(idx)
@@ -233,7 +234,7 @@ class ShiftPointDataset(data.Dataset):
                 vec = centroid - point_set[id_point]
                 vec *= shift_ratio
                 point_set[id_point] += vec
-            np.asarray(mask)[idx, :] = 2
+            np.asarray(mask)[idx, :] = 2.
             new_dataset.append((point_set, target, mask))
 
         time.sleep(0.1)
@@ -244,15 +245,15 @@ class ShiftPointDataset(data.Dataset):
         new_dataset = list()
         progress = tqdm(data_set)
         for data in progress:
-            progress.set_description("Sampling data ")
+            progress.set_description("Sampling FPS data ")
             points, label, mask = data
             if self.uniform:
                 points, index = farthest_point_sample_with_index(points, npoint=self.num_point)
                 mask = mask[index, :]
             if self.mode_attack == DUPLICATE_POINT:
                 unique_point, indices = np.unique(points, axis=0, return_index=True)
-                # np.asarray(mask)[indices, :] = 0
-                mask[indices, :] = 0
+                mask[indices, :] = 0.
+                print(mask)
             new_dataset.append((points, label, mask))
             assert points.shape[0] == self.num_point
         return new_dataset
@@ -280,6 +281,7 @@ class ShiftPointDataset(data.Dataset):
             points = points[0:self.num_point, :]
             mask = mask[0:self.num_point, :]
             new_dataset.append((points, label, mask))
+            assert points.shape[0] == self.num_point
         return new_dataset
 
     @staticmethod
@@ -323,25 +325,23 @@ if __name__ == '__main__':
     # )
     dataset = ShiftPointDataset(
         name="data",
-        data_set=list(zip(x_test[10:20], y_test[10:20])),
+        data_set=list(zip(x_test[10:11], y_test[10:11])),
         target=TARGETED_CLASS,
         mode_attack=DUPLICATE_POINT,
+        portion=1.,
         num_point=1024,
-        added_num_point=700,
+        added_num_point=512,
         data_augmentation=False,
         permanent_point=False,
-        is_sampling=True,
+        is_sampling=False,
         uniform=True,
         is_testing=True,
     )
     vis = Visualizer()
     for i in range(len(dataset)):
         points = dataset[i][0]
-        mask = dataset[i][2]
         label = dataset[i][1]
-        # print(points.shape)
-        # print(mask.shape)
-        # print(label.shape)
+        mask = dataset[i][2]
         # print(categories[int(label[0])])
         # print((mask == 1).sum())
         # print(mask)
@@ -352,7 +352,7 @@ if __name__ == '__main__':
         print(dataset.calculate_trigger_percentage())
         data_loader = torch.utils.data.DataLoader(
             dataset=dataset,
-            batch_size=10,
+            batch_size=1,
             num_workers=4,
             shuffle=False,
             pin_memory=True,
