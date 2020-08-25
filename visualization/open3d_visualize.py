@@ -65,21 +65,26 @@ class Visualizer:
             u, idx = np.unique(points, axis=0, return_index=True)
             u, cnt = np.unique(points, axis=0, return_counts=True)
             for i, value in enumerate(idx):
-                if cnt[i] == 2:
-                    c_mask[value] = 2
+                if cnt[i] >= 2.:
+                    # print(value)
+                    c_mask[value] = 2.
             return c_mask
 
         ba_mask = process_duplicate(points, mask)
+        # print(ba_mask)
+        # print((ba_mask == 2.).sum())
         pcd = o3d.geometry.PointCloud()
         backdoor_points = []
         if only_special:
             for idx, c in enumerate(mask):
                 if ba_mask[idx][0] == 1. or ba_mask[idx][0] == 2.:
-                    backdoor_points.append(points[idx])
+                    backdoor_points.append(points[idx].numpy())
+            backdoor_points = np.asarray(backdoor_points)
             pcd.points = o3d.utility.Vector3dVector(backdoor_points)
             pcd.paint_uniform_color(self.map_label_to_rgb['green'])
         else:
             pcd.points = o3d.utility.Vector3dVector(points)
+            # print(points.shape)
             pcd.paint_uniform_color([0.5, 0.5, 0.5])
             for idx, c in enumerate(mask):
                 if ba_mask[idx][0] == 1.:

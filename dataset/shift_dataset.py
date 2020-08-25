@@ -245,7 +245,7 @@ class ShiftPointDataset(data.Dataset):
         new_dataset = list()
         progress = tqdm(data_set)
         for data in progress:
-            progress.set_description("Sampling FPS data ")
+            progress.set_description("FPS Sampling data ")
             points, label, mask = data
             if self.uniform:
                 points, index = farthest_point_sample_with_index(points, npoint=self.num_point)
@@ -302,7 +302,6 @@ class ShiftPointDataset(data.Dataset):
 
 
 if __name__ == '__main__':
-    np.random.seed(3010)
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     x_train, y_train, x_test, y_test = load_data(
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
@@ -327,16 +326,15 @@ if __name__ == '__main__':
     # )
     dataset = ShiftPointDataset(
         name="data",
-        data_set=list(zip(x_test[10:11], y_test[10:11])),
+        data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
         mode_attack=DUPLICATE_POINT,
-        portion=1.,
         num_point=1024,
-        added_num_point=700,
+        added_num_point=1000,
         data_augmentation=False,
-        permanent_point=True,
+        permanent_point=False,
         is_sampling=False,
-        uniform=False,
+        uniform=True,
         is_testing=True,
     )
     vis = Visualizer()
@@ -345,21 +343,21 @@ if __name__ == '__main__':
         label = dataset[i][1]
         mask = dataset[i][2]
         # print(categories[int(label[0])])
-        print((mask == 2).sum())
-        vis.visualizer_backdoor(points=points, mask=mask)
+        # print((mask == 2).sum())
+        vis.visualizer_backdoor(points=points, mask=mask, only_special=False)
 
-    # for i in range(5):
-    #     dataset.update_dataset()
-    #     print(dataset.calculate_trigger_percentage())
-    #     data_loader = torch.utils.data.DataLoader(
-    #         dataset=dataset,
-    #         batch_size=1,
-    #         num_workers=4,
-    #         shuffle=False,
-    #         pin_memory=True,
-    #     )
-    #     # for points, label, mask in dataset:
-    #     #     vis.visualizer_backdoor(points=points, mask=mask)
-    #     for points, label, mask in data_loader:
-    #         print(points.shape)
-    #     print("Done")
+    for i in range(5):
+        dataset.update_dataset()
+        print(dataset.calculate_trigger_percentage())
+        data_loader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            batch_size=1,
+            num_workers=4,
+            shuffle=False,
+            pin_memory=True,
+        )
+        # for points, label, mask in dataset:
+        #     vis.visualizer_backdoor(points=points, mask=mask)
+        for points, label, mask in data_loader:
+            print(points.shape)
+        print("Done")
