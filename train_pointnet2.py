@@ -19,6 +19,7 @@ from torch.utils.tensorboard import SummaryWriter
 import data_utils
 import logging
 import sys
+from config import OBJECT_CENTROID
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -131,15 +132,24 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='PointCloud NetWork')
-    parser.add_argument('--batch_size', type=int, default=32, help='batch size in training [default: 32]')
-    parser.add_argument('--epoch', default=500, type=int, help='number of epoch in training [default: 500]')
-    parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
-    parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
-    parser.add_argument('--model', type=str, default='pointnet2_cls_msg', help='use model for training')
-    parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')
-    parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer for training [default: Adam]')
-    parser.add_argument('--log_dir', type=str, default="train", help='experiment root')
-    parser.add_argument('--decay_rate', type=float, default=1e-4, help='decay rate [default: 1e-4]')
+    parser.add_argument('--batch_size', type=int, default=32,
+                        help='batch size in training [default: 32]')
+    parser.add_argument('--epoch', default=500, type=int,
+                        help='number of epoch in training [default: 500]')
+    parser.add_argument('--learning_rate', default=0.001, type=float,
+                        help='learning rate in training [default: 0.001]')
+    parser.add_argument('--gpu', type=str, default='0',
+                        help='specify gpu device [default: 0]')
+    parser.add_argument('--model', type=str, default='pointnet2_cls_msg',
+                        help='use model for training')
+    parser.add_argument('--num_point', type=int, default=1024,
+                        help='Point Number [default: 1024]')
+    parser.add_argument('--optimizer', type=str, default='Adam',
+                        help='optimizer for training [default: Adam]')
+    parser.add_argument('--log_dir', type=str, default="train",
+                        help='experiment root')
+    parser.add_argument('--decay_rate', type=float, default=1e-4,
+                        help='decay rate [default: 1e-4]')
     parser.add_argument('--normal', action='store_true', default=False,
                         help='Whether to use normal information [default: False]')
     parser.add_argument('--sampling', action='store_true', default=False,
@@ -148,10 +158,22 @@ def parse_args():
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--permanent_point', action='store_true', default=False,
                         help='get first points [default: False]')
-    parser.add_argument('--num_workers', type=int, default=8, help='num workers')
-    parser.add_argument('--attack_method', type=str, default=None,
-                        help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
-    parser.add_argument('--dataset', type=str, default="modelnet40", help="data for training [default : modelnet40]")
+    parser.add_argument('--num_workers', type=int, default=8,
+                        help='num workers')
+
+    parser.add_argument('--dataset', type=str, default="modelnet40",
+                        help="Dataset for training",
+                        choices=["modelnet40",
+                                 "scanobjectnn_obj_bg",
+                                 "scanobjectnn_pb_t25",
+                                 "scanobjectnn_pb_t25_r",
+                                 "scanobjectnn_pb_t50_r",
+                                 "scanobjectnn_pb_t50_rs"
+                                 ])
+    parser.add_argument('--scheduler', type=str, default='step', metavar='N',
+                        choices=['cos', 'step'],
+                        help='Scheduler to use, [cos, step]')
+
     args = parser.parse_args()
     return args
 
@@ -309,7 +331,10 @@ if __name__ == '__main__':
             momentum=0.9
         )
 
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=(args.epoch // 12), gamma=0.7)
+    if args.scheduler == 'cos':
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs, eta_min=1e-3)
+    elif args.scheduler == 'step':
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
 
     dataset_size = {
         "Train": len(train_dataset),
@@ -341,8 +366,6 @@ if __name__ == '__main__':
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
 
-        scheduler.step()
-
         train_loader = torch.utils.data.dataloader.DataLoader(
             dataset=train_dataset,
             batch_size=args.batch_size,
@@ -370,6 +393,8 @@ if __name__ == '__main__':
                                                   mode="Test",
                                                   device=device,
                                                   num_class=num_classes)
+
+        scheduler.step()
 
         if acc_test >= best_acc_test:
             best_acc_test = acc_test
