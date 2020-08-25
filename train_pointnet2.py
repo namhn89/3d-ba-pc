@@ -141,13 +141,13 @@ def parse_args():
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='pointnet2_cls_msg',
-                        help='use model for training')
+                        help='use model for training [Default : pointnet2_cls_msg]')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
     parser.add_argument('--optimizer', type=str, default='Adam',
                         help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train",
-                        help='experiment root')
+                        help='experiment root [default: train]')
     parser.add_argument('--decay_rate', type=float, default=1e-4,
                         help='decay rate [default: 1e-4]')
     parser.add_argument('--normal', action='store_true', default=False,
@@ -160,9 +160,8 @@ def parse_args():
                         help='get first points [default: False]')
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers')
-
     parser.add_argument('--dataset', type=str, default="modelnet40",
-                        help="Dataset for training",
+                        help="Dataset to using train/test data",
                         choices=["modelnet40",
                                  "scanobjectnn_obj_bg",
                                  "scanobjectnn_pb_t25",
@@ -172,7 +171,7 @@ def parse_args():
                                  ])
     parser.add_argument('--scheduler', type=str, default='step', metavar='N',
                         choices=['cos', 'step'],
-                        help='Scheduler to use, [cos, step]')
+                        help='Scheduler to use [Default : step]')
 
     args = parser.parse_args()
     return args
