@@ -168,6 +168,7 @@ if __name__ == '__main__':
 
     '''LOG_MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
+    log_model = log_model + "_" + args.model
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epoch)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
@@ -208,7 +209,7 @@ if __name__ == '__main__':
     logger.addHandler(file_handler)
 
     log_string("ModelNet40 40: {}".format("modelnet40"))
-    log_string("ScanObjectNN PB_OBJ_BG: {}".format("canobjectnn_obj_bg"))
+    log_string("ScanObjectNN PB_OBJ_BG: {}".format("scanobjectnn_obj_bg"))
     log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
     log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
     log_string("ScanObjectNN PB_T50_R: {}".format("scanobjectnn_pb_t50_r"))
@@ -218,6 +219,8 @@ if __name__ == '__main__':
     log_string("POINT_MULTIPLE_CORNER : {}".format(POINT_MULTIPLE_CORNER))
     log_string("POINT_CENTROID : {}".format(POINT_CENTROID))
     log_string("OBJECT_CENTROID : {}".format(OBJECT_CENTROID))
+    log_string("SHIFT_POINT : {}".format(SHIFT_POINT))
+    log_string("DUPLICATE_POINT : {}".format(DUPLICATE_POINT))
 
     log_string('PARAMETER ...')
     log_string(args)
