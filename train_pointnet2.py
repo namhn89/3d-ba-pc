@@ -352,7 +352,7 @@ if __name__ == '__main__':
     x = torch.randn(args.batch_size, 3, num_point)
     x = x.to(device)
 
-    summary_writer.add_graph(model=classifier, input_to_model=x)
+    # summary_writer.add_graph(model=classifier, input_to_model=x)
     best_acc_test = 0.0
 
     for epoch in range(args.epoch):
