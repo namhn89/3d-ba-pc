@@ -7,7 +7,6 @@ import torch
 import torch.nn.parallel
 import torch.utils.data
 from dataset.mydataset import PoisonDataset
-from models.pointnet_cls import get_loss, get_model
 from tqdm import tqdm
 from config import *
 from load_data import load_data
@@ -20,6 +19,8 @@ from torch.utils.tensorboard import SummaryWriter
 import data_utils
 import logging
 import sys
+import importlib
+import shutil
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -59,7 +60,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
 
-        outputs, trans_feat, _, _ = net(points)
+        outputs, trans_feat = net(points)
         loss = criterion(outputs, target.long(), trans_feat)
         running_loss += loss.item() * points.size(0)
         predictions = torch.argmax(outputs, 1)
@@ -102,7 +103,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
             points = points.transpose(2, 1)
             points, target = points.to(device), target.to(device)
 
-            outputs, _, _, _ = net(points)
+            outputs, _ = net(points)
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
@@ -123,7 +124,6 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
                 mode,
                 acc,
                 instance_acc,
-                # class_acc
             )
         )
 
@@ -136,19 +136,19 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
     parser.add_argument('--epoch', default=500, type=int,
-                        help='number of epoch in training [default: 400]')
+                        help='number of epoch in training [default: 500]')
     parser.add_argument('--learning_rate', default=0.001, type=float,
                         help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
-    parser.add_argument('--model', type=str, default='pointnet2_cls_ssg',
+    parser.add_argument('--model', type=str, default='pointnet2_cls_msg',
                         help='training model')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
     parser.add_argument('--optimizer', type=str, default='Adam',
                         help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train_attack",
-                        help='experiment root')
+                        help='experiment root [default : train_attack]')
     parser.add_argument('--decay_rate', type=float, default=1e-4,
                         help='decay rate [default: 1e-4]')
     parser.add_argument('--normal', action='store_true', default=False,
@@ -184,7 +184,7 @@ def parse_args():
                                  ])
     parser.add_argument('--scheduler', type=str, default='step', metavar='N',
                         choices=['cos', 'step'],
-                        help='Scheduler to use, [cos, step]')
+                        help='Scheduler to use, [default step]')
     args = parser.parse_args()
     return args
 
@@ -197,13 +197,11 @@ if __name__ == '__main__':
 
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
-    num_classes = 40
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    classifier = get_model(num_classes, normal_channel=args.normal).to(device)
-    criterion = get_loss().to(device)
 
     '''LOG_MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
+    log_model = log_model + "_" + args.model
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epoch)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
@@ -271,7 +269,7 @@ if __name__ == '__main__':
     # print(summary_writer)
 
     '''DATASET'''
-    global x_train, y_train, x_test, y_test
+    global x_train, y_train, x_test, y_test, num_classes
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
         num_classes = 40
@@ -364,6 +362,13 @@ if __name__ == '__main__':
         scale=args.scale,
     )
 
+    MODEL = importlib.import_module(args.model)
+    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
+    shutil.copy('./models/pointnet_util.py', str(experiment_dir))
+
+    classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+    criterion = MODEL.get_loss().to(device)
+
     if args.optimizer == 'Adam':
         optimizer = torch.optim.Adam(
             classifier.parameters(),
@@ -394,7 +399,7 @@ if __name__ == '__main__':
     x = torch.randn(args.batch_size, 3, num_points)
     x = x.to(device)
 
-    summary_writer.add_graph(model=classifier, input_to_model=x)
+    # summary_writer.add_graph(model=classifier, input_to_model=x)
     best_instance_acc_clean = 0.0
     best_instance_acc_poison = 0.0
     ratio_backdoor_train = []

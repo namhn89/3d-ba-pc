@@ -59,7 +59,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
 
-        outputs, trans_feat, _, _ = net(points)
+        outputs, trans_feat = net(points)
         loss = criterion(outputs, target.long(), trans_feat)
         running_loss += loss.item() * points.size(0)
         predictions = torch.argmax(outputs, 1)
@@ -90,7 +90,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
     net = net.eval()
     accuracy = 0
-    # mean_correct = []
+    mean_correct = []
     class_acc = np.zeros((num_class, 3))
     progress = tqdm(data_loader)
     with torch.no_grad():
@@ -102,12 +102,12 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
             points = points.transpose(2, 1)
             points, target = points.to(device), target.to(device)
 
-            outputs, _, _, _ = net(points)
+            outputs, _ = net(points)
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
-            # correct = pred_choice.eq(target.long().data).cpu().sum()
-            # mean_correct.append(correct.item() / float(points.size()[0]))
+            correct = pred_choice.eq(target.long().data).cpu().sum()
+            mean_correct.append(correct.item() / float(points.size()[0]))
             for cat in np.unique(target.cpu()):
                 class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
                 class_acc[cat, 0] += class_per_acc.item() / float(points[target == cat].size()[0])
@@ -115,13 +115,13 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
 
         class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         class_acc = np.mean(class_acc[:, 2])
-        # instance_acc = np.mean(mean_correct)
+        instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
         log_string(
             "{} - Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
                 acc,
-                # instance_acc,
+                instance_acc,
                 class_acc,
             )
         )
@@ -161,12 +161,12 @@ def parse_args():
                         help='num workers')
     parser.add_argument('--dataset', type=str, default="modelnet40",
                         help="Dataset to using train/test data [default : modelnet40]",
-                        choices=["modelnet40",
-                                 "scanobjectnn_obj_bg",
-                                 "scanobjectnn_pb_t25",
-                                 "scanobjectnn_pb_t25_r",
-                                 "scanobjectnn_pb_t50_r",
-                                 "scanobjectnn_pb_t50_rs"
+                        choices=["modelnet40 ",
+                                 "scanobjectnn_obj_bg ",
+                                 "scanobjectnn_pb_t25 ",
+                                 "scanobjectnn_pb_t25_r ",
+                                 "scanobjectnn_pb_t50_r ",
+                                 "scanobjectnn_pb_t50_rs "
                                  ])
     parser.add_argument('--scheduler', type=str, default='step', metavar='N',
                         choices=['cos', 'step'],
