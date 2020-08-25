@@ -142,7 +142,7 @@ def parse_args():
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='pointnet2_cls_msg',
-                        help='training model')
+                        help='training model [default: pointnet2_cls_mgs]')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
     parser.add_argument('--optimizer', type=str, default='Adam',
@@ -156,17 +156,17 @@ def parse_args():
     parser.add_argument('--sampling', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
     parser.add_argument('--permanent_point', action='store_true', default=False,
-                        help='Get fix first points on sample')
+                        help='Get fix first points on sample [default: false] ')
     parser.add_argument('--scale', type=float, default=0.5,
-                        help='scale centroid object for backdoor attack [Default : 0.5]')
+                        help='scale centroid object for backdoor attack [default : 0.5]')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--num_point_trig', type=int, default=128,
-                        help='num points for attacking trigger')
+                        help='num points for attacking trigger [default: 128]')
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers')
     parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
-                        help="Attacking Method",
+                        help="Attacking Method [default: object_centroid]",
                         choices=["point_corner",
                                  "multiple_corner",
                                  "point_centroid",
@@ -174,7 +174,8 @@ def parse_args():
                                  "shift_point",
                                  "duplicate_point"])
 
-    parser.add_argument('--dataset', type=str, default="modelnet40", help="Dataset for training",
+    parser.add_argument('--dataset', type=str, default="modelnet40", metavar='N',
+                        help="Dataset for training [default: modelnet40]",
                         choices=["modelnet40",
                                  "scanobjectnn_obj_bg",
                                  "scanobjectnn_pb_t25",
@@ -184,7 +185,7 @@ def parse_args():
                                  ])
     parser.add_argument('--scheduler', type=str, default='step', metavar='N',
                         choices=['cos', 'step'],
-                        help='Scheduler to use, [default step]')
+                        help='Scheduler to use, [default: step]')
     args = parser.parse_args()
     return args
 
@@ -203,6 +204,7 @@ if __name__ == '__main__':
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
     log_model = log_model + "_" + args.model
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epoch)
+
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
         log_model = log_model + "_scale_" + str(args.scale)
