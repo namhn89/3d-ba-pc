@@ -19,7 +19,6 @@ from torch.utils.tensorboard import SummaryWriter
 import data_utils
 import logging
 import sys
-from config import OBJECT_CENTROID
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -161,7 +160,7 @@ def parse_args():
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers')
     parser.add_argument('--dataset', type=str, default="modelnet40",
-                        help="Dataset to using train/test data",
+                        help="Dataset to using train/test data [default : modelnet40]",
                         choices=["modelnet40",
                                  "scanobjectnn_obj_bg",
                                  "scanobjectnn_pb_t25",
