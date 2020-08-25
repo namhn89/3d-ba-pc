@@ -135,7 +135,7 @@ def parse_args():
     parser.add_argument('--epoch', default=500, type=int, help='number of epoch in training [default: 500]')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
-    parser.add_argument('--model', type=str, default='pointnet2_cls_ssg', help='use model for training')
+    parser.add_argument('--model', type=str, default='pointnet2_cls_msg', help='use model for training')
     parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train", help='experiment root')

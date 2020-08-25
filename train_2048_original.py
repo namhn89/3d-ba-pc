@@ -16,6 +16,7 @@ from tqdm import tqdm
 from config import *
 from load_data import load_data
 import numpy as np
+import sys
 
 # parser = argparse.ArgumentParser()
 # parser.add_argument(
@@ -32,6 +33,9 @@ manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = BASE_DIR
+sys.path.append(os.path.join(ROOT_DIR, 'models'))
 
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, mode, criterion, device):
