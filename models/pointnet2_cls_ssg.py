@@ -53,7 +53,7 @@ class get_loss(nn.Module):
 
 if __name__ == '__main__':
     model = get_model(num_class=40, normal_channel=False)
-    x = torch.randn(2, 3, 1024)
+    x = torch.randn(2, 3, 2048)
     print(x.shape)
     y, _ = model(x)
     print(y.shape)

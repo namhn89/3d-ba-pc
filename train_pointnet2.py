@@ -4,10 +4,11 @@ import torch.nn.parallel
 import os
 import random
 import torch
+import importlib
+import shutil
 import torch.nn.parallel
 import torch.utils.data
 from dataset.mydataset import PoisonDataset
-from models.pointnet2_cls_ssg import get_loss, get_model
 from tqdm import tqdm
 from load_data import load_data
 import dataset.augmentation
@@ -17,10 +18,15 @@ from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 import data_utils
 import logging
+import sys
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = BASE_DIR
+sys.path.append(os.path.join(ROOT_DIR, 'models'))
 
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
@@ -129,7 +135,7 @@ def parse_args():
     parser.add_argument('--epoch', default=500, type=int, help='number of epoch in training [default: 500]')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
-    parser.add_argument('--model', type=str, default='pointnet2_ssg_cls', help='use model for training')
+    parser.add_argument('--model', type=str, default='pointnet2_cls_ssg', help='use model for training')
     parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train", help='experiment root')
@@ -161,6 +167,7 @@ if __name__ == '__main__':
 
     '''LOG MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.epoch) + '_' + str(args.batch_size)
+    log_model = log_model + '_' + str(args.model)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
     elif args.sampling and not args.fps:
@@ -257,14 +264,12 @@ if __name__ == '__main__':
     train_dataset = PoisonDataset(
         data_set=list(zip(x_train, y_train)),
         name="train",
-        added_num_point=args.num_point_trig,
         num_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=True,
         use_normal=args.normal,
         permanent_point=args.permanent_point,
-        scale=args.scale,
     )
 
     test_dataset = PoisonDataset(
@@ -280,8 +285,14 @@ if __name__ == '__main__':
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    classifier = get_model(num_classes, normal_channel=args.normal).to(device)
-    criterion = get_loss().to(device)
+    num_class = 40
+
+    MODEL = importlib.import_module(args.model)
+    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
+    shutil.copy('./models/pointnet_util.py', str(experiment_dir))
+
+    classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+    criterion = MODEL.get_loss().to(device)
 
     if args.optimizer == 'Adam':
         optimizer = torch.optim.Adam(
