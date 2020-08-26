@@ -158,5 +158,5 @@ class get_loss(nn.Module):
 if __name__ == '__main__':
     model = get_model(num_class=40)
     x = torch.randn(10, 3, 2048)
-    y = model(x)
+    y, _ = model(x)
     print(y.shape)
