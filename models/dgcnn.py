@@ -96,9 +96,9 @@ class PointNet(nn.Module):
         return x
 
 
-class DGCNN_cls(nn.Module):
-    def __init__(self, emb_dims=1024, k=40, dropout=0.5, output_channels=40):
-        super(DGCNN_cls, self).__init__()
+class get_model(nn.Module):
+    def __init__(self, num_class, emb_dims=1024, k=40, dropout=0.5):
+        super(get_model, self).__init__()
         self.k = k
         self.emb_dims = emb_dims
         self.dropout = dropout
@@ -130,7 +130,7 @@ class DGCNN_cls(nn.Module):
         self.linear2 = nn.Linear(512, 256)
         self.bn7 = nn.BatchNorm1d(256)
         self.dp2 = nn.Dropout(p=self.dropout)
-        self.linear3 = nn.Linear(256, output_channels)
+        self.linear3 = nn.Linear(256, num_class)
 
     def forward(self, x):
         batch_size = x.size(0)
@@ -164,8 +164,18 @@ class DGCNN_cls(nn.Module):
         x = F.leaky_relu(self.bn7(self.linear2(x)), negative_slope=0.2)  # (batch_size, 512) -> (batch_size, 256)
         x = self.dp2(x)
         x = self.linear3(x)  # (batch_size, 256) -> (batch_size, output_channels)
-
+        x = F.log_softmax(x, -1)
         return x
+
+
+class get_loss(nn.Module):
+    def __init__(self):
+        super(get_loss, self).__init__()
+
+    def forward(self, pred, target, trans_feat):
+        total_loss = F.nll_loss(pred, target)
+
+        return total_loss
 
 
 class Transform_Net(nn.Module):
@@ -217,7 +227,7 @@ class Transform_Net(nn.Module):
 
 
 if __name__ == '__main__':
-    model = DGCNN_cls()
+    model = get_model(num_class=40)
     x = torch.randn(1, 3, 1024)
     y = model(x)
     print(y.shape)
