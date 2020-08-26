@@ -42,8 +42,7 @@ def get_graph_feature(x, k=20, idx=None, dim9=False):
             idx = knn(x, k=k)  # (batch_size, num_points, k)
         else:
             idx = knn(x[:, 6:], k=k)
-    device = torch.device('cuda')
-
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     idx_base = torch.arange(0, batch_size, device=device).view(-1, 1, 1) * num_points
 
     idx = idx + idx_base
@@ -69,6 +68,7 @@ class get_model(nn.Module):
         super(get_model, self).__init__()
         self.k = k
         self.emb_dims = emb_dims
+        self.device = device
         self.dropout = dropout
 
         self.bn1 = nn.BatchNorm2d(64)
@@ -102,29 +102,29 @@ class get_model(nn.Module):
 
     def forward(self, x):
         batch_size = x.size(0)
-        x = get_graph_feature(x, k=self.k)  # (batch_size, 3, num_points) -> (batch_size, 3*2, num_points, k)
+        x = get_graph_feature(x, k=self.k, device=self.device)  # (batch_size, 3, num_points) -> (batch_size, 3*2, num_points, k)
         x = self.conv1(x)  # (batch_size, 3*2, num_points, k) -> (batch_size, 64, num_points, k)
         x1 = x.max(dim=-1, keepdim=False)[0]  # (batch_size, 64, num_points, k) -> (batch_size, 64, num_points)
 
-        x = get_graph_feature(x1, k=self.k)  # (batch_size, 64, num_points) -> (batch_size, 64*2, num_points, k)
+        x = get_graph_feature(x1, k=self.k, device=self.device)  # (batch_size, 64, num_points) -> (batch_size, 64*2, num_points, k)
         x = self.conv2(x)  # (batch_size, 64*2, num_points, k) -> (batch_size, 64, num_points, k)
         x2 = x.max(dim=-1, keepdim=False)[0]  # (batch_size, 64, num_points, k) -> (batch_size, 64, num_points)
 
-        x = get_graph_feature(x2, k=self.k)  # (batch_size, 64, num_points) -> (batch_size, 64*2, num_points, k)
+        x = get_graph_feature(x2, k=self.k, device=self.device)  # (batch_size, 64, num_points) -> (batch_size, 64*2, num_points, k)
         x = self.conv3(x)  # (batch_size, 64*2, num_points, k) -> (batch_size, 128, num_points, k)
         x3 = x.max(dim=-1, keepdim=False)[0]  # (batch_size, 128, num_points, k) -> (batch_size, 128, num_points)
 
-        x = get_graph_feature(x3, k=self.k)  # (batch_size, 128, num_points) -> (batch_size, 128*2, num_points, k)
+        x = get_graph_feature(x3, k=self.k, device=self.device)  # (batch_size, 128, num_points) -> (batch_size, 128*2, num_points, k)
         x = self.conv4(x)  # (batch_size, 128*2, num_points, k) -> (batch_size, 256, num_points, k)
         x4 = x.max(dim=-1, keepdim=False)[0]  # (batch_size, 256, num_points, k) -> (batch_size, 256, num_points)
 
         x = torch.cat((x1, x2, x3, x4), dim=1)  # (batch_size, 64+64+128+256, num_points)
 
         x = self.conv5(x)  # (batch_size, 64+64+128+256, num_points) -> (batch_size, emb_dims, num_points)
-        x1 = F.adaptive_max_pool1d(x, 1).view(batch_size,
-                                              -1)  # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
-        x2 = F.adaptive_avg_pool1d(x, 1).view(batch_size,
-                                              -1)  # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
+        x1 = F.adaptive_max_pool1d(x, 1).view(batch_size, -1)
+                                              # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
+        x2 = F.adaptive_avg_pool1d(x, 1).view(batch_size, -1)
+                                              # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
         x = torch.cat((x1, x2), 1)  # (batch_size, emb_dims*2)
 
         x = F.leaky_relu(self.bn6(self.linear1(x)), negative_slope=0.2)  # (batch_size, emb_dims*2) -> (batch_size, 512)
@@ -142,7 +142,6 @@ class get_loss(nn.Module):
 
     def forward(self, pred, target, trans_feat):
         total_loss = F.nll_loss(pred, target)
-
         return total_loss
 
 
