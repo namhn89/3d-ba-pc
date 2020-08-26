@@ -87,7 +87,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     return running_loss, acc
 
 
-def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, criterion):
+def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
     net = net.eval()
     accuracy = 0
     mean_correct = []
