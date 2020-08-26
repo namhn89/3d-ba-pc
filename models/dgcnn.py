@@ -136,9 +136,7 @@ class get_model(nn.Module):
         x2 = F.adaptive_avg_pool1d(x, 1).view(batch_size, -1)
         # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
         x = torch.cat((x1, x2), 1)  # (batch_size, emb_dims*2)
-        print(x.shape)
         x = F.leaky_relu(self.bn6(self.linear1(x)), negative_slope=0.2)  # (batch_size, emb_dims*2) ->
-        print(x.shape)
         x = self.dp1(x)
         x = F.leaky_relu(self.bn7(self.linear2(x)), negative_slope=0.2)  # (batch_size, 512) -> (batch_size, 256)
         x = self.dp2(x)
@@ -157,7 +155,7 @@ class get_loss(nn.Module):
 
 
 if __name__ == '__main__':
-    model = get_model(num_class=40, k=40)
+    model = get_model(num_class=40)
     x = torch.randn(10, 3, 2048)
     y = model(x)
     print(y.shape)
