@@ -102,7 +102,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
             points = points.transpose(2, 1)
             points, target = points.to(device), target.to(device)
 
-            outputs, _ = net(points)
+            outputs = net(points)
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
@@ -133,8 +133,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='PointCloud NetWork')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
-    parser.add_argument('--epoch', default=500, type=int,
-                        help='number of epoch in training [default: 500]')
+    parser.add_argument('--epoch', default=250, type=int,
+                        help='number of epoch in training [default: 250]')
     parser.add_argument('--learning_rate', default=0.001, type=float,
                         help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0',
@@ -168,7 +168,7 @@ def parse_args():
                                  "scanobjectnn_pb_t50_r ",
                                  "scanobjectnn_pb_t50_rs "
                                  ])
-    parser.add_argument('--scheduler', type=str, default='step', metavar='N',
+    parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
                         choices=['cos', 'step'],
                         help='Scheduler to use [Default : step]')
 
