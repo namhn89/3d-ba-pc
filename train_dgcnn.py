@@ -59,11 +59,11 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
 
-        outputs = net(points)
-        loss = criterion(outputs, target.long())
+        outputs, trans_feat = net(points)
+        loss = criterion(outputs, target.long(), trans_feat)
         running_loss += loss.item() * points.size(0)
         predictions = torch.argmax(outputs, 1)
-        pred_choice = outputs.data.max(1)[1]
+        # pred_choice = outputs.data.max(1)[1]
         # correct = pred_choice.eq(target.long().data).cpu().sum()
         # mean_correct.append(correct.item() / float(points.size()[0]))
 
@@ -87,12 +87,13 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     return running_loss, acc
 
 
-def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
+def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, criterion):
     net = net.eval()
     accuracy = 0
     mean_correct = []
     class_acc = np.zeros((num_class, 3))
     progress = tqdm(data_loader)
+    running_loss = 0.0
     with torch.no_grad():
         for data in progress:
             progress.set_description("Testing  ")
@@ -102,12 +103,17 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
             points = points.transpose(2, 1)
             points, target = points.to(device), target.to(device)
 
-            outputs = net(points)
+            outputs, trans_feat = net(points)
+            loss = criterion(outputs, predictions, trans_feat)
+
+            running_loss += loss.item() * points.size(0)
             predictions = torch.argmax(outputs, 1)
+
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
             correct = pred_choice.eq(target.long().data).cpu().sum()
             mean_correct.append(correct.item() / float(points.size()[0]))
+
             for cat in np.unique(target.cpu()):
                 class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
                 class_acc[cat, 0] += class_per_acc.item() / float(points[target == cat].size()[0])
@@ -115,31 +121,31 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
 
         class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         class_acc = np.mean(class_acc[:, 2])
-        instance_acc = np.mean(mean_correct)
+        # instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
         log_string(
-            "{} - Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
+            "{} Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
                 acc,
-                instance_acc,
+                # instance_acc,
                 class_acc,
             )
         )
 
-    return acc, class_acc
+    return running_loss, acc
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='PointCloud NetWork')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
-    parser.add_argument('--epoch', default=250, type=int,
-                        help='number of epoch in training [default: 250]')
+    parser.add_argument('--epochs', default=250, type=int,
+                        help='number of epochs in training [default: 250]')
     parser.add_argument('--learning_rate', default=0.001, type=float,
                         help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
-    parser.add_argument('--model', type=str, default='dgcnn',
+    parser.add_argument('--model', type=str, default='dgcnn_cls',
                         help='use model for training [Default : pointnet2_cls_msg]')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
@@ -161,16 +167,23 @@ def parse_args():
                         help='num workers')
     parser.add_argument('--dataset', type=str, default="modelnet40",
                         help="Dataset to using train/test data [default : modelnet40]",
-                        choices=["modelnet40 ",
-                                 "scanobjectnn_obj_bg ",
-                                 "scanobjectnn_pb_t25 ",
-                                 "scanobjectnn_pb_t25_r ",
-                                 "scanobjectnn_pb_t50_r ",
-                                 "scanobjectnn_pb_t50_rs "
-                                 ])
+                        choices=[
+                            "modelnet40 ",
+                            "scanobjectnn_obj_bg ",
+                            "scanobjectnn_pb_t25 ",
+                            "scanobjectnn_pb_t25_r ",
+                            "scanobjectnn_pb_t50_r ",
+                            "scanobjectnn_pb_t50_rs "
+                        ])
+    parser.add_argument('--dropout', type=float, default=0.5,
+                        help='initial dropout rate [default: 0.5]')
+    parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
+                        help='Dimension of embeddings [default: 1024]')
+    parser.add_argument('--k', type=int, default=20, metavar='N',
+                        help='Num of nearest neighbors to use [default : 20]')
     parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
                         choices=['cos', 'step'],
-                        help='Scheduler to use [Default : step]')
+                        help='Scheduler to use [default: step]')
 
     args = parser.parse_args()
     return args
@@ -186,7 +199,7 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
     '''LOG MODEL'''
-    log_model = str(args.log_dir) + '_' + str(args.epoch) + '_' + str(args.batch_size)
+    log_model = str(args.log_dir) + '_' + str(args.epochs) + '_' + str(args.batch_size)
     log_model = log_model + '_' + str(args.model)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
@@ -330,9 +343,13 @@ if __name__ == '__main__':
         )
 
     if args.scheduler == 'cos':
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epoch, eta_min=1e-3)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
+                                                               args.epochs,
+                                                               eta_min=1e-3)
     elif args.scheduler == 'step':
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
+                                                    step_size=20,
+                                                    gamma=0.7)
 
     dataset_size = {
         "Train": len(train_dataset),
@@ -355,11 +372,10 @@ if __name__ == '__main__':
     # summary_writer.add_graph(model=classifier, input_to_model=x)
     best_acc_test = 0.0
 
-    for epoch in range(args.epoch):
+    for epoch in range(args.epochs):
         if args.sampling and not args.fps:
             log_string("Random sampling data")
             train_dataset.update_random_dataset()
-            # test_dataset.update_random_dataset()
 
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
@@ -377,7 +393,7 @@ if __name__ == '__main__':
             shuffle=False,
         )
 
-        log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
+        log_string("*** Epoch {}/{} ***".format(epoch, args.epochs))
         loss_train, acc_train = train_one_epoch(net=classifier,
                                                 data_loader=train_loader,
                                                 dataset_size=dataset_size,

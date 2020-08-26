@@ -1,6 +1,5 @@
 import torch
 from load_data import load_data
-from utils.time import Timer
 
 
 def knn(x, k):
@@ -18,5 +17,4 @@ if __name__ == '__main__':
     x = x.unsqueeze(dim=0)
     x = x.transpose(2, 1)
     print(x.shape)
-    print(test_knn(x, 20).shape)
     print(knn(x, 20).shape)
