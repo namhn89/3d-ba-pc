@@ -156,7 +156,7 @@ class get_loss(nn.Module):
 
 
 if __name__ == '__main__':
-    model = get_model(num_class=40)
+    model = get_model(num_class=40).cuda()
     x = torch.randn(10, 3, 2048).cuda()
     y, _ = model(x)
     print(y.shape)
