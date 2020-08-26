@@ -228,6 +228,6 @@ class Transform_Net(nn.Module):
 
 if __name__ == '__main__':
     model = get_model(num_class=40)
-    x = torch.randn(1, 3, 1024)
+    x = torch.randn(1, 1024, 3)
     y = model(x)
     print(y.shape)
