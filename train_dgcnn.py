@@ -59,8 +59,8 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
 
-        outputs, trans_feat = net(points)
-        loss = criterion(outputs, target.long(), trans_feat)
+        outputs = net(points)
+        loss = criterion(outputs, target.long())
         running_loss += loss.item() * points.size(0)
         predictions = torch.argmax(outputs, 1)
         pred_choice = outputs.data.max(1)[1]

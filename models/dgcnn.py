@@ -149,7 +149,7 @@ class get_loss(nn.Module):
     def __init__(self):
         super(get_loss, self).__init__()
 
-    def forward(self, pred, target, trans_feat):
+    def forward(self, pred, target):
         total_loss = F.nll_loss(pred, target)
         return total_loss
 
