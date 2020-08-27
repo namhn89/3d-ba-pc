@@ -22,6 +22,7 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
+import load_data
 
 
 def knn(x, k):
@@ -152,6 +153,7 @@ class get_loss(nn.Module):
     def forward(self, pred, target, trans_feat,  smoothing=True):
 
         target = target.contiguous().view(-1)
+        target = target.int()
         if smoothing:
             eps = 0.2
             n_class = pred.size(1)
@@ -167,6 +169,6 @@ class get_loss(nn.Module):
 
 if __name__ == '__main__':
     model = get_model(num_class=40).cuda()
-    x = torch.randn(2, 3, 2048).cuda()
+    x = torch.randn(3, 3, 2048)
     y, _ = model(x)
     print(y.shape)
