@@ -341,7 +341,7 @@ if __name__ == '__main__':
             lr=0.01,
             momentum=0.9
         )
-
+    global scheduler
     if args.scheduler == 'cos':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
                                                                args.epochs,
@@ -392,6 +392,8 @@ if __name__ == '__main__':
             num_workers=args.num_workers,
             shuffle=False,
         )
+        # Step Schedule
+        scheduler.step()
 
         log_string("*** Epoch {}/{} ***".format(epoch, args.epochs))
         loss_train, acc_train = train_one_epoch(net=classifier,
@@ -407,8 +409,6 @@ if __name__ == '__main__':
                                                   mode="Test",
                                                   device=device,
                                                   num_class=num_classes)
-
-        scheduler.step()
 
         if acc_test >= best_acc_test:
             best_acc_test = acc_test
