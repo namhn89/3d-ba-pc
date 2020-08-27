@@ -141,18 +141,28 @@ class get_model(nn.Module):
         x = F.leaky_relu(self.bn7(self.linear2(x)), negative_slope=0.2)  # (batch_size, 512) -> (batch_size, 256)
         x = self.dp2(x)
         x = self.linear3(x)  # (batch_size, 256) -> (batch_size, output_channels)
-        x = F.log_softmax(x, -1)
         log_x = F.log_softmax(x, -1)
-        return log_x, x
+        return x, log_x
 
 
 class get_loss(nn.Module):
     def __init__(self):
         super(get_loss, self).__init__()
 
-    def forward(self, pred, target, trans_feat):
-        total_loss = F.nll_loss(pred, target)
-        return total_loss
+    def forward(self, pred, target, trans_feat,  smoothing=True):
+
+        target = target.contiguous().view(-1)
+        if smoothing:
+            eps = 0.2
+            n_class = pred.size(1)
+            one_hot = torch.zeros_like(pred).scatter(1, target.view(-1, 1), 1)
+            one_hot = one_hot * (1 - eps) + (1 - one_hot) * eps / (n_class - 1)
+            log_prb = F.log_softmax(pred, dim=1)
+            loss = -(one_hot * log_prb).sum(dim=1).mean()
+        else:
+            loss = F.cross_entropy(pred, target, reduction='mean')
+
+        return loss
 
 
 if __name__ == '__main__':
