@@ -104,7 +104,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
             points, target = points.to(device), target.to(device)
 
             outputs, trans_feat = net(points)
-            loss = criterion(outputs, predictions, trans_feat)
+            loss = criterion(outputs, target, trans_feat)
 
             running_loss += loss.item() * points.size(0)
             predictions = torch.argmax(outputs, 1)
@@ -132,7 +132,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
             )
         )
 
-    return running_loss, acc
+    return acc, class_acc
 
 
 def parse_args():
