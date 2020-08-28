@@ -383,7 +383,7 @@ if __name__ == '__main__':
         )
     else:
         optimizer = torch.optim.SGD(classifier.parameters(), lr=0.01, momentum=0.9)
-
+    global scheduler
     if args.scheduler == 'cos':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs, eta_min=1e-3)
     elif args.scheduler == 'step':
@@ -492,7 +492,7 @@ if __name__ == '__main__':
         scheduler.step()
 
         if acc_poison >= best_acc_poison:
-            best_instance_acc_poison = acc_poison
+            best_acc_poison = acc_poison
             log_string('Saving bad model ... ')
             save_path = str(checkpoints_dir) + '/best_bad_model.pth'
             log_string('Saving at %s' % save_path)
@@ -506,7 +506,7 @@ if __name__ == '__main__':
             torch.save(state, save_path)
 
         if acc_clean >= best_acc_clean:
-            best_instance_acc_clean = acc_clean
+            best_acc_clean = acc_clean
             log_string('Save clean model ...')
             save_path = str(checkpoints_dir) + '/best_model.pth'
             log_string('Saving at %s' % save_path)
