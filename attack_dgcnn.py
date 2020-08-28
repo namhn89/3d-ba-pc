@@ -137,8 +137,8 @@ def parse_args():
 
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
-    parser.add_argument('--epoch', default=250, type=int,
-                        help='number of epoch in training [default: 250]')
+    parser.add_argument('--epochs', default=250, type=int,
+                        help='number of epochs in training [default: 250]')
     parser.add_argument('--learning_rate', default=0.001, type=float,
                         help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0',
@@ -216,7 +216,7 @@ if __name__ == '__main__':
     else:
         log_model = str(args.log_dir) + '_' + str(args.attack_method)
     log_model = log_model + "_" + args.model
-    log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epoch)
+    log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epochs)
 
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
@@ -409,7 +409,7 @@ if __name__ == '__main__':
     ratio_backdoor_train = []
     ratio_backdoor_test = []
 
-    for epoch in range(args.epoch):
+    for epoch in range(args.epochs):
 
         if args.sampling and not args.fps:
             log_string("Random sampling data")
@@ -451,7 +451,7 @@ if __name__ == '__main__':
             shuffle=False,
         )
 
-        log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
+        log_string("*** Epoch {}/{} ***".format(epoch, args.epochs))
         log_string("ratio trigger on train sample {:.4f}".format(t_train))
         log_string("ratio trigger on bad sample {:.4f}".format(t_test))
 
@@ -520,8 +520,8 @@ if __name__ == '__main__':
             }
             torch.save(state, save_path)
 
-        log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_clean))
-        log_string('Trigger Test - Best Accuracy: {:.4f}'.format(best_instance_acc_poison))
+        log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_acc_clean))
+        log_string('Trigger Test - Best Accuracy: {:.4f}'.format(best_acc_poison))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
