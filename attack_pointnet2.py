@@ -164,11 +164,11 @@ def parse_args():
                         help='scale centroid object for backdoor attack [default : 0.5]')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
-    parser.add_argument('--num_point_trig', type=int, default=128,
+    parser.add_argument('--num_point_trig', type=int, default=1024,
                         help='num points for attacking trigger [default: 128]')
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers')
-    parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
+    parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
                         help="Attacking Method [default: object_centroid]",
                         choices=["point_corner",
                                  "multiple_corner",
