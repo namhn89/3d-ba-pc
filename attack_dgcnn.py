@@ -93,7 +93,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, crit
     mean_correct = []
     class_acc = np.zeros((num_class, 3))
     progress = tqdm(data_loader)
-    running_loss =
+    running_loss = 0.0
     with torch.no_grad():
         for data in progress:
             progress.set_description("Testing  ")
@@ -122,13 +122,14 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, crit
         running_loss = running_loss / dataset_size[mode]
 
         log_string(
-            "{} Accuracy: {:.4f}".format(
+            "{} Loss: {:.4f}, Accuracy: {:.4f}".format(
                 mode,
+                running_loss,
                 acc,
             )
         )
 
-    return acc
+    return running_loss, acc
 
 
 def parse_args():
