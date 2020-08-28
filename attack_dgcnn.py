@@ -164,7 +164,7 @@ def parse_args():
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--num_point_trig', type=int, default=1024,
-                        help='num points for attacking trigger [default: 128]')
+                        help='num points for attacking trigger [default: 1024]')
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers')
     parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
@@ -370,7 +370,7 @@ if __name__ == '__main__':
     shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
     shutil.copy('./models/pointnet_util.py', str(experiment_dir))
 
-    classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+    classifier = MODEL.get_model(num_classes).to(device)
     criterion = MODEL.get_loss().to(device)
 
     if args.optimizer == 'Adam':
