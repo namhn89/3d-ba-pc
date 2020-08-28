@@ -9,6 +9,7 @@ import torch.utils.data
 from dataset.mydataset import PoisonDataset
 from tqdm import tqdm
 from config import *
+from dataset.shift_dataset import ShiftPointDataset
 from load_data import load_data
 import provider
 import dataset.augmentation
@@ -307,7 +308,65 @@ if __name__ == '__main__':
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
 
-    train_dataset = PoisonDataset(
+    # train_dataset = PoisonDataset(
+    #     data_set=list(zip(x_train, y_train)),
+    #     name="train",
+    #     added_num_point=args.num_point_trig,
+    #     num_point=args.num_point,
+    #     is_sampling=args.sampling,
+    #     uniform=args.fps,
+    #     data_augmentation=True,
+    #     mode_attack=args.attack_method,
+    #     use_normal=args.normal,
+    #     permanent_point=args.permanent_point,
+    #     scale=args.scale,
+    # )
+    #
+    # test_dataset = PoisonDataset(
+    #     data_set=list(zip(x_test, y_test)),
+    #     name="test",
+    #     added_num_point=args.num_point_trig,
+    #     num_point=args.num_point,
+    #     is_sampling=args.sampling,
+    #     uniform=args.fps,
+    #     data_augmentation=False,
+    #     mode_attack=args.attack_method,
+    #     use_normal=args.normal,
+    #     permanent_point=args.permanent_point,
+    #     scale=args.scale,
+    # )
+    #
+    # clean_dataset = PoisonDataset(
+    #     data_set=list(zip(x_test, y_test)),
+    #     portion=0.0,
+    #     name="clean_test",
+    #     added_num_point=args.num_point_trig,
+    #     num_point=args.num_point,
+    #     is_sampling=args.sampling,
+    #     uniform=args.fps,
+    #     data_augmentation=False,
+    #     mode_attack=args.attack_method,
+    #     use_normal=args.normal,
+    #     permanent_point=args.permanent_point,
+    #     scale=args.scale,
+    # )
+    #
+    # poison_dataset = PoisonDataset(
+    #     data_set=list(zip(x_test, y_test)),
+    #     portion=1.0,
+    #     name="poison_test",
+    #     added_num_point=args.num_point_trig,
+    #     num_point=args.num_point,
+    #     is_sampling=args.sampling,
+    #     uniform=args.fps,
+    #     data_augmentation=False,
+    #     mode_attack=args.attack_method,
+    #     use_normal=args.normal,
+    #     permanent_point=args.permanent_point,
+    #     scale=args.scale,
+    # )
+
+    train_dataset = ShiftPointDataset(
         data_set=list(zip(x_train, y_train)),
         name="train",
         added_num_point=args.num_point_trig,
@@ -316,12 +375,10 @@ if __name__ == '__main__':
         uniform=args.fps,
         data_augmentation=True,
         mode_attack=args.attack_method,
-        use_normal=args.normal,
         permanent_point=args.permanent_point,
-        scale=args.scale,
     )
 
-    test_dataset = PoisonDataset(
+    test_dataset = ShiftPointDataset(
         data_set=list(zip(x_test, y_test)),
         name="test",
         added_num_point=args.num_point_trig,
@@ -330,12 +387,10 @@ if __name__ == '__main__':
         uniform=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
-        use_normal=args.normal,
         permanent_point=args.permanent_point,
-        scale=args.scale,
     )
 
-    clean_dataset = PoisonDataset(
+    clean_dataset = ShiftPointDataset(
         data_set=list(zip(x_test, y_test)),
         portion=0.0,
         name="clean_test",
@@ -345,12 +400,10 @@ if __name__ == '__main__':
         uniform=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
-        use_normal=args.normal,
         permanent_point=args.permanent_point,
-        scale=args.scale,
     )
 
-    poison_dataset = PoisonDataset(
+    poison_dataset = ShiftPointDataset(
         data_set=list(zip(x_test, y_test)),
         portion=1.0,
         name="poison_test",
@@ -360,9 +413,7 @@ if __name__ == '__main__':
         uniform=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
-        use_normal=args.normal,
         permanent_point=args.permanent_point,
-        scale=args.scale,
     )
 
     MODEL = importlib.import_module(args.model)
@@ -412,10 +463,10 @@ if __name__ == '__main__':
 
         if args.sampling and not args.fps:
             log_string("Random sampling data")
-            train_dataset.update_random_dataset()
+            train_dataset.update_dataset()
             # test_dataset.update_random_dataset()
-            # clean_dataset.update_random_dataset()
-            poison_dataset.update_random_dataset()
+            clean_dataset.update_dataset()
+            poison_dataset.update_dataset()
 
         t_train = train_dataset.calculate_trigger_percentage()
         t_test = poison_dataset.calculate_trigger_percentage()
