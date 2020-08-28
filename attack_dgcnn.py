@@ -93,6 +93,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, crit
     mean_correct = []
     class_acc = np.zeros((num_class, 3))
     progress = tqdm(data_loader)
+    running_loss =
     with torch.no_grad():
         for data in progress:
             progress.set_description("Testing  ")
@@ -104,6 +105,8 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, crit
 
             outputs, _ = net(points)
             predictions = torch.argmax(outputs, 1)
+            loss = criterion(predictions, target, _)
+            running_loss += loss.item() * points.size(0)
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
             correct = pred_choice.eq(target.long().data).cpu().sum()
@@ -116,6 +119,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, crit
         # class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         # class_acc = np.mean(class_acc[:, 2])
         acc = accuracy.double() / dataset_size[mode]
+        running_loss = running_loss / dataset_size[mode]
 
         log_string(
             "{} Accuracy: {:.4f}".format(
@@ -158,7 +162,7 @@ def parse_args():
                         help='scale centroid object for backdoor attack [default : 0.5]')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
-    parser.add_argument('--num_point_trig', type=int, default=128,
+    parser.add_argument('--num_point_trig', type=int, default=1024,
                         help='num points for attacking trigger [default: 128]')
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers')
