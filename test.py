@@ -1,18 +1,15 @@
 from __future__ import print_function
 import argparse
-import os
 import random
 import torch
-import numpy as np
 import torch.utils.data
 import logging
-from visualization.visualization_utils import pyplot_draw_point_cloud
-from visualization.visualize_pointnet import make_one_critical
 import data_utils
 
 from tqdm import tqdm
 from dataset.mydataset import PoisonDataset
-from models.pointnet_cls import get_loss, get_model
+# from models.pointnet_cls import get_loss, get_model
+from models.dgcnn_cls import get_loss, get_model
 from config import *
 from visualization.customized_open3d import *
 from load_data import load_data
@@ -27,13 +24,53 @@ torch.manual_seed(manualSeed)
 
 def parse_args():
     """PARAMETERS"""
-    parser = argparse.ArgumentParser('PointNet')
-    parser.add_argument('--batch_size', type=int, default=24, help='batch size in training')
+    parser = argparse.ArgumentParser('')
+    parser.add_argument('--batch_size', type=int, default=16, help='batch size in training')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
-    parser.add_argument('--log_dir', type=str, default='train_500_24_modelnet40', help='Experiment root')
+    parser.add_argument('--log_dir', type=str, default='train_250_32_dgcnn_cls_random_modelnet40',
+                        help='Experiment root')
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
     parser.add_argument('--dataset', type=str, default="modelnet40", help="add dataset for testing")
     return parser.parse_args()
+
+
+def eval_test(data_set, net, device, checkpoint, args):
+    test_dataset = PoisonDataset(
+        data_set=data_set,
+        portion=1.0,
+        n_class=NUM_CLASSES,
+        target=TARGETED_CLASS,
+        name="bad_test",
+        is_sampling=args.random,
+        uniform=args.fps,
+        data_augmentation=False,
+        is_testing=True,
+    )
+
+    test_dataloader = torch.utils.data.DataLoader(
+        dataset=test_dataset,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+        shuffle=False,
+    )
+
+    net.load_state_dict(checkpoint['model_state_dict'])
+    net.to(device)
+    net = net.eval()
+    sum_correct = 0.0
+
+    with torch.no_grad():
+        for data in tqdm(test_dataloader):
+            points, label, mask = data
+            target = label[:, 0]
+            points = points.transpose(2, 1)
+            points, target = points.to(device), target.to(device)
+            predictions, feat_trans = net(points)
+            pred_choice = predictions.max(1)[1]
+            correct = pred_choice.eq(target.data).cpu().sum()
+            sum_correct += correct
+
+    return sum_correct / len(test_dataset)
 
 
 if __name__ == '__main__':
@@ -41,6 +78,7 @@ if __name__ == '__main__':
     def log_string(str):
         logger.info(str)
         print(str)
+
 
     args = parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -92,50 +130,12 @@ if __name__ == '__main__':
     log_string('PARAMETER ...')
     log_string(args)
 
-    classifier = get_model(k=40, normal_channel=False)
-    classifier.to(device)
-    test_dataset = PoisonDataset(
-        data_set=list(zip(x_test, y_test)),
-        n_class=NUM_CLASSES,
-        target=TARGETED_CLASS,
-        name="test",
-        is_sampling=False,
-        uniform=False,
-        data_augmentation=False,
-        is_testing=True,
-    )
-
-    test_loader = torch.utils.data.DataLoader(
-        dataset=test_dataset,
-        batch_size=args.batch_size,
-        # batch_size=32,
-        shuffle=False,
-        num_workers=args.num_workers,
-    )
+    net = get_model(num_class=40)
+    net.to(device)
+    data_set = list(zip(x_test, y_test))
 
     checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_model.pth',
                             map_location=lambda storage, loc: storage)
-    classifier.load_state_dict(checkpoint['model_state_dict'])
-    classifier.to(device)
-    classifier = classifier.eval()
-    sum_correct = 0.0
 
-    with torch.no_grad():
-        for data in tqdm(test_loader):
-            points, label, mask = data
-            target = label[:, 0]
-            # pyplot_draw_point_cloud(points.numpy().reshape(-1, 3))
-            points = points.transpose(2, 1)
-            points, target = points.to(device), target.to(device)
-            predictions, feat_trans, hx, max_pool = classifier(points)
-            points = points.transpose(2, 1)
-            hx = hx.transpose(2, 1).cpu().numpy().reshape(-1, 1024)
-            # print(hx.shape)
-            critical_mask = make_one_critical(hx=hx)
-            # visualize_point_cloud_critical_point(points.cpu().numpy().reshape(-1, 3), critical_mask)
-            pred_choice = predictions.max(1)[1]
-            # print(categories[pred_choice.cpu().numpy()[0]])
-            correct = pred_choice.eq(target.data).cpu().sum()
-            sum_correct += correct
-
-    log_string('accuracy: %f' % (sum_correct / len(test_dataset)))
+    accuracy = eval_test(data_set, net, device, checkpoint, args)
+    log_string('accuracy: %f' % (accuracy))

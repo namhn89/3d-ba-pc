@@ -8,8 +8,8 @@ warnings.filterwarnings("ignore")
 
 def load_h5(h5_filename):
     f = h5py.File(h5_filename)
-    data = f['data'][:]
-    label = f['label'][:]
+    data = f['data'][:].astype('float32')
+    label = f['label'][:].astype('int64')
 
     return data, label
 

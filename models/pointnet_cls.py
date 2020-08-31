@@ -5,8 +5,9 @@ from models.pointnet import PointNetEncoder, feature_transform_reguliarzer
 
 
 class get_model(nn.Module):
-    def __init__(self, k=40, normal_channel=True):
+    def __init__(self, k=40, normal_channel=True, visualize=False):
         super(get_model, self).__init__()
+        self.visualize = visualize
         if normal_channel:
             channel = 6
         else:
@@ -26,7 +27,9 @@ class get_model(nn.Module):
         x = F.relu(self.bn2(self.dropout(self.fc2(x))))
         x = self.fc3(x)
         x = F.log_softmax(x, dim=1)
-        return x, trans_feat, hx, max_pool
+        if self.visualize:
+            return x, trans_feat, hx, max_pool
+        return x, trans_feat
 
 
 class get_loss(torch.nn.Module):

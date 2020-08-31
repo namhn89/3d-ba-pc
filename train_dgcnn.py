@@ -9,6 +9,7 @@ import shutil
 import torch.nn.parallel
 import torch.utils.data
 from dataset.mydataset import PoisonDataset
+from data import ModelNet40
 from tqdm import tqdm
 from load_data import load_data
 import dataset.augmentation
@@ -316,6 +317,9 @@ if __name__ == '__main__':
         permanent_point=args.permanent_point,
     )
 
+    # train_dataset = ModelNet40(args.num_point, "train")
+    # test_dataset = ModelNet40(args.num_point, "test")
+
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     num_class = 40
@@ -385,13 +389,16 @@ if __name__ == '__main__':
             batch_size=args.batch_size,
             num_workers=args.num_workers,
             shuffle=True,
+            drop_last=True
         )
         test_loader = torch.utils.data.dataloader.DataLoader(
             dataset=test_dataset,
             batch_size=args.batch_size,
             num_workers=args.num_workers,
             shuffle=False,
+            drop_last=False
         )
+
         # Step Schedule
         scheduler.step()
 

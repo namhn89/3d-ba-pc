@@ -7,7 +7,7 @@ import numpy as np
 from tqdm import tqdm
 from dataset.sampling import pc_normalize, farthest_point_sample_with_index
 from dataset.sampling import random_sample_with_index
-from dataset.augmentation import shuffle_data
+from dataset.augmentation import *
 import torch.nn.parallel
 from config import *
 import time
@@ -88,11 +88,6 @@ class PoisonDataset(data.Dataset):
             new_dataset.append((points, label, mask))
         self.data_set = new_dataset
 
-    def shuffle_data(self):
-        idx = np.arange(self.data_set.shape[0])
-        np.random.shuffle(idx)
-        self.data_set = self.data_set[idx]
-
     def calculate_trigger_percentage(self):
         res = []
         for data in tqdm(self.data_set):
@@ -114,20 +109,10 @@ class PoisonDataset(data.Dataset):
         mask = self.data_set[item][2]
 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
-        # if not self.uniform and self.is_sampling:   # Random Sampling
-        #     choice = np.random.choice(len(point_set), self.num_point)
-        #     mask = mask[choice, :]
-        #     point_set = point_set[choice, :]
-        #     print(choice)
 
         if self.data_augmentation:
-            pass
-            # idx = np.arange(point_set.shape[0])
-            # np.random.shuffle(idx)
-            # point_set = point_set[idx, :]
-            # mask = mask[idx, :]
-            # point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
-
+            point_set = translate_pointcloud(point_set)
+            np.random.shuffle(point_set)
         if self.permanent_point:
             point_set = point_set[0:self.num_point, 0:3]
             mask = mask[0:self.num_point, 0:3]
@@ -347,22 +332,20 @@ if __name__ == '__main__':
         name="data",
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
-        mode_attack=SHIFT_POINT,
         num_point=1024,
         added_num_point=128,
         data_augmentation=False,
         permanent_point=False,
         is_sampling=True,
-        uniform=True,
+        uniform=False,
         is_testing=True,
         scale=0.01,
     )
     vis = Visualizer()
-    # print(dataset[0][0].shape)
-    # print(dataset[0][1].shape)
+    print(dataset[0][0].shape)
+    print(dataset[0][1].shape)
 
     for i in range(5):
-        dataset.shuffle_data()
         # res = []
         if dataset.is_sampling and not dataset.uniform:
             dataset.update_random_dataset()
