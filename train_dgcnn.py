@@ -46,7 +46,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         # points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
 
         if args.dataset.startswith("scanobjectnn"):
-                 points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
         #     points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         # Augmentation by charlesq34
@@ -178,8 +178,8 @@ def parse_args():
                         help='initial dropout rate [default: 0.5]')
     parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
                         help='Dimension of embeddings [default: 1024]')
-    parser.add_argument('--k', type=int, default=20, metavar='N',
-                        help='Num of nearest neighbors to use [default : 20]')
+    parser.add_argument('--k', type=int, default=40, metavar='N',
+                        help='Num of nearest neighbors to use [default : 40]')
     parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
                         choices=['cos', 'step'],
                         help='Scheduler to use [default: step]')
@@ -340,7 +340,7 @@ if __name__ == '__main__':
     else:
         optimizer = torch.optim.SGD(
             classifier.parameters(),
-            lr=0.01,
+            lr=args.learning_rate * 100,
             momentum=0.9,
             weight_decay=args.decay_rate
         )

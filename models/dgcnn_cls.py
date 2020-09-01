@@ -153,9 +153,8 @@ class get_loss(nn.Module):
         super(get_loss, self).__init__()
 
     def forward(self, pred, target, trans_feat, smoothing=True):
-
         target = target.contiguous().view(-1)
-        target = target.unsqueeze(1).data.cpu()
+        # target = target.unsqueeze(1).data.cpu()
         if smoothing:
             eps = 0.2
             n_class = pred.size(1)
