@@ -148,7 +148,7 @@ def parse_args():
                         help='use model for training [Default : pointnet2_cls_msg]')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-    parser.add_argument('--optimizer', type=str, default='Adam',
+    parser.add_argument('--optimizer', type=str, default='SGD',
                         help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train",
                         help='experiment root [default: train]')
@@ -341,7 +341,8 @@ if __name__ == '__main__':
         optimizer = torch.optim.SGD(
             classifier.parameters(),
             lr=0.01,
-            momentum=0.9
+            momentum=0.9,
+            weight_decay=args.decay_rate
         )
     global scheduler
     if args.scheduler == 'cos':
