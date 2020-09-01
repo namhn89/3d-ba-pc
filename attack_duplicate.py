@@ -124,13 +124,13 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
             )
         )
 
-    return acc, instance_acc, class_acc
+    return acc, instance_acc
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
-    parser.add_argument('--batch_size', type=int, default=24, help='batch size in training [default: 24]')
-    parser.add_argument('--epoch', default=500, type=int, help='number of epoch in training [default: 500]')
+    parser.add_argument('--batch_size', type=int, default=32, help='batch size in training [default: 32]')
+    parser.add_argument('--epoch', default=250, type=int, help='number of epoch in training [default: 250]')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='pointnet_cls', help='training model')
@@ -157,6 +157,8 @@ if __name__ == '__main__':
     def log_string(str):
         logger.info(str)
         print(str)
+
+
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     num_classes = 40
@@ -390,18 +392,18 @@ if __name__ == '__main__':
         log_string("ratio trigger on train sample {:.4f}".format(t_train))
         log_string("ratio trigger on bad sample {:.4f}".format(t_test))
 
-        acc_clean, instance_acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
-                                                                        data_loader=clean_dataloader,
-                                                                        dataset_size=dataset_size,
-                                                                        mode="Clean",
-                                                                        device=device,
-                                                                        num_class=num_classes, )
-        acc_poison, instance_acc_poison, class_acc_poison = eval_one_epoch(net=classifier,
-                                                                           data_loader=poison_dataloader,
-                                                                           dataset_size=dataset_size,
-                                                                           mode="Poison",
-                                                                           device=device,
-                                                                           num_class=num_classes, )
+        acc_clean, instance_acc_clean = eval_one_epoch(net=classifier,
+                                                       data_loader=clean_dataloader,
+                                                       dataset_size=dataset_size,
+                                                       mode="Clean",
+                                                       device=device,
+                                                       num_class=num_classes, )
+        acc_poison, instance_acc_poison = eval_one_epoch(net=classifier,
+                                                         data_loader=poison_dataloader,
+                                                         dataset_size=dataset_size,
+                                                         mode="Poison",
+                                                         device=device,
+                                                         num_class=num_classes, )
         loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
                                                                     data_loader=train_dataloader,
                                                                     dataset_size=dataset_size,
@@ -409,12 +411,12 @@ if __name__ == '__main__':
                                                                     mode="Train",
                                                                     criterion=criterion,
                                                                     device=device)
-        acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
-                                                                     data_loader=clean_dataloader,
-                                                                     dataset_size=dataset_size,
-                                                                     mode="Test",
-                                                                     device=device,
-                                                                     num_class=num_classes, )
+        acc_test, instance_acc_test = eval_one_epoch(net=classifier,
+                                                     data_loader=clean_dataloader,
+                                                     dataset_size=dataset_size,
+                                                     mode="Test",
+                                                     device=device,
+                                                     num_class=num_classes, )
 
         if instance_acc_poison >= best_instance_acc_poison:
             best_instance_acc_poison = instance_acc_poison
@@ -424,7 +426,7 @@ if __name__ == '__main__':
             state = {
                 'epoch': epoch,
                 'instance_acc': instance_acc_clean,
-                'class_acc': class_acc_clean,
+                'class_acc': instance_acc_clean,
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
@@ -438,7 +440,7 @@ if __name__ == '__main__':
             state = {
                 'epoch': epoch,
                 'instance_acc': instance_acc_clean,
-                'class_acc': class_acc_clean,
+                'class_acc': instance_acc_clean,
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
