@@ -41,12 +41,12 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points, labels = data
         points = points.data.numpy()
         # Augmentation
-        points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
 
         if args.dataset.startswith("scanobjectnn"):
-            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+                 points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
         #     points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         # Augmentation by charlesq34
@@ -122,13 +122,11 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
 
         class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         class_acc = np.mean(class_acc[:, 2])
-        # instance_acc = np.mean(mean_correct)
         acc = accuracy.double() / dataset_size[mode]
         log_string(
             "{} Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
                 acc,
-                # instance_acc,
                 class_acc,
             )
         )

@@ -56,7 +56,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
 
-        outputs, trans_feat, _, _ = net(points)
+        outputs, trans_feat = net(points)
         loss = criterion(outputs, target.long(), trans_feat)
         running_loss += loss.item() * points.size(0)
         predictions = torch.argmax(outputs, 1)
@@ -99,7 +99,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
             points = points.transpose(2, 1)
             points, target = points.to(device), target.to(device)
 
-            outputs, _, _, _ = net(points)
+            outputs, _ = net(points)
             predictions = torch.argmax(outputs, 1)
             accuracy += torch.sum(predictions == target)
             pred_choice = outputs.data.max(1)[1]
@@ -348,11 +348,9 @@ if __name__ == '__main__':
 
     for epoch in range(args.epoch):
         if args.sampling and not args.fps:
-            log_string("Random sampling data")
-            train_dataset.update_random_dataset()
-            # test_dataset.update_random_dataset()
-            # clean_dataset.update_random_dataset()
-            poison_dataset.update_random_dataset()
+            log_string("Random sampling data ..... ")
+            train_dataset.update_dataset()
+            poison_dataset.update_dataset()
 
         t_train = train_dataset.calculate_trigger_percentage()
         t_test = poison_dataset.calculate_trigger_percentage()
