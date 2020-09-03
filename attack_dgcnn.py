@@ -147,7 +147,7 @@ def parse_args():
                         help='training model [default: dgcnn_cls]')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-    parser.add_argument('--optimizer', type=str, default='Adam',
+    parser.add_argument('--optimizer', type=str, default='SGD',
                         help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train_attack",
                         help='experiment root [default : train_attack]')
@@ -163,8 +163,8 @@ def parse_args():
                         help='scale centroid object for backdoor attack [default : 0.5]')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
-    parser.add_argument('--num_point_trig', type=int, default=1024,
-                        help='num points for attacking trigger [default: 1024]')
+    parser.add_argument('--num_point_trig', type=int, default=768,
+                        help='num points for attacking trigger [default: 768]')
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers')
     parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
@@ -482,7 +482,7 @@ if __name__ == '__main__':
                                                 )
 
         loss_test, acc_test = eval_one_epoch(net=classifier,
-                                             data_loader=clean_dataloader,
+                                             data_loader=test_dataloader,
                                              dataset_size=dataset_size,
                                              mode="Test",
                                              device=device,
@@ -498,8 +498,8 @@ if __name__ == '__main__':
             log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
-                'instance_acc': acc_clean,
-                'class_acc': acc_clean,
+                'best_clean_acc': best_acc_clean,
+                'best_poison_acc': best_acc_poison,
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
@@ -512,8 +512,8 @@ if __name__ == '__main__':
             log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
-                'instance_acc': acc_clean,
-                'class_acc': acc_clean,
+                'best_clean_acc': best_acc_clean,
+                'best_poison_acc': best_acc_poison,
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
@@ -524,11 +524,11 @@ if __name__ == '__main__':
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
-        summary_writer.add_scalar('Train/Instance_Accuracy', acc_train, epoch)
+        # summary_writer.add_scalar('Train/', acc_train, epoch)
         summary_writer.add_scalar('Clean/Accuracy', acc_clean, epoch)
-        summary_writer.add_scalar('Clean/Instance_Accuracy', acc_clean, epoch)
+        summary_writer.add_scalar('Clean/Loss', loss_clean, epoch)
         summary_writer.add_scalar('Poison/Accuracy', acc_poison, epoch)
-        summary_writer.add_scalar('Poison/Instance_Accuracy', acc_poison, epoch)
+        summary_writer.add_scalar('Poison/Loss', loss_poison, epoch)
 
     print("Average ratio trigger on train sample {:.4f}".format(np.mean(ratio_backdoor_train)))
     print("Average ratio trigger on bad sample {:.4f}".format(np.mean(ratio_backdoor_test)))

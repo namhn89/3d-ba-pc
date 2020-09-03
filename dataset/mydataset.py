@@ -344,6 +344,7 @@ if __name__ == '__main__':
     vis = Visualizer()
     print(dataset[0][0].shape)
     print(dataset[0][1].shape)
+    print(dataset[0][2].shape)
 
     for i in range(5):
         # res = []
