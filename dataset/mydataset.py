@@ -31,11 +31,11 @@ class PoisonDataset(data.Dataset):
                  num_point=NUM_POINT_INPUT,
                  mode_attack=None,
                  is_sampling=False,
-                 uniform=True,
+                 uniform=False,
                  use_normal=False,
                  is_testing=False,
                  permanent_point=False,
-                 scale=0.5,
+                 scale=0.05,
                  ):
 
         self.use_normal = use_normal
