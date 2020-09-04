@@ -58,14 +58,13 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
         outputs, trans_feat = net(points)
         loss = criterion(outputs, target, trans_feat)
+        loss.backward()
+        optimizer.step()
 
         running_loss += loss.item() * points.size(0)
         predictions = outputs.data.max(dim=1)[1]
         train_true.append(labels.cpu().numpy())
         train_pred.append(predictions.detach().cpu().numpy())
-
-        loss.backward()
-        optimizer.step()
 
     train_true = np.concatenate(train_true)
     train_pred = np.concatenate(train_pred)
@@ -107,7 +106,7 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 
             running_loss += loss.item() * points.size(0)
             predictions = outputs.data.max(dim=1)[1]
-            train_true.append(labels.cpu().numpy())
+            train_true.append(target.cpu().numpy())
             train_pred.append(predictions.detach().cpu().numpy())
 
         train_true = np.concatenate(train_true)
@@ -346,6 +345,7 @@ if __name__ == '__main__':
 
     summary_writer.add_graph(model=classifier, input_to_model=x)
     best_acc_test = 0.0
+    print(classifier)
 
     for epoch in range(args.epochs):
         if args.sampling and not args.fps:
