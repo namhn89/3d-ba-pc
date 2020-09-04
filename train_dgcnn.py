@@ -146,7 +146,7 @@ def parse_args():
                         help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='dgcnn_cls',
                         help='use model for training [Default : pointnet2_cls_msg]')
-    parser.add_argument('--num_point', type=int, default=1024,
+    parser.add_argument('--num_point', type=int, default=2048,
                         help='Point Number [default: 1024]')
     parser.add_argument('--optimizer', type=str, default='SGD',
                         help='optimizer for training [default: Adam]')
@@ -314,9 +314,9 @@ if __name__ == '__main__':
     #     use_normal=args.normal,
     #     permanent_point=args.permanent_point,
     # )
-
-    train_dataset = ModelNet40(args.num_point, "train")
-    test_dataset = ModelNet40(args.num_point, "test")
+    if args.dataset == "modelnet40":
+        train_dataset = ModelNet40(args.num_point, "train")
+        test_dataset = ModelNet40(args.num_point, "test")
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -326,10 +326,11 @@ if __name__ == '__main__':
     shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
     shutil.copy('./models/pointnet_util.py', str(experiment_dir))
 
-    classifier = MODEL.get_model(num_classes).to(device)
+    classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
     criterion = MODEL.get_loss().to(device)
 
     if args.optimizer == 'Adam':
+        log_string("Using Adam optimizer")
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
@@ -338,6 +339,7 @@ if __name__ == '__main__':
             weight_decay=args.decay_rate
         )
     else:
+        log_string("Using SGD optimizer")
         optimizer = torch.optim.SGD(
             classifier.parameters(),
             lr=args.learning_rate * 100,
