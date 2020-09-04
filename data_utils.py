@@ -524,7 +524,7 @@ class ShapeNetPart(Dataset):
         self.partition = partition
         self.class_choice = class_choice
 
-        if self.class_choice != None:
+        if self.class_choice is not None:
             id_choice = self.cat2id[self.class_choice]
             indices = (self.label == id_choice).squeeze()
             self.data = self.data[indices]

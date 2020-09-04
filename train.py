@@ -17,6 +17,8 @@ from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 import data_utils
 import logging
+import sys
+import sklearn.metrics as metrics
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -29,8 +31,8 @@ sys.path.append(os.path.join(ROOT_DIR, 'models'))
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
     net = net.train()
     running_loss = 0.0
-    accuracy = 0
-    # mean_correct = []
+    train_true = []
+    train_pred = []
     progress = tqdm(data_loader)
     progress.set_description("Training ")
     for data in progress:
@@ -52,84 +54,86 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points = torch.from_numpy(points)
         target = labels[:, 0]
         points = points.transpose(2, 1)
-
         points, target = points.to(device), target.to(device)
-        optimizer.zero_grad()
 
-        outputs, trans_feat, _, _ = net(points)
-        loss = criterion(outputs, target.long(), trans_feat)
+        outputs, trans_feat = net(points)
+        loss = criterion(outputs, target, trans_feat)
+
         running_loss += loss.item() * points.size(0)
-        predictions = torch.argmax(outputs, 1)
-        pred_choice = outputs.data.max(1)[1]
-        # correct = pred_choice.eq(target.long().data).cpu().sum()
-        # mean_correct.append(correct.item() / float(points.size()[0]))
-
-        accuracy += torch.sum(predictions == target)
+        predictions = outputs.data.max(dim=1)[1]
+        train_true.append(labels.cpu().numpy())
+        train_pred.append(predictions.detach().cpu().numpy())
 
         loss.backward()
         optimizer.step()
 
-    # instance_acc = np.mean(mean_correct)
+    train_true = np.concatenate(train_true)
+    train_pred = np.concatenate(train_pred)
     running_loss = running_loss / dataset_size[mode]
-    acc = accuracy.double() / dataset_size[mode]
+    acc = metrics.accuracy_score(train_true, train_pred)
+    class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+    running_loss = running_loss / dataset_size[mode]
     log_string(
-        "{} - Loss: {:.4f}, Accuracy: {:.4f}".format(
+        "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
             mode,
             running_loss,
             acc,
-            # instance_acc,
+            class_acc,
         )
     )
 
-    return running_loss, acc
+    return running_loss, acc, class_acc
 
 
-def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
+def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
     net = net.eval()
-    accuracy = 0
-    # mean_correct = []
-    class_acc = np.zeros((num_class, 3))
+    running_loss = 0.0
+    train_true = []
+    train_pred = []
     progress = tqdm(data_loader)
     with torch.no_grad():
         for data in progress:
             progress.set_description("Testing  ")
             points, labels = data
 
+            points = torch.from_numpy(points)
             target = labels[:, 0]
             points = points.transpose(2, 1)
             points, target = points.to(device), target.to(device)
 
-            outputs, _, _, _ = net(points)
-            predictions = torch.argmax(outputs, 1)
-            accuracy += torch.sum(predictions == target)
-            pred_choice = outputs.data.max(1)[1]
-            # correct = pred_choice.eq(target.long().data).cpu().sum()
-            # mean_correct.append(correct.item() / float(points.size()[0]))
-            for cat in np.unique(target.cpu()):
-                class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
-                class_acc[cat, 0] += class_per_acc.item() / float(points[target == cat].size()[0])
-                class_acc[cat, 1] += 1
+            outputs, trans_feat = net(points)
+            loss = criterion(outputs, target, trans_feat)
+            loss.backward()
+            optimizer.step()
 
-        class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
-        class_acc = np.mean(class_acc[:, 2])
-        # instance_acc = np.mean(mean_correct)
-        acc = accuracy.double() / dataset_size[mode]
+            running_loss += loss.item() * points.size(0)
+            predictions = outputs.data.max(dim=1)[1]
+            train_true.append(labels.cpu().numpy())
+            train_pred.append(predictions.detach().cpu().numpy())
+
+
+        train_true = np.concatenate(train_true)
+        train_pred = np.concatenate(train_pred)
+        running_loss = running_loss / dataset_size[mode]
+        acc = metrics.accuracy_score(train_true, train_pred)
+        class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+        running_loss = running_loss / dataset_size[mode]
         log_string(
-            "{} - Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
+            "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
+                running_loss,
                 acc,
-                # instance_acc,
                 class_acc,
             )
         )
 
-    return acc, class_acc
+    return running_loss, acc, class_acc
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='PointCloud NetWork')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size in training [default: 32]')
-    parser.add_argument('--epoch', default=500, type=int, help='number of epoch in training [default: 500]')
+    parser.add_argument('--epoch', default=250, type=int, help='number of epoch in training [default: 250]')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='pointnet_cls', help='use model for training')
@@ -145,12 +149,21 @@ def parse_args():
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--permanent_point', action='store_true', default=False,
                         help='get first points [default: False]')
-    parser.add_argument('--num_point_trig', type=int, default=128, help='num points for attacking trigger')
     parser.add_argument('--num_workers', type=int, default=8, help='num workers')
-    parser.add_argument('--attack_method', type=str, default=None,
-                        help="Attacking Method : point_corner, multiple_corner, point_centroid, object_centroid")
-    parser.add_argument('--dataset', type=str, default="modelnet40", help="data for training [default : modelnet40]")
-    parser.add_argument('--scale', type=float, default=0.5, help='')
+    parser.add_argument('--dataset', type=str, default="modelnet40",
+                        help="Dataset to using train/test data [default : modelnet40]",
+                        choices=[
+                            "modelnet40 ",
+                            "scanobjectnn_obj_bg ",
+                            "scanobjectnn_pb_t25 ",
+                            "scanobjectnn_pb_t25_r ",
+                            "scanobjectnn_pb_t50_r ",
+                            "scanobjectnn_pb_t50_rs "
+                        ])
+    parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
+                        choices=['cos', 'step'],
+                        help='Scheduler to use [default: step]')
+
     args = parser.parse_args()
     return args
 
@@ -291,6 +304,7 @@ if __name__ == '__main__':
     criterion = get_loss().to(device)
 
     if args.optimizer == 'Adam':
+        log_string("Using Adam optimizer")
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
@@ -299,13 +313,24 @@ if __name__ == '__main__':
             weight_decay=args.decay_rate
         )
     else:
+        log_string("Using SGD optimizer")
         optimizer = torch.optim.SGD(
             classifier.parameters(),
-            lr=0.01,
-            momentum=0.9
+            lr=args.learning_rate * 100,
+            momentum=0.9,
+            weight_decay=args.decay_rate
         )
-
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=(args.epoch // 12), gamma=0.7)
+    global scheduler
+    if args.scheduler == 'cos':
+        log_string("Use Cos Scheduler !")
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
+                                                               args.epochs,
+                                                               eta_min=1e-3)
+    elif args.scheduler == 'step':
+        log_string("Use Step Scheduler !")
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
+                                                    step_size=20,
+                                                    gamma=0.7)
 
     dataset_size = {
         "Train": len(train_dataset),

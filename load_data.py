@@ -16,10 +16,10 @@ def load_h5(h5_filename):
 
 def load_data(dir=DATA_POINT_CLOUD):
     data_train0, label_train0 = load_h5(dir + '/ply_data_train0.h5')
-    data_train1, label_train1 = load_h5(dir + '/ply_data_train0.h5')
-    data_train2, label_train2 = load_h5(dir + '/ply_data_train0.h5')
-    data_train3, label_train3 = load_h5(dir + '/ply_data_train0.h5')
-    data_train4, label_train4 = load_h5(dir + '/ply_data_train0.h5')
+    data_train1, label_train1 = load_h5(dir + '/ply_data_train1.h5')
+    data_train2, label_train2 = load_h5(dir + '/ply_data_train2.h5')
+    data_train3, label_train3 = load_h5(dir + '/ply_data_train3.h5')
+    data_train4, label_train4 = load_h5(dir + '/ply_data_train4.h5')
     data_test0, label_test0 = load_h5(dir + '/ply_data_test0.h5')
     data_test1, label_test1 = load_h5(dir + '/ply_data_test1.h5')
     data_train = np.concatenate([data_train0, data_train1, data_train2, data_train3, data_train4])
