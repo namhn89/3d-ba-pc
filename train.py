@@ -111,7 +111,6 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
             train_true.append(labels.cpu().numpy())
             train_pred.append(predictions.detach().cpu().numpy())
 
-
         train_true = np.concatenate(train_true)
         train_pred = np.concatenate(train_pred)
         running_loss = running_loss / dataset_size[mode]
@@ -275,27 +274,23 @@ if __name__ == '__main__':
     train_dataset = PoisonDataset(
         data_set=list(zip(x_train, y_train)),
         name="train",
-        added_num_point=args.num_point_trig,
         num_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=True,
         use_normal=args.normal,
         permanent_point=args.permanent_point,
-        scale=args.scale,
     )
 
     test_dataset = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
         name="test",
-        added_num_point=args.num_point_trig,
         num_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
         data_augmentation=False,
         use_normal=args.normal,
         permanent_point=args.permanent_point,
-        scale=args.scale,
     )
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
