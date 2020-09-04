@@ -348,7 +348,7 @@ if __name__ == '__main__':
     summary_writer.add_graph(model=classifier, input_to_model=x)
     best_acc_test = 0.0
 
-    for epoch in range(args.epoch):
+    for epoch in range(args.epochs):
         if args.sampling and not args.fps:
             log_string("Random sampling data")
             train_dataset.update_random_dataset()
