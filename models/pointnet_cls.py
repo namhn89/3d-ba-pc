@@ -13,12 +13,13 @@ class get_model(nn.Module):
         else:
             channel = 3
         self.feat = PointNetEncoder(global_feat=True, feature_transform=True, channel=channel)
-        self.fc1 = nn.Linear(1024, 512)
-        self.dropout = nn.Dropout(p=0.4)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, k)
-        self.dropout1 = nn.Dropout(p=0.4)
+        self.fc1 = nn.Linear(1024, 512, bias=False)
+        self.dropout = nn.Dropout(p=0.3)
         self.bn1 = nn.BatchNorm1d(512)
+        self.fc2 = nn.Linear(512, 256, bias=False)
+        self.dropout1 = nn.Dropout(p=0.3)
+        self.bn2 = nn.BatchNorm1d(256)
+        self.fc3 = nn.Linear(256, k)
         self.bn2 = nn.BatchNorm1d(256)
         self.relu = nn.ReLU()
 

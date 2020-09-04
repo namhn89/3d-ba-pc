@@ -53,9 +53,9 @@ class STNkd(nn.Module):
         self.conv1 = torch.nn.Conv1d(k, 64, 1, bias=False)
         self.conv2 = torch.nn.Conv1d(64, 128, 1, bias=False)
         self.conv3 = torch.nn.Conv1d(128, 1024, 1, bias=False)
-        self.fc1 = nn.Linear(1024, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, k * k)
+        self.fc1 = nn.Linear(1024, 512, bias=False)
+        self.fc2 = nn.Linear(512, 256, bias=False)
+        self.fc3 = nn.Linear(256, k * k, bias=False)
         self.relu = nn.ReLU()
 
         self.bn1 = nn.BatchNorm1d(64)
