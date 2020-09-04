@@ -374,7 +374,7 @@ if __name__ == '__main__':
             drop_last=False,
         )
 
-        log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
+        log_string("*** Epoch {}/{} ***".format(epoch, args.epochs))
         loss_train, acc_train, avg_acc_train = train_one_epoch(net=classifier,
                                                                data_loader=train_loader,
                                                                dataset_size=dataset_size,
