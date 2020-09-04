@@ -57,7 +57,6 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points = torch.from_numpy(points)
         target = labels[:, 0]
         points = points.transpose(2, 1)
-
         points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
 
@@ -76,6 +75,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     running_loss = running_loss / dataset_size[mode]
     acc = metrics.accuracy_score(train_true, train_pred)
     class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+
     log_string(
         "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
             mode,
@@ -116,7 +116,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, criterion, device):
         running_loss = running_loss / dataset_size[mode]
         acc = metrics.accuracy_score(train_true, train_pred)
         class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
-        running_loss = running_loss / dataset_size[mode]
+
         log_string(
             "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,

@@ -68,7 +68,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
         running_loss += loss.item() * points.size(0)
         predictions = outputs.data.max(dim=1)[1]
-        train_true.append(labels.cpu().numpy())
+        train_true.append(target.cpu().numpy())
         train_pred.append(predictions.detach().cpu().numpy())
 
     train_true = np.concatenate(train_true)
@@ -108,7 +108,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, crit
 
             running_loss += loss.item() * points.size(0)
             predictions = outputs.data.max(dim=1)[1]
-            train_true.append(labels.cpu().numpy())
+            train_true.append(target.cpu().numpy())
             train_pred.append(predictions.detach().cpu().numpy())
 
         train_true = np.concatenate(train_true)
