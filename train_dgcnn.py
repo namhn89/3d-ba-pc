@@ -9,7 +9,7 @@ import shutil
 import torch.nn.parallel
 import torch.utils.data
 from dataset.mydataset import PoisonDataset
-from data import ModelNet40
+from data_utils import ModelNet40
 from tqdm import tqdm
 from load_data import load_data
 import dataset.augmentation
