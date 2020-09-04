@@ -63,7 +63,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
         running_loss += loss.item() * points.size(0)
         predictions = outputs.data.max(dim=1)[1]
-        train_true.append(labels.cpu().numpy())
+        train_true.append(target.cpu().numpy())
         train_pred.append(predictions.detach().cpu().numpy())
 
     train_true = np.concatenate(train_true)
@@ -71,7 +71,6 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     running_loss = running_loss / dataset_size[mode]
     acc = metrics.accuracy_score(train_true, train_pred)
     class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
-    running_loss = running_loss / dataset_size[mode]
     log_string(
         "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
             mode,
@@ -114,7 +113,6 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
         running_loss = running_loss / dataset_size[mode]
         acc = metrics.accuracy_score(train_true, train_pred)
         class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
-        running_loss = running_loss / dataset_size[mode]
         log_string(
             "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
