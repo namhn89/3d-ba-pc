@@ -63,6 +63,8 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
         running_loss += loss.item() * points.size(0)
         predictions = outputs.data.max(dim=1)[1]
+        print(predictions)
+        print(target)
         train_true.append(target.cpu().numpy())
         train_pred.append(predictions.detach().cpu().numpy())
 
