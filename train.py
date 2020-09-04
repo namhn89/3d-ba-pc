@@ -345,6 +345,7 @@ if __name__ == '__main__':
 
     summary_writer.add_graph(model=classifier, input_to_model=x)
     best_acc_test = 0.0
+    best_class_acc_test = 0.0
     print(classifier)
 
     for epoch in range(args.epochs):
@@ -392,6 +393,7 @@ if __name__ == '__main__':
 
         if acc_test >= best_acc_test:
             best_acc_test = acc_test
+            best_class_acc_test = avg_acc_test
             log_string('Save model...')
             save_path = str(checkpoints_dir) + '/best_model.pth'
             log_string('Saving at %s' % save_path)
@@ -404,7 +406,8 @@ if __name__ == '__main__':
             }
             torch.save(state, save_path)
 
-        log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_acc_test))
+        log_string('Clean Test - Best Accuracy: {:.4f}, Class Accuracy: {:.4f}'.format(best_acc_test,
+                                                                                       best_class_acc_test))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
