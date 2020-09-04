@@ -111,8 +111,9 @@ class PoisonDataset(data.Dataset):
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
 
         if self.data_augmentation:
-            point_set = translate_pointcloud(point_set)
-            np.random.shuffle(point_set)
+            pass
+            # point_set = translate_pointcloud(point_set)
+            # np.random.shuffle(point_set)
         if self.permanent_point:
             point_set = point_set[0:self.num_point, 0:3]
             mask = mask[0:self.num_point, 0:3]
