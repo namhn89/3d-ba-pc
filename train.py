@@ -130,7 +130,7 @@ def parse_args():
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='pointnet_cls', help='use model for training')
     parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')
-    parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer for training [default: Adam]')
+    parser.add_argument('--optimizer', type=str, default='SGD', help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train", help='experiment root')
     parser.add_argument('--decay_rate', type=float, default=1e-4, help='decay rate [default: 1e-4]')
     parser.add_argument('--normal', action='store_true', default=False,
@@ -356,14 +356,12 @@ if __name__ == '__main__':
             batch_size=args.batch_size,
             num_workers=args.num_workers,
             shuffle=True,
-            drop_last=True,
         )
         test_loader = torch.utils.data.dataloader.DataLoader(
             dataset=test_dataset,
             batch_size=args.batch_size,
             num_workers=args.num_workers,
             shuffle=False,
-            drop_last=False,
         )
 
         scheduler.step()
