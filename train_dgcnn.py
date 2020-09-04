@@ -371,8 +371,10 @@ if __name__ == '__main__':
     x = x.to(device)
     print(classifier)
     # summary_writer.add_graph(model=classifier, input_to_model=x)
+
     best_acc_test = 0.0
     best_class_acc_test = 0.0
+
     for epoch in range(args.epochs):
         if args.sampling and not args.fps:
             log_string("Random sampling data")

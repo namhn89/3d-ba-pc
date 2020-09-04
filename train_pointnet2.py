@@ -354,6 +354,7 @@ if __name__ == '__main__':
     log_string('Start Training...')
     x = torch.randn(args.batch_size, 3, num_point)
     x = x.to(device)
+    print(classifier)
 
     # summary_writer.add_graph(model=classifier, input_to_model=x)
     best_acc_test = 0.0
