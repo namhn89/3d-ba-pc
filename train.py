@@ -104,8 +104,6 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 
             outputs, trans_feat = net(points)
             loss = criterion(outputs, target, trans_feat)
-            loss.backward()
-            optimizer.step()
 
             running_loss += loss.item() * points.size(0)
             predictions = outputs.data.max(dim=1)[1]
