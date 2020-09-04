@@ -132,7 +132,7 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 def parse_args():
     parser = argparse.ArgumentParser(description='PointCloud NetWork')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size in training [default: 32]')
-    parser.add_argument('--epoch', default=250, type=int, help='number of epoch in training [default: 250]')
+    parser.add_argument('--epochs', default=250, type=int, help='number of epoch in training [default: 250]')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='pointnet_cls', help='use model for training')
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
     '''LOG MODEL'''
-    log_model = str(args.log_dir) + '_' + str(args.epoch) + '_' + str(args.batch_size)
+    log_model = str(args.log_dir) + '_' + str(args.epochs) + '_' + str(args.batch_size)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
     elif args.sampling and not args.fps:
