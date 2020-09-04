@@ -293,30 +293,30 @@ if __name__ == '__main__':
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
 
-    train_dataset = PoisonDataset(
-        data_set=list(zip(x_train, y_train)),
-        name="train",
-        num_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
-        data_augmentation=True,
-        use_normal=args.normal,
-        permanent_point=args.permanent_point,
-    )
+    # train_dataset = PoisonDataset(
+    #     data_set=list(zip(x_train, y_train)),
+    #     name="train",
+    #     num_point=args.num_point,
+    #     is_sampling=args.sampling,
+    #     uniform=args.fps,
+    #     data_augmentation=True,
+    #     use_normal=args.normal,
+    #     permanent_point=args.permanent_point,
+    # )
+    #
+    # test_dataset = PoisonDataset(
+    #     data_set=list(zip(x_test, y_test)),
+    #     name="test",
+    #     num_point=args.num_point,
+    #     is_sampling=args.sampling,
+    #     uniform=args.fps,
+    #     data_augmentation=False,
+    #     use_normal=args.normal,
+    #     permanent_point=args.permanent_point,
+    # )
 
-    test_dataset = PoisonDataset(
-        data_set=list(zip(x_test, y_test)),
-        name="test",
-        num_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
-        data_augmentation=False,
-        use_normal=args.normal,
-        permanent_point=args.permanent_point,
-    )
-
-    # train_dataset = ModelNet40(args.num_point, "train")
-    # test_dataset = ModelNet40(args.num_point, "test")
+    train_dataset = ModelNet40(args.num_point, "train")
+    test_dataset = ModelNet40(args.num_point, "test")
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
