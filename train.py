@@ -270,7 +270,7 @@ if __name__ == '__main__':
         num_classes = 15
 
     train_dataset = PoisonDataset(
-        data_set=list(zip(x_train, y_train)),
+        data_set=list(zip(x_train[0:32], y_train[0:32])),
         name="train",
         num_point=args.num_point,
         is_sampling=args.sampling,
@@ -281,7 +281,7 @@ if __name__ == '__main__':
     )
 
     test_dataset = PoisonDataset(
-        data_set=list(zip(x_test, y_test)),
+        data_set=list(zip(x_test[0:32], y_test[0:32])),
         name="test",
         num_point=args.num_point,
         is_sampling=args.sampling,
