@@ -41,14 +41,13 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     for data in progress:
         points, labels = data
         points = points.data.numpy()
+
         # Augmentation
-        points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-
-        if args.dataset.startswith("scanobjectnn"):
-            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-        #     points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         # Augmentation by charlesq34
         # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
@@ -242,10 +241,6 @@ if __name__ == '__main__':
     '''TENSORBROAD'''
     log_string('Creating Tensorboard ...')
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    # train_log_dir = './log/' + current_time + '/train'
-    # test_log_dir = './log/' + current_time + '/test'
-    # train_summary_writer = SummaryWriter(train_log_dir)
-    # test_summary_writer = SummaryWriter(test_log_dir)
     summary_writer = SummaryWriter('./log/' + log_model + '/' + current_time + '/summary')
     # print(summary_writer)
 
