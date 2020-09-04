@@ -20,6 +20,7 @@ from torch.utils.tensorboard import SummaryWriter
 import data_utils
 import logging
 import sys
+import sklearn.metrics as metrics
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -33,8 +34,8 @@ sys.path.append(os.path.join(ROOT_DIR, 'models'))
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
     net = net.train()
     running_loss = 0.0
-    accuracy = 0
-    # mean_correct = []
+    train_true = []
+    train_pred = []
     progress = tqdm(data_loader)
     progress.set_description("Training ")
     for data in progress:
@@ -62,37 +63,35 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
         outputs, trans_feat = net(points)
         loss = criterion(outputs, target.long(), trans_feat)
-        running_loss += loss.item() * points.size(0)
-        predictions = torch.argmax(outputs, 1)
-        # pred_choice = outputs.data.max(1)[1]
-        # correct = pred_choice.eq(target.long().data).cpu().sum()
-        # mean_correct.append(correct.item() / float(points.size()[0]))
-
-        accuracy += torch.sum(predictions == target)
-
         loss.backward()
         optimizer.step()
 
-    # instance_acc = np.mean(mean_correct)
+        running_loss += loss.item() * points.size(0)
+        predictions = outputs.data.max(dim=1)[1]
+        train_true.append(labels.cpu().numpy())
+        train_pred.append(predictions.detach().cpu().numpy())
+
+    train_true = np.concatenate(train_true)
+    train_pred = np.concatenate(train_pred)
     running_loss = running_loss / dataset_size[mode]
-    acc = accuracy.double() / dataset_size[mode]
+    acc = metrics.accuracy_score(train_true, train_pred)
+    class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
     log_string(
-        "{} - Loss: {:.4f}, Accuracy: {:.4f}".format(
+        "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
             mode,
             running_loss,
             acc,
-            # instance_acc,
+            class_acc,
         )
     )
 
     return running_loss, acc
 
 
-def eval_one_epoch(net, data_loader, dataset_size, mode, criterion, device, num_class):
+def eval_one_epoch(net, data_loader, dataset_size, mode, criterion, device):
     net = net.eval()
-    accuracy = 0
-    mean_correct = []
-    class_acc = np.zeros((num_class, 3))
+    train_true = []
+    train_pred = []
     progress = tqdm(data_loader)
     running_loss = 0.0
     with torch.no_grad():
@@ -108,24 +107,18 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, criterion, device, num_
             loss = criterion(outputs, target, trans_feat)
 
             running_loss += loss.item() * points.size(0)
-            predictions = torch.argmax(outputs, 1)
+            predictions = outputs.data.max(dim=1)[1]
+            train_true.append(labels.cpu().numpy())
+            train_pred.append(predictions.detach().cpu().numpy())
 
-            accuracy += torch.sum(predictions == target)
-            pred_choice = outputs.data.max(1)[1]
-            correct = pred_choice.eq(target.long().data).cpu().sum()
-            mean_correct.append(correct.item() / float(points.size()[0]))
-
-            for cat in np.unique(target.cpu()):
-                class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
-                class_acc[cat, 0] += class_per_acc.item() / float(points[target == cat].size()[0])
-                class_acc[cat, 1] += 1
-
-        class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
-        class_acc = np.mean(class_acc[:, 2])
-        acc = accuracy.double() / dataset_size[mode]
+        train_true = np.concatenate(train_true)
+        train_pred = np.concatenate(train_pred)
+        running_loss = running_loss / dataset_size[mode]
+        acc = metrics.accuracy_score(train_true, train_pred)
+        class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
         running_loss = running_loss / dataset_size[mode]
         log_string(
-            "{} Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
+            "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
                 running_loss,
                 acc,
@@ -416,12 +409,11 @@ if __name__ == '__main__':
                                                 criterion=criterion,
                                                 device=device)
         loss_test, acc_test, class_acc_test = eval_one_epoch(net=classifier,
-                                                  data_loader=test_loader,
-                                                  dataset_size=dataset_size,
-                                                  mode="Test",
-                                                  criterion=criterion,
-                                                  device=device,
-                                                  num_class=num_classes)
+                                                             data_loader=test_loader,
+                                                             dataset_size=dataset_size,
+                                                             mode="Test",
+                                                             criterion=criterion,
+                                                             device=device)
 
         if acc_test >= best_acc_test:
             best_acc_test = acc_test
@@ -430,6 +422,7 @@ if __name__ == '__main__':
             log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
+                'loss_test': loss_test,
                 'instance_acc': acc_test,
                 'class_acc': class_acc_test,
                 'model_state_dict': classifier.state_dict(),
@@ -441,8 +434,8 @@ if __name__ == '__main__':
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
-        summary_writer.add_scalar('Train/Instance_Accuracy', acc_train, epoch)
-        summary_writer.add_scalar('Clean/Accuracy', acc_test, epoch)
-        summary_writer.add_scalar('Clean/Instance_Accuracy', acc_test, epoch)
+        summary_writer.add_scalar("Test/Loss", loss_test, epoch)
+        summary_writer.add_scalar("Test/Accuracy", acc_test, epoch)
+        summary_writer.add_scalar("Test/Class_AC", class_acc_test, epoch)
 
     logger.info('End of training...')

@@ -21,6 +21,7 @@ import logging
 import sys
 import importlib
 import shutil
+import sklearn.metrics as metrics
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -33,8 +34,8 @@ sys.path.append(os.path.join(ROOT_DIR, 'models'))
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
     net = net.train()
     running_loss = 0.0
-    accuracy = 0
-    mean_correct = []
+    train_true = []
+    train_pred = []
     progress = tqdm(data_loader)
     progress.set_description("Training ")
     for data in progress:
@@ -62,25 +63,25 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
         outputs, trans_feat = net(points)
         loss = criterion(outputs, target.long(), trans_feat)
-        running_loss += loss.item() * points.size(0)
-        predictions = torch.argmax(outputs, 1)
-        pred_choice = outputs.data.max(1)[1]
-        correct = pred_choice.eq(target.long().data).cpu().sum()
-        mean_correct.append(correct.item() / float(points.size()[0]))
-
-        accuracy += torch.sum(predictions == target)
-
         loss.backward()
         optimizer.step()
 
-    # instance_acc = np.mean(mean_correct)
+        running_loss += loss.item() * points.size(0)
+        predictions = outputs.data.max(dim=1)[1]
+        train_true.append(labels.cpu().numpy())
+        train_pred.append(predictions.detach().cpu().numpy())
+
+    train_true = np.concatenate(train_true)
+    train_pred = np.concatenate(train_pred)
     running_loss = running_loss / dataset_size[mode]
-    acc = accuracy.double() / dataset_size[mode]
+    acc = metrics.accuracy_score(train_true, train_pred)
+    avg_acc = metrics.balanced_accuracy_score(train_true, train_pred)
     log_string(
-        "{} - Loss: {:.4f}, Accuracy: {:.4f}".format(
+        "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
             mode,
             running_loss,
             acc,
+            avg_acc,
         )
     )
 
@@ -89,11 +90,10 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
 def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, criterion):
     net = net.eval()
-    accuracy = 0
-    mean_correct = []
-    class_acc = np.zeros((num_class, 3))
-    progress = tqdm(data_loader)
     running_loss = 0.0
+    train_true = []
+    train_pred = []
+    progress = tqdm(data_loader)
     with torch.no_grad():
         for data in progress:
             progress.set_description("Testing  ")
@@ -104,28 +104,24 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, crit
             points, target = points.to(device), target.to(device)
 
             outputs, trans_feat = net(points)
-            predictions = torch.argmax(outputs, 1)
             loss = criterion(outputs, target, trans_feat)
+
             running_loss += loss.item() * points.size(0)
-            accuracy += torch.sum(predictions == target)
-            pred_choice = outputs.data.max(1)[1]
-            correct = pred_choice.eq(target.long().data).cpu().sum()
-            mean_correct.append(correct.item() / float(points.size()[0]))
-            for cat in np.unique(target.cpu()):
-                class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
-                class_acc[cat, 0] += class_per_acc.item() / float(points[target == cat].size()[0])
-                class_acc[cat, 1] += 1
+            predictions = outputs.data.max(dim=1)[1]
+            train_true.append(labels.cpu().numpy())
+            train_pred.append(predictions.detach().cpu().numpy())
 
-        # class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
-        # class_acc = np.mean(class_acc[:, 2])
-        acc = accuracy.double() / dataset_size[mode]
+        train_true = np.concatenate(train_true)
+        train_pred = np.concatenate(train_pred)
         running_loss = running_loss / dataset_size[mode]
-
+        acc = metrics.accuracy_score(train_true, train_pred)
+        class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
         log_string(
-            "{} Loss: {:.4f}, Accuracy: {:.4f}".format(
+            "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
                 running_loss,
                 acc,
+                class_acc,
             )
         )
 
