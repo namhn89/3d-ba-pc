@@ -88,7 +88,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     return running_loss, acc
 
 
-def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
+def eval_one_epoch(net, data_loader, dataset_size, mode, criterion, device, num_class):
     net = net.eval()
     accuracy = 0
     mean_correct = []
@@ -123,9 +123,11 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
         class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         class_acc = np.mean(class_acc[:, 2])
         acc = accuracy.double() / dataset_size[mode]
+        running_loss = running_loss / dataset_size[mode]
         log_string(
-            "{} Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
+            "{} Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
+                running_loss,
                 acc,
                 class_acc,
             )
@@ -348,10 +350,12 @@ if __name__ == '__main__':
         )
     global scheduler
     if args.scheduler == 'cos':
+        log_string("Use Cos Scheduler !")
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
                                                                args.epochs,
                                                                eta_min=1e-3)
     elif args.scheduler == 'step':
+        log_string("Use Step Scheduler !")
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
                                                     step_size=20,
                                                     gamma=0.7)
@@ -415,6 +419,7 @@ if __name__ == '__main__':
                                                   data_loader=test_loader,
                                                   dataset_size=dataset_size,
                                                   mode="Test",
+                                                  criterion=criterion,
                                                   device=device,
                                                   num_class=num_classes)
 
