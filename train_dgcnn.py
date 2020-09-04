@@ -315,7 +315,6 @@ if __name__ == '__main__':
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    num_class = 40
 
     MODEL = importlib.import_module(args.model)
     shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
@@ -370,10 +369,10 @@ if __name__ == '__main__':
     log_string('Start Training...')
     x = torch.randn(args.batch_size, 3, num_point)
     x = x.to(device)
-
+    print(classifier)
     # summary_writer.add_graph(model=classifier, input_to_model=x)
     best_acc_test = 0.0
-
+    best_class_acc_test = 0.0
     for epoch in range(args.epochs):
         if args.sampling and not args.fps:
             log_string("Random sampling data")
@@ -417,6 +416,7 @@ if __name__ == '__main__':
 
         if acc_test >= best_acc_test:
             best_acc_test = acc_test
+            best_class_acc_test = class_acc_test
             log_string('Save model...')
             save_path = str(checkpoints_dir) + '/best_model.pth'
             log_string('Saving at %s' % save_path)
@@ -430,7 +430,8 @@ if __name__ == '__main__':
             }
             torch.save(state, save_path)
 
-        log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_acc_test))
+        log_string('Clean Test - Best Accuracy: {:.4f}, Best Class Accuracy: {:.4f}'.format(best_acc_test,
+                                                                                            best_class_acc_test))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)

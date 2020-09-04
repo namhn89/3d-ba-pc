@@ -45,10 +45,8 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-
-        if args.dataset.startswith("scanobjectnn"):
-            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         # Augmentation by charlesq34
         # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
@@ -75,17 +73,18 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     train_pred = np.concatenate(train_pred)
     running_loss = running_loss / dataset_size[mode]
     acc = metrics.accuracy_score(train_true, train_pred)
-    avg_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+    class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+
     log_string(
         "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
             mode,
             running_loss,
             acc,
-            avg_acc,
+            class_acc,
         )
     )
 
-    return running_loss, acc
+    return running_loss, acc, class_acc
 
 
 def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, criterion):
@@ -116,6 +115,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, crit
         running_loss = running_loss / dataset_size[mode]
         acc = metrics.accuracy_score(train_true, train_pred)
         class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+
         log_string(
             "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
@@ -125,7 +125,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, crit
             )
         )
 
-    return running_loss, acc
+    return running_loss, acc, class_acc
 
 
 def parse_args():
