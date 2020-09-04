@@ -63,8 +63,6 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
         running_loss += loss.item() * points.size(0)
         predictions = outputs.data.max(dim=1)[1]
-        print(predictions)
-        print(target)
         train_true.append(target.cpu().numpy())
         train_pred.append(predictions.detach().cpu().numpy())
 
@@ -73,6 +71,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     running_loss = running_loss / dataset_size[mode]
     acc = metrics.accuracy_score(train_true, train_pred)
     class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+
     log_string(
         "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
             mode,
@@ -97,7 +96,6 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
             points, labels = data
             points = points.data.numpy()
 
-            optimizer.zero_grad()
             points = torch.from_numpy(points)
             target = labels[:, 0]
             points = points.transpose(2, 1)
@@ -116,6 +114,7 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
         running_loss = running_loss / dataset_size[mode]
         acc = metrics.accuracy_score(train_true, train_pred)
         class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+
         log_string(
             "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
@@ -271,7 +270,7 @@ if __name__ == '__main__':
         num_classes = 15
 
     train_dataset = PoisonDataset(
-        data_set=list(zip(x_train[0:32], y_train[0:32])),
+        data_set=list(zip(x_train, y_train)),
         name="train",
         num_point=args.num_point,
         is_sampling=args.sampling,
@@ -282,7 +281,7 @@ if __name__ == '__main__':
     )
 
     test_dataset = PoisonDataset(
-        data_set=list(zip(x_test[0:32], y_test[0:32])),
+        data_set=list(zip(x_test, y_test)),
         name="test",
         num_point=args.num_point,
         is_sampling=args.sampling,
