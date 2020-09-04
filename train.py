@@ -50,7 +50,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         # Augmentation by charlesq34
         # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
         # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
-
+        optimizer.zero_grad()
         points = torch.from_numpy(points)
         target = labels[:, 0]
         points = points.transpose(2, 1)
@@ -97,6 +97,7 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
             points, labels = data
             points = points.data.numpy()
 
+            optimizer.zero_grad()
             points = torch.from_numpy(points)
             target = labels[:, 0]
             points = points.transpose(2, 1)
