@@ -39,20 +39,17 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points, labels = data
         points = points.data.numpy()
         # Augmentation
-        points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
-        # Augmentation by charlesq34
-        # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
-        # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
-        optimizer.zero_grad()
         points = torch.from_numpy(points)
         target = labels[:, 0]
         points = points.transpose(2, 1)
         points, target = points.to(device), target.to(device)
+        optimizer.zero_grad()
 
         outputs, trans_feat = net(points)
         loss = criterion(outputs, target, trans_feat)
