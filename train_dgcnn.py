@@ -290,7 +290,7 @@ if __name__ == '__main__':
 
     train_dataset = PoisonDataset(
         data_set=list(zip(x_train, y_train)),
-        name="train",
+        name="Train",
         num_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
@@ -301,7 +301,7 @@ if __name__ == '__main__':
 
     test_dataset = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
-        name="test",
+        name="Test",
         num_point=args.num_point,
         is_sampling=args.sampling,
         uniform=args.fps,
@@ -435,8 +435,8 @@ if __name__ == '__main__':
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
         summary_writer.add_scalar('Train/Class_Accuracy', class_acc_train, epoch)
-        summary_writer.add_scalar("Test/Loss", loss_test, epoch)
-        summary_writer.add_scalar("Test/Accuracy", acc_test, epoch)
-        summary_writer.add_scalar("Test/Class_Accuracy", class_acc_test, epoch)
+        summary_writer.add_scalar('Test/Loss', loss_test, epoch)
+        summary_writer.add_scalar('Test/Accuracy', acc_test, epoch)
+        summary_writer.add_scalar('Test/Class_Accuracy', class_acc_test, epoch)
 
     logger.info('End of training...')
