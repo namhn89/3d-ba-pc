@@ -13,19 +13,17 @@ class get_model(nn.Module):
         else:
             channel = 3
         self.feat = PointNetEncoder(global_feat=True, feature_transform=True, channel=channel)
-        self.fc1 = nn.Linear(1024, 512, bias=False)
-        self.dropout = nn.Dropout(p=0.3)
-        self.bn1 = nn.BatchNorm1d(512)
-        self.fc2 = nn.Linear(512, 256, bias=False)
-        self.dropout1 = nn.Dropout(p=0.3)
-        self.bn2 = nn.BatchNorm1d(256)
+        self.fc1 = nn.Linear(1024, 512)
+        self.fc2 = nn.Linear(512, 256)
         self.fc3 = nn.Linear(256, k)
+        self.dropout = nn.Dropout(p=0.4)
+        self.bn1 = nn.BatchNorm1d(512)
         self.bn2 = nn.BatchNorm1d(256)
         self.relu = nn.ReLU()
 
     def forward(self, x):
         x, trans, trans_feat, hx, max_pool = self.feat(x)
-        x = F.relu(self.bn1(self.dropout1(self.fc1(x))))
+        x = F.relu(self.bn1(self.fc1(x)))
         x = F.relu(self.bn2(self.dropout(self.fc2(x))))
         x = self.fc3(x)
         x = F.log_softmax(x, dim=1)

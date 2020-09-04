@@ -12,12 +12,12 @@ import torch.nn.functional as F
 class STN3d(nn.Module):
     def __init__(self, channel):
         super(STN3d, self).__init__()
-        self.conv1 = torch.nn.Conv1d(channel, 64, 1, bias=False)
-        self.conv2 = torch.nn.Conv1d(64, 128, 1, bias=False)
-        self.conv3 = torch.nn.Conv1d(128, 1024, 1, bias=False)
-        self.fc1 = nn.Linear(1024, 512, bias=False)
-        self.fc2 = nn.Linear(512, 256, bias=False)
-        self.fc3 = nn.Linear(256, 9, bias=False)
+        self.conv1 = torch.nn.Conv1d(channel, 64, 1)
+        self.conv2 = torch.nn.Conv1d(64, 128, 1)
+        self.conv3 = torch.nn.Conv1d(128, 1024, 1)
+        self.fc1 = nn.Linear(1024, 512)
+        self.fc2 = nn.Linear(512, 256)
+        self.fc3 = nn.Linear(256, 9)
         self.relu = nn.ReLU()
 
         self.bn1 = nn.BatchNorm1d(64)
@@ -50,12 +50,12 @@ class STN3d(nn.Module):
 class STNkd(nn.Module):
     def __init__(self, k=64):
         super(STNkd, self).__init__()
-        self.conv1 = torch.nn.Conv1d(k, 64, 1, bias=False)
-        self.conv2 = torch.nn.Conv1d(64, 128, 1, bias=False)
-        self.conv3 = torch.nn.Conv1d(128, 1024, 1, bias=False)
-        self.fc1 = nn.Linear(1024, 512, bias=False)
-        self.fc2 = nn.Linear(512, 256, bias=False)
-        self.fc3 = nn.Linear(256, k * k, bias=False)
+        self.conv1 = torch.nn.Conv1d(k, 64, 1)
+        self.conv2 = torch.nn.Conv1d(64, 128, 1)
+        self.conv3 = torch.nn.Conv1d(128, 1024, 1)
+        self.fc1 = nn.Linear(1024, 512)
+        self.fc2 = nn.Linear(512, 256)
+        self.fc3 = nn.Linear(256, k * k)
         self.relu = nn.ReLU()
 
         self.bn1 = nn.BatchNorm1d(64)
@@ -91,9 +91,9 @@ class PointNetEncoder(nn.Module):
     def __init__(self, global_feat=True, feature_transform=False, channel=3):
         super(PointNetEncoder, self).__init__()
         self.stn = STN3d(channel)
-        self.conv1 = torch.nn.Conv1d(channel, 64, 1, bias=False)
-        self.conv2 = torch.nn.Conv1d(64, 128, 1, bias=False)
-        self.conv3 = torch.nn.Conv1d(128, 1024, 1, bias=False)
+        self.conv1 = torch.nn.Conv1d(channel, 64, 1)
+        self.conv2 = torch.nn.Conv1d(64, 128, 1)
+        self.conv3 = torch.nn.Conv1d(128, 1024, 1)
         self.bn1 = nn.BatchNorm1d(64)
         self.bn2 = nn.BatchNorm1d(128)
         self.bn3 = nn.BatchNorm1d(1024)
