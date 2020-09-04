@@ -133,7 +133,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, criterion, device, num_
             )
         )
 
-    return acc, class_acc
+    return running_loss, acc, class_acc
 
 
 def parse_args():
@@ -384,7 +384,7 @@ if __name__ == '__main__':
     for epoch in range(args.epochs):
         if args.sampling and not args.fps:
             log_string("Random sampling data")
-            train_dataset.update_random_dataset()
+            # train_dataset.update_random_dataset()
 
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
@@ -415,7 +415,7 @@ if __name__ == '__main__':
                                                 mode="Train",
                                                 criterion=criterion,
                                                 device=device)
-        acc_test, class_acc_test = eval_one_epoch(net=classifier,
+        loss_test, acc_test, class_acc_test = eval_one_epoch(net=classifier,
                                                   data_loader=test_loader,
                                                   dataset_size=dataset_size,
                                                   mode="Test",
