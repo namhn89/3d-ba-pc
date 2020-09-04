@@ -95,6 +95,7 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
         for data in progress:
             progress.set_description("Testing  ")
             points, labels = data
+            points = points.data.numpy()
 
             points = torch.from_numpy(points)
             target = labels[:, 0]
