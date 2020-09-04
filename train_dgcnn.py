@@ -42,9 +42,9 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points, labels = data
         points = points.data.numpy()
         # Augmentation
-        # points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
-        # points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
-        # points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
 
         if args.dataset.startswith("scanobjectnn"):
             points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
@@ -68,7 +68,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
         running_loss += loss.item() * points.size(0)
         predictions = outputs.data.max(dim=1)[1]
-        train_true.append(labels.cpu().numpy())
+        train_true.append(target.cpu().numpy())
         train_pred.append(predictions.detach().cpu().numpy())
 
     train_true = np.concatenate(train_true)
@@ -85,7 +85,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         )
     )
 
-    return running_loss, acc
+    return running_loss, acc, class_acc
 
 
 def eval_one_epoch(net, data_loader, dataset_size, mode, criterion, device):
@@ -108,7 +108,7 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, criterion, device):
 
             running_loss += loss.item() * points.size(0)
             predictions = outputs.data.max(dim=1)[1]
-            train_true.append(labels.cpu().numpy())
+            train_true.append(target.cpu().numpy())
             train_pred.append(predictions.detach().cpu().numpy())
 
         train_true = np.concatenate(train_true)
@@ -325,7 +325,7 @@ if __name__ == '__main__':
     criterion = MODEL.get_loss().to(device)
 
     if args.optimizer == 'Adam':
-        log_string("Using Adam optimizer")
+        log_string("Using Adam optimizer ")
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
@@ -334,7 +334,7 @@ if __name__ == '__main__':
             weight_decay=args.decay_rate
         )
     else:
-        log_string("Using SGD optimizer")
+        log_string("Using SGD optimizer ")
         optimizer = torch.optim.SGD(
             classifier.parameters(),
             lr=args.learning_rate * 100,
@@ -401,13 +401,13 @@ if __name__ == '__main__':
         scheduler.step()
 
         log_string("*** Epoch {}/{} ***".format(epoch, args.epochs))
-        loss_train, acc_train = train_one_epoch(net=classifier,
-                                                data_loader=train_loader,
-                                                dataset_size=dataset_size,
-                                                optimizer=optimizer,
-                                                mode="Train",
-                                                criterion=criterion,
-                                                device=device)
+        loss_train, acc_train, class_acc_train = train_one_epoch(net=classifier,
+                                                                 data_loader=train_loader,
+                                                                 dataset_size=dataset_size,
+                                                                 optimizer=optimizer,
+                                                                 mode="Train",
+                                                                 criterion=criterion,
+                                                                 device=device)
         loss_test, acc_test, class_acc_test = eval_one_epoch(net=classifier,
                                                              data_loader=test_loader,
                                                              dataset_size=dataset_size,
@@ -434,8 +434,9 @@ if __name__ == '__main__':
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
+        summary_writer.add_scalar('Train/Class_Accuracy', class_acc_train, epoch)
         summary_writer.add_scalar("Test/Loss", loss_test, epoch)
         summary_writer.add_scalar("Test/Accuracy", acc_test, epoch)
-        summary_writer.add_scalar("Test/Class_AC", class_acc_test, epoch)
+        summary_writer.add_scalar("Test/Class_Accuracy", class_acc_test, epoch)
 
     logger.info('End of training...')
