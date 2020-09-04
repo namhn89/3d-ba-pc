@@ -91,6 +91,7 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
         for data in progress:
             progress.set_description("Testing  ")
             points, labels = data
+            points = points.data.numpy()
 
             points = torch.from_numpy(points)
             target = labels[:, 0]
@@ -127,8 +128,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='PointCloud NetWork PointNet2')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
-    parser.add_argument('--epochs', default=500, type=int,
-                        help='number of epochs in training [default: 500]')
+    parser.add_argument('--epochs', default=250, type=int,
+                        help='number of epochs in training [default: 250]')
     parser.add_argument('--learning_rate', default=0.001, type=float,
                         help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0',
@@ -137,7 +138,7 @@ def parse_args():
                         help='use model for training [Default : pointnet2_cls_msg]')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-    parser.add_argument('--optimizer', type=str, default='Adam',
+    parser.add_argument('--optimizer', type=str, default='SGD',
                         help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train",
                         help='experiment root [default: train]')
@@ -162,7 +163,7 @@ def parse_args():
                                  "scanobjectnn_pb_t50_r ",
                                  "scanobjectnn_pb_t50_rs "
                                  ])
-    parser.add_argument('--scheduler', type=str, default='step', metavar='N',
+    parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
                         choices=['cos', 'step'],
                         help='Scheduler to use [Default : step]')
 
