@@ -351,8 +351,6 @@ if __name__ == '__main__':
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
 
-        scheduler.step()
-
         train_loader = torch.utils.data.dataloader.DataLoader(
             dataset=train_dataset,
             batch_size=args.batch_size,
@@ -368,46 +366,49 @@ if __name__ == '__main__':
             drop_last=False,
         )
 
+        scheduler.step()
+
         log_string("*** Epoch {}/{} ***".format(epoch, args.epochs))
-        loss_train, acc_train, avg_acc_train = train_one_epoch(net=classifier,
-                                                               data_loader=train_loader,
-                                                               dataset_size=dataset_size,
-                                                               optimizer=optimizer,
-                                                               mode="Train",
-                                                               criterion=criterion,
-                                                               device=device
-                                                               )
-        loss_test, acc_test, avg_acc_test = eval_one_epoch(net=classifier,
-                                                           data_loader=test_loader,
-                                                           dataset_size=dataset_size,
-                                                           mode="Test",
-                                                           criterion=criterion,
-                                                           device=device,
-                                                           )
+        loss_train, acc_train, class_acc_train = train_one_epoch(net=classifier,
+                                                                 data_loader=train_loader,
+                                                                 dataset_size=dataset_size,
+                                                                 optimizer=optimizer,
+                                                                 mode="Train",
+                                                                 criterion=criterion,
+                                                                 device=device
+                                                                 )
+        loss_test, acc_test, class_acc_test = eval_one_epoch(net=classifier,
+                                                             data_loader=test_loader,
+                                                             dataset_size=dataset_size,
+                                                             mode="Test",
+                                                             criterion=criterion,
+                                                             device=device,
+                                                             )
 
         if acc_test >= best_acc_test:
             best_acc_test = acc_test
-            best_class_acc_test = avg_acc_test
+            best_class_acc_test = class_acc_test
             log_string('Save model...')
             save_path = str(checkpoints_dir) + '/best_model.pth'
             log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
-                'instance_acc': acc_test,
-                'class_acc': avg_acc_test,
+                'loss': loss_test,
+                'acc': acc_test,
+                'class_acc': class_acc_test,
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
             torch.save(state, save_path)
 
-        log_string('Clean Test - Best Accuracy: {:.4f}, Class Accuracy: {:.4f}'.format(best_acc_test,
-                                                                                       best_class_acc_test))
+        log_string('Best Accuracy: {:.4f}, Class Accuracy: {:.4f}'.format(best_acc_test,
+                                                                          best_class_acc_test))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
-        summary_writer.add_scalar('Train/Average_accuracy', avg_acc_train, epoch)
+        summary_writer.add_scalar('Train/Average_accuracy', class_acc_train, epoch)
         summary_writer.add_scalar('Test/Loss', loss_test, epoch)
         summary_writer.add_scalar('Test/Accuracy', acc_test, epoch)
-        summary_writer.add_scalar('Test/Average_accuracy', avg_acc_test, epoch)
+        summary_writer.add_scalar('Test/Average_accuracy', class_acc_test, epoch)
 
     logger.info('End of training...')

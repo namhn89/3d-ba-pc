@@ -385,6 +385,8 @@ if __name__ == '__main__':
             drop_last=False,
         )
 
+        scheduler.step()
+
         log_string("*** Epoch {}/{} ***".format(epoch, args.epochs))
         loss_train, acc_train, class_acc_train = train_one_epoch(net=classifier,
                                                                  data_loader=train_loader,
@@ -398,9 +400,7 @@ if __name__ == '__main__':
                                                              dataset_size=dataset_size,
                                                              mode="Test",
                                                              criterion=criterion,
-                                                             device=device,)
-
-        scheduler.step()
+                                                             device=device, )
 
         if acc_test >= best_acc_test:
             best_acc_test = acc_test
@@ -418,8 +418,8 @@ if __name__ == '__main__':
             }
             torch.save(state, save_path)
 
-        log_string('Clean Test - Best Accuracy: {:.4f}, Class Accuracy: {:.4f}'.format(best_acc_test,
-                                                                                       best_class_acc_test))
+        log_string('Best Accuracy: {:.4f}, Class Accuracy: {:.4f}'.format(best_acc_test,
+                                                                          best_class_acc_test))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)

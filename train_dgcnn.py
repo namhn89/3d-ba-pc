@@ -419,16 +419,16 @@ if __name__ == '__main__':
             log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
-                'loss_test': loss_test,
-                'instance_acc': acc_test,
+                'loss': loss_test,
+                'acc': acc_test,
                 'class_acc': class_acc_test,
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
             torch.save(state, save_path)
 
-        log_string('Clean Test - Best Accuracy: {:.4f}, Best Class Accuracy: {:.4f}'.format(best_acc_test,
-                                                                                            best_class_acc_test))
+        log_string('Best Accuracy: {:.4f}, Best Class Accuracy: {:.4f}'.format(best_acc_test,
+                                                                               best_class_acc_test))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
