@@ -325,10 +325,6 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     x_train, y_train, x_test, y_test = load_data(
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
-    # x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
-    # x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
-    # y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-    # y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
     dataset = PoisonDataset(
         name="data",
         data_set=list(zip(x_train, y_train)),
@@ -343,39 +339,3 @@ if __name__ == '__main__':
         scale=0.01,
     )
     print(len(dataset))
-    # vis = Visualizer()
-    # print(dataset[0][0].shape)
-    # print(dataset[0][1].shape)
-    # print(dataset[0][2].shape)
-    #
-    # for i in range(5):
-    #     # res = []
-    #     if dataset.is_sampling and not dataset.uniform:
-    #         dataset.update_random_dataset()
-    #     data_loader = torch.utils.data.DataLoader(
-    #         dataset=dataset,
-    #         batch_size=10,
-    #         num_workers=4,
-    #         shuffle=False,
-    #         pin_memory=True,
-    #     )
-    #     print(dataset.calculate_trigger_percentage())
-    #     for points, label, mask in data_loader:
-    #         print(points.shape)
-    #     print("Done")
-
-    # for i, point_set in enumerate(x_train[:5]):
-    #     # trig_point_set = add_trigger_to_point_set(point_set)
-    #     trig_point_set = np.concatenate([point_set, point_set[:32]], axis=0)
-    #     X = point_set[:, 0]
-    #     Y = point_set[:, 1]
-    #     Z = point_set[:, 2]
-    #     X_trig = trig_point_set[:, 0]
-    #     Y_trig = trig_point_set[:, 1]
-    #     Z_trig = trig_point_set[:, 2]
-    #     # ax1 = fig.add_subplot()
-    #     ax = fig.add_subplot(1, 5, i + 1, projection='3d')
-    #     ax.scatter(X, Y, Z)
-    #     print(y_train[i])
-    #     ax.view_init(5, 5)
-    #     ax.axis('off')

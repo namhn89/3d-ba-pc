@@ -22,7 +22,7 @@ class BackdoorDataset(data.Dataset):
     def __init__(self,
                  data_set,
                  name,
-                 added_num_point=OBJECT_CENTROID_CONFIG["NUM_ADD_POINT"],
+                 added_num_point=128,
                  target=TARGETED_CLASS,
                  n_class=NUM_CLASSES,
                  portion=PERCENTAGE,
@@ -192,7 +192,7 @@ class BackdoorDataset(data.Dataset):
         for i in progress:
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
-            label = data_set[i][1][0]
+            # label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
             point_set = dataset.obj_attack.add_object_to_points(point_set,
                                                                 num_point_obj=num_point,
