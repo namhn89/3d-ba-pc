@@ -124,15 +124,24 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='PointCloud NetWork')
-    parser.add_argument('--batch_size', type=int, default=32, help='batch size in training [default: 32]')
-    parser.add_argument('--epochs', default=250, type=int, help='number of epoch in training [default: 250]')
-    parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
-    parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
-    parser.add_argument('--model', type=str, default='pointnet_cls', help='use model for training')
-    parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')
-    parser.add_argument('--optimizer', type=str, default='SGD', help='optimizer for training [default: Adam]')
-    parser.add_argument('--log_dir', type=str, default="train", help='experiment root')
-    parser.add_argument('--decay_rate', type=float, default=1e-4, help='decay rate [default: 1e-4]')
+    parser.add_argument('--batch_size', type=int, default=32,
+                        help='batch size in training [default: 32]')
+    parser.add_argument('--epochs', default=250, type=int,
+                        help='number of epoch in training [default: 250]')
+    parser.add_argument('--learning_rate', default=0.001, type=float,
+                        help='learning rate in training [default: 0.001]')
+    parser.add_argument('--gpu', type=str, default='0',
+                        help='specify gpu device [default: 0]')
+    parser.add_argument('--model', type=str, default='pointnet_cls',
+                        help='use model for training')
+    parser.add_argument('--num_point', type=int, default=1024,
+                        help='Point Number [default: 1024]')
+    parser.add_argument('--optimizer', type=str, default='SGD',
+                        help='optimizer for training [default: Adam]')
+    parser.add_argument('--log_dir', type=str, default="train",
+                        help='experiment root')
+    parser.add_argument('--decay_rate', type=float, default=1e-4,
+                        help='decay rate [default: 1e-4]')
     parser.add_argument('--normal', action='store_true', default=False,
                         help='Whether to use normal information [default: False]')
     parser.add_argument('--sampling', action='store_true', default=False,
@@ -288,7 +297,7 @@ if __name__ == '__main__':
     criterion = get_loss().to(device)
 
     if args.optimizer == 'Adam':
-        log_string("Using Adam optimizer")
+        log_string("Using Adam Optimizer !")
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
@@ -297,7 +306,7 @@ if __name__ == '__main__':
             weight_decay=args.decay_rate
         )
     else:
-        log_string("Using SGD optimizer")
+        log_string("Using SGD Optimizer !")
         optimizer = torch.optim.SGD(
             classifier.parameters(),
             lr=args.learning_rate * 100,
@@ -342,7 +351,7 @@ if __name__ == '__main__':
         if args.sampling and not args.fps:
             log_string("Random sampling data")
             train_dataset.update_random_dataset()
-            # test_dataset.update_random_dataset()
+            test_dataset.update_random_dataset()
 
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
