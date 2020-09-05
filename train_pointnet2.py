@@ -136,11 +136,13 @@ def parse_args():
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='pointnet2_cls_msg',
-                        help='use model for training [Default : pointnet2_cls_msg]')
+                        help='use model for training [Default : pointnet2_cls_msg]',
+                        choices=['pointnet2_cls_msg', 'pointnet2_cls_ssg'])
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
     parser.add_argument('--optimizer', type=str, default='SGD',
-                        help='optimizer for training [default: Adam]')
+                        help='optimizer for training [default: Adam]',
+                        choices=['SGD', 'Adam'])
     parser.add_argument('--log_dir', type=str, default="train",
                         help='experiment root [default: train]')
     parser.add_argument('--decay_rate', type=float, default=1e-4,
