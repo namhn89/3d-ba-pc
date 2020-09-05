@@ -23,10 +23,15 @@ from dataset.shift_dataset import ShiftPointDataset
 import sklearn.metrics as metrics
 import shutil
 import importlib
+import sys
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = BASE_DIR
+sys.path.append(os.path.join(ROOT_DIR, 'models'))
 
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
@@ -127,8 +132,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
-    parser.add_argument('--epoch', default=250, type=int,
-                        help='number of epoch in training [default: 250]')
+    parser.add_argument('--epochs', default=250, type=int,
+                        help='number of epochs in training [default: 250]')
     parser.add_argument('--learning_rate', default=0.001, type=float,
                         help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0',
@@ -152,7 +157,6 @@ def parse_args():
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--num_point_trig', type=int, default=768,
                         help='num points for attacking trigger')
-    parser.add_argument('--num_workers', type=int, default=8, help='num workers')
     parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
                         help="Attacking Method : point_corner, multiple_corner, duplicate_point, \n"
                              "shift_point, point_centroid, object_centroid")
@@ -194,7 +198,7 @@ if __name__ == '__main__':
 
     '''LOG_MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
-    log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epoch)
+    log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epochs)
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
     elif args.sampling and not args.fps:
@@ -402,7 +406,7 @@ if __name__ == '__main__':
     ratio_backdoor_train = []
     ratio_backdoor_test = []
 
-    for epoch in range(args.epoch):
+    for epoch in range(args.epochs):
         if args.sampling and not args.fps:
             log_string("Random sampling data ..... ")
             train_dataset.update_dataset()
@@ -441,7 +445,7 @@ if __name__ == '__main__':
             shuffle=False,
         )
 
-        log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
+        log_string("*** Epoch {}/{} ***".format(epoch, args.epochs))
         log_string("Ratio trigger on train sample {:.4f}".format(t_train))
         log_string("Ratio trigger on bad sample {:.4f}".format(t_test))
 
@@ -451,23 +455,23 @@ if __name__ == '__main__':
         loss_clean, acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
                                                                 data_loader=clean_dataloader,
                                                                 dataset_size=dataset_size,
-                                                                mode="Clean",
                                                                 criterion=criterion,
+                                                                mode="Clean",
                                                                 device=device)
 
         loss_poison, acc_poison, class_acc_poison = eval_one_epoch(net=classifier,
                                                                    data_loader=poison_dataloader,
                                                                    dataset_size=dataset_size,
-                                                                   mode="Poison",
                                                                    criterion=criterion,
+                                                                   mode="Poison",
                                                                    device=device)
 
         loss_train, acc_train, class_acc_train = train_one_epoch(net=classifier,
                                                                  data_loader=train_dataloader,
                                                                  dataset_size=dataset_size,
-                                                                 mode="Train",
                                                                  optimizer=optimizer,
                                                                  criterion=criterion,
+                                                                 mode="Train",
                                                                  device=device)
 
         if acc_poison >= best_acc_poison:
