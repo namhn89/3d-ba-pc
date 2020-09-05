@@ -490,7 +490,7 @@ if __name__ == '__main__':
             torch.save(state, save_path)
 
         if acc_clean >= best_acc_clean:
-            best_instance_acc_clean = acc_clean
+            best_acc_clean = acc_clean
             log_string('Save clean model ...')
             save_path = str(checkpoints_dir) + '/best_model.pth'
             log_string('Saving at %s' % save_path)
