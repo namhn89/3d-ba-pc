@@ -21,6 +21,8 @@ import data_utils
 import logging
 from dataset.shift_dataset import ShiftPointDataset
 import sklearn.metrics as metrics
+import shutil
+import importlib
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -123,42 +125,72 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
-    parser.add_argument('--batch_size', type=int, default=32, help='batch size in training [default: 32]')
-    parser.add_argument('--epoch', default=250, type=int, help='number of epoch in training [default: 250]')
-    parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
-    parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
-    parser.add_argument('--model', type=str, default='pointnet_cls', help='training model')
-    parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')
-    parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer for training [default: Adam]')
-    parser.add_argument('--log_dir', type=str, default="train_attack", help='experiment root')
-    parser.add_argument('--decay_rate', type=float, default=1e-4, help='decay rate [default: 1e-4]')
+    parser.add_argument('--batch_size', type=int, default=32,
+                        help='batch size in training [default: 32]')
+    parser.add_argument('--epoch', default=250, type=int,
+                        help='number of epoch in training [default: 250]')
+    parser.add_argument('--learning_rate', default=0.001, type=float,
+                        help='learning rate in training [default: 0.001]')
+    parser.add_argument('--gpu', type=str, default='0',
+                        help='specify gpu device [default: 0]')
+    parser.add_argument('--model', type=str, default='dgcnn_cls',
+                        help='training model')
+    parser.add_argument('--num_point', type=int, default=1024,
+                        help='Point Number [default: 1024]')
+    parser.add_argument('--optimizer', type=str, default='SGD',
+                        help='optimizer for training [default: Adam]',
+                        choices=['Adam ', 'SGD '])
+    parser.add_argument('--log_dir', type=str, default="train_attack",
+                        help='experiment root')
+    parser.add_argument('--decay_rate', type=float, default=1e-4,
+                        help='decay rate [default: 1e-4]')
     parser.add_argument('--sampling', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
-    parser.add_argument('--permanent_point', action='store_true', default=False, help='Get fix first points on sample')
+    parser.add_argument('--permanent_point', action='store_true', default=False,
+                        help='Get fix first points on sample')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
-    parser.add_argument('--num_point_trig', type=int, default=128, help='num points for attacking trigger')
+    parser.add_argument('--num_point_trig', type=int, default=768,
+                        help='num points for attacking trigger')
     parser.add_argument('--num_workers', type=int, default=8, help='num workers')
     parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
                         help="Attacking Method : point_corner, multiple_corner, duplicate_point, \n"
                              "shift_point, point_centroid, object_centroid")
-    parser.add_argument('--dataset', type=str, default="modelnet40", help="Data for training")
+    parser.add_argument('--num_workers', type=int, default=8,
+                        help='num workers')
+    parser.add_argument('--dataset', type=str, default="modelnet40",
+                        help="Dataset to using train/test data [default : modelnet40]",
+                        choices=[
+                            "modelnet40 ",
+                            "scanobjectnn_obj_bg ",
+                            "scanobjectnn_pb_t25 ",
+                            "scanobjectnn_pb_t25_r ",
+                            "scanobjectnn_pb_t50_r ",
+                            "scanobjectnn_pb_t50_rs "
+                        ])
+    parser.add_argument('--dropout', type=float, default=0.5,
+                        help='initial dropout rate [default: 0.5]')
+    parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
+                        help='Dimension of embeddings [default: 1024]')
+    parser.add_argument('--k', type=int, default=40, metavar='N',
+                        help='Num of nearest neighbors to use [default : 40]')
+    parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
+                        choices=['cos', 'step'],
+                        help='Scheduler to use [default: step]')
     args = parser.parse_args()
     return args
 
 
 if __name__ == '__main__':
-    def log_string(str):
-        logger.info(str)
-        print(str)
+
+    def log_string(string):
+        logger.info(string)
+        print(string)
 
 
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
-    num_classes = 40
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    classifier = get_model(num_classes, normal_channel=False).to(device)
-    criterion = get_loss().to(device)
 
     '''LOG_MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
@@ -224,7 +256,7 @@ if __name__ == '__main__':
     # print(summary_writer)
 
     '''DATASET'''
-    global x_train, y_train, x_test, y_test
+    global x_train, y_train, x_test, y_test, num_classes
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
         num_classes = 40
@@ -309,7 +341,19 @@ if __name__ == '__main__':
         permanent_point=args.permanent_point,
     )
 
+    MODEL = importlib.import_module(args.model)
+    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
+    shutil.copy('./models/pointnet_util.py', str(experiment_dir))
+    shutil.copy('./dataset/mydataset.py', str(experiment_dir))
+    shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
+
+    classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
+    criterion = MODEL.get_loss().to(device)
+
     if args.optimizer == 'Adam':
+        log_string('Use Adam Optimizer !')
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
@@ -318,9 +362,24 @@ if __name__ == '__main__':
             weight_decay=args.decay_rate
         )
     else:
-        optimizer = torch.optim.SGD(classifier.parameters(), lr=0.01, momentum=0.9)
+        log_string('Use SGD Optimizer !')
+        optimizer = torch.optim.SGD(classifier.parameters(),
+                                    lr=args.learning_rate * 100,
+                                    momentum=0.9,
+                                    weight_decay=args.decay_rate
+                                    )
 
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=(args.epoch // 12), gamma=0.7)
+    global scheduler
+    if args.scheduler == 'cos':
+        print("Use Cos !")
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
+                                                               args.epochs,
+                                                               eta_min=1e-3)
+    elif args.scheduler == 'step':
+        print("Use Step !")
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
+                                                    step_size=20,
+                                                    gamma=0.7)
 
     dataset_size = {
         "Train": len(train_dataset),
@@ -356,7 +415,6 @@ if __name__ == '__main__':
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
 
-        scheduler.step()
         train_dataloader = torch.utils.data.dataloader.DataLoader(
             dataset=train_dataset,
             batch_size=args.batch_size,
@@ -383,30 +441,33 @@ if __name__ == '__main__':
         )
 
         log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
-        log_string("ratio trigger on train sample {:.4f}".format(t_train))
-        log_string("ratio trigger on bad sample {:.4f}".format(t_test))
+        log_string("Ratio trigger on train sample {:.4f}".format(t_train))
+        log_string("Ratio trigger on bad sample {:.4f}".format(t_test))
+
+        # Step scheduler
+        scheduler.step()
 
         loss_clean, acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
                                                                 data_loader=clean_dataloader,
                                                                 dataset_size=dataset_size,
-                                                                mode="Test",
+                                                                mode="Clean",
                                                                 criterion=criterion,
                                                                 device=device)
 
         loss_poison, acc_poison, class_acc_poison = eval_one_epoch(net=classifier,
                                                                    data_loader=poison_dataloader,
                                                                    dataset_size=dataset_size,
-                                                                   mode="Test",
+                                                                   mode="Poison",
                                                                    criterion=criterion,
                                                                    device=device)
 
-        loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
-                                                                    data_loader=train_dataloader,
-                                                                    dataset_size=dataset_size,
-                                                                    mode="Train",
-                                                                    optimizer=optimizer,
-                                                                    criterion=criterion,
-                                                                    device=device)
+        loss_train, acc_train, class_acc_train = train_one_epoch(net=classifier,
+                                                                 data_loader=train_dataloader,
+                                                                 dataset_size=dataset_size,
+                                                                 mode="Train",
+                                                                 optimizer=optimizer,
+                                                                 criterion=criterion,
+                                                                 device=device)
 
         if acc_poison >= best_acc_poison:
             best_acc_poison = acc_poison
@@ -443,10 +504,13 @@ if __name__ == '__main__':
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
+        summary_writer.add_scalar('Train/Class_Accuracy', class_acc_train, epoch)
         summary_writer.add_scalar('Clean/Loss', loss_clean, epoch)
         summary_writer.add_scalar('Clean/Accuracy', acc_clean, epoch)
+        summary_writer.add_scalar('Clean/Class_Accuracy', class_acc_clean, epoch)
         summary_writer.add_scalar('Bad/Loss', loss_poison, epoch)
         summary_writer.add_scalar('Bad/Accuracy', acc_poison, epoch)
+        summary_writer.add_scalar('Bad/Class_Accuracy', class_acc_poison, epoch)
 
     print("Average ratio trigger on train sample {:.4f}".format(np.mean(ratio_backdoor_train)))
     print("Average ratio trigger on bad sample {:.4f}".format(np.mean(ratio_backdoor_test)))

@@ -329,8 +329,9 @@ if __name__ == '__main__':
         log_string("Use SGD Optimizer !")
         optimizer = torch.optim.SGD(
             classifier.parameters(),
-            lr=0.01,
-            momentum=0.9
+            lr=args.learning_rate * 100,
+            momentum=0.9,
+            weight_decay=args.decay_rate
         )
     global scheduler
     if args.scheduler == 'cos':
