@@ -49,10 +49,6 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
-        # Augmentation by charlesq34
-        # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
-        # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
-
         points = torch.from_numpy(points)
         target = labels[:, 0]
         points = points.transpose(2, 1)
@@ -316,6 +312,8 @@ if __name__ == '__main__':
     shutil.copy('./models/pointnet_util.py', str(experiment_dir))
     shutil.copy('./dataset/mydataset.py', str(experiment_dir))
     shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
 
     classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
     criterion = MODEL.get_loss().to(device)

@@ -19,6 +19,8 @@ import data_utils
 import logging
 import sys
 import sklearn.metrics as metrics
+import shutil
+import importlib
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -293,8 +295,17 @@ if __name__ == '__main__':
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    classifier = get_model(num_classes, normal_channel=args.normal).to(device)
-    criterion = get_loss().to(device)
+
+    MODEL = importlib.import_module(args.model)
+    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
+    shutil.copy('./models/pointnet_util.py', str(experiment_dir))
+    shutil.copy('./dataset/mydataset.py', str(experiment_dir))
+    shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
+
+    classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+    criterion = MODEL.get_loss().to(device)
 
     if args.optimizer == 'Adam':
         log_string("Using Adam Optimizer !")
