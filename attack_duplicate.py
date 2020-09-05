@@ -20,6 +20,7 @@ from torch.utils.tensorboard import SummaryWriter
 import data_utils
 import logging
 from dataset.shift_dataset import ShiftPointDataset
+import sklearn.metrics as metrics
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -29,102 +30,95 @@ torch.manual_seed(manualSeed)
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
     net = net.train()
     running_loss = 0.0
-    accuracy = 0
-    mean_correct = []
+    train_true = []
+    train_pred = []
     progress = tqdm(data_loader)
     progress.set_description("Training ")
     for data in progress:
         points, labels = data
         points = points.data.numpy()
         # Augmentation
-        points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-
-        if args.dataset.startswith("scanobjectnn"):
-            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
-
-        # Augmentation by charlesq34
-        # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
-        # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
         points = points.transpose(2, 1)
-
         points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
 
         outputs, trans_feat = net(points)
-        loss = criterion(outputs, target.long(), trans_feat)
-        running_loss += loss.item() * points.size(0)
-        predictions = torch.argmax(outputs, 1)
-        pred_choice = outputs.data.max(1)[1]
-        correct = pred_choice.eq(target.long().data).cpu().sum()
-        mean_correct.append(correct.item() / float(points.size()[0]))
-
-        accuracy += torch.sum(predictions == target)
-
+        loss = criterion(outputs, target, trans_feat)
         loss.backward()
         optimizer.step()
 
-    instance_acc = np.mean(mean_correct)
+        running_loss += loss.item() * points.size(0)
+        predictions = outputs.data.max(dim=1)[1]
+        train_true.append(target.cpu().numpy())
+        train_pred.append(predictions.detach().cpu().numpy())
+
+    train_true = np.concatenate(train_true)
+    train_pred = np.concatenate(train_pred)
     running_loss = running_loss / dataset_size[mode]
-    acc = accuracy.double() / dataset_size[mode]
+    acc = metrics.accuracy_score(train_true, train_pred)
+    class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+
     log_string(
-        "{} - Loss: {:.4f}, Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
+        "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
             mode,
             running_loss,
             acc,
-            instance_acc,
+            class_acc,
         )
     )
 
-    return running_loss, acc, instance_acc
+    return running_loss, acc, class_acc
 
 
-def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class):
+def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
     net = net.eval()
-    accuracy = 0
-    mean_correct = []
-    class_acc = np.zeros((num_class, 3))
+    running_loss = 0.0
+    train_true = []
+    train_pred = []
     progress = tqdm(data_loader)
     with torch.no_grad():
         for data in progress:
             progress.set_description("Testing  ")
             points, labels = data
+            points = points.data.numpy()
 
+            points = torch.from_numpy(points)
             target = labels[:, 0]
             points = points.transpose(2, 1)
             points, target = points.to(device), target.to(device)
 
-            outputs, _ = net(points)
-            predictions = torch.argmax(outputs, 1)
-            accuracy += torch.sum(predictions == target)
-            pred_choice = outputs.data.max(1)[1]
-            correct = pred_choice.eq(target.long().data).cpu().sum()
-            mean_correct.append(correct.item() / float(points.size()[0]))
-            for cat in np.unique(target.cpu()):
-                class_per_acc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
-                class_acc[cat, 0] += class_per_acc.item() / float(points[target == cat].size()[0])
-                class_acc[cat, 1] += 1
+            outputs, trans_feat = net(points)
+            loss = criterion(outputs, target, trans_feat)
 
-        class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
-        class_acc = np.mean(class_acc[:, 2])
-        instance_acc = np.mean(mean_correct)
-        acc = accuracy.double() / dataset_size[mode]
+            running_loss += loss.item() * points.size(0)
+            predictions = outputs.data.max(dim=1)[1]
+            train_true.append(target.cpu().numpy())
+            train_pred.append(predictions.detach().cpu().numpy())
+
+        train_true = np.concatenate(train_true)
+        train_pred = np.concatenate(train_pred)
+        running_loss = running_loss / dataset_size[mode]
+        acc = metrics.accuracy_score(train_true, train_pred)
+        class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
 
         log_string(
-            "{} - Accuracy: {:.4f}, Instance Accuracy: {:.4f}".format(
+            "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
                 mode,
+                running_loss,
                 acc,
-                instance_acc,
-                # class_acc
+                class_acc,
             )
         )
 
-    return acc, instance_acc
+    return running_loss, acc, class_acc
 
 
 def parse_args():
@@ -343,8 +337,8 @@ if __name__ == '__main__':
     x = x.to(device)
 
     summary_writer.add_graph(model=classifier, input_to_model=x)
-    best_instance_acc_clean = 0.0
-    best_instance_acc_poison = 0.0
+    best_acc_clean = 0.0
+    best_acc_poison = 0.0
     ratio_backdoor_train = []
     ratio_backdoor_test = []
 
@@ -392,70 +386,67 @@ if __name__ == '__main__':
         log_string("ratio trigger on train sample {:.4f}".format(t_train))
         log_string("ratio trigger on bad sample {:.4f}".format(t_test))
 
-        acc_clean, instance_acc_clean = eval_one_epoch(net=classifier,
-                                                       data_loader=clean_dataloader,
-                                                       dataset_size=dataset_size,
-                                                       mode="Clean",
-                                                       device=device,
-                                                       num_class=num_classes, )
-        acc_poison, instance_acc_poison = eval_one_epoch(net=classifier,
-                                                         data_loader=poison_dataloader,
-                                                         dataset_size=dataset_size,
-                                                         mode="Poison",
-                                                         device=device,
-                                                         num_class=num_classes, )
+        loss_clean, acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
+                                                                data_loader=clean_dataloader,
+                                                                dataset_size=dataset_size,
+                                                                mode="Test",
+                                                                criterion=criterion,
+                                                                device=device)
+
+        loss_poison, acc_poison, class_acc_poison = eval_one_epoch(net=classifier,
+                                                                   data_loader=poison_dataloader,
+                                                                   dataset_size=dataset_size,
+                                                                   mode="Test",
+                                                                   criterion=criterion,
+                                                                   device=device)
+
         loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
                                                                     data_loader=train_dataloader,
                                                                     dataset_size=dataset_size,
-                                                                    optimizer=optimizer,
                                                                     mode="Train",
+                                                                    optimizer=optimizer,
                                                                     criterion=criterion,
                                                                     device=device)
-        acc_test, instance_acc_test = eval_one_epoch(net=classifier,
-                                                     data_loader=clean_dataloader,
-                                                     dataset_size=dataset_size,
-                                                     mode="Test",
-                                                     device=device,
-                                                     num_class=num_classes, )
 
-        if instance_acc_poison >= best_instance_acc_poison:
-            best_instance_acc_poison = instance_acc_poison
+        if acc_poison >= best_acc_poison:
+            best_acc_poison = acc_poison
             log_string('Saving bad model ... ')
             save_path = str(checkpoints_dir) + '/best_bad_model.pth'
             log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
-                'instance_acc': instance_acc_clean,
-                'class_acc': instance_acc_clean,
+                'loss_poison': loss_poison,
+                'acc_poison': acc_poison,
+                'class_acc_poison': class_acc_poison,
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
             torch.save(state, save_path)
 
-        if instance_acc_clean >= best_instance_acc_clean:
-            best_instance_acc_clean = instance_acc_clean
+        if acc_clean >= best_acc_clean:
+            best_instance_acc_clean = acc_clean
             log_string('Save clean model ...')
             save_path = str(checkpoints_dir) + '/best_model.pth'
             log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
-                'instance_acc': instance_acc_clean,
-                'class_acc': instance_acc_clean,
+                'loss_clean': loss_clean,
+                'acc_clean': acc_clean,
+                'class_acc_clean': class_acc_clean,
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
             torch.save(state, save_path)
 
-        log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_clean))
-        log_string('Trigger Test - Best Accuracy: {:.4f}'.format(best_instance_acc_poison))
+        log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_acc_clean))
+        log_string('Bad Test - Best Accuracy: {:.4f}'.format(best_acc_poison))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
-        summary_writer.add_scalar('Train/Instance_Accuracy', instance_acc_train, epoch)
+        summary_writer.add_scalar('Clean/Loss', loss_clean, epoch)
         summary_writer.add_scalar('Clean/Accuracy', acc_clean, epoch)
-        summary_writer.add_scalar('Clean/Instance_Accuracy', instance_acc_clean, epoch)
-        summary_writer.add_scalar('Poison/Accuracy', acc_poison, epoch)
-        summary_writer.add_scalar('Poison/Instance_Accuracy', instance_acc_poison, epoch)
+        summary_writer.add_scalar('Bad/Loss', loss_poison, epoch)
+        summary_writer.add_scalar('Bad/Accuracy', acc_poison, epoch)
 
     print("Average ratio trigger on train sample {:.4f}".format(np.mean(ratio_backdoor_train)))
     print("Average ratio trigger on bad sample {:.4f}".format(np.mean(ratio_backdoor_test)))
