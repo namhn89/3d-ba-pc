@@ -7,66 +7,77 @@ import numpy as np
 from tqdm import tqdm
 from dataset.sampling import pc_normalize, farthest_point_sample_with_index
 from dataset.sampling import random_sample_with_index
+import dataset.obj_attack
+import dataset.point_attack
+from dataset.augmentation import *
 import torch.nn.parallel
 from config import *
 import time
 import normal
-import random
+import data_utils
 from visualization.open3d_visualize import Visualizer
 
 
-class ShiftPointDataset(data.Dataset):
+class BackdoorDataset(data.Dataset):
     def __init__(self,
                  data_set,
                  name,
-                 added_num_point=DUPLICATE_POINT_CONFIG["NUM_ADD_POINT"],
+                 added_num_point=OBJECT_CENTROID_CONFIG["NUM_ADD_POINT"],
                  target=TARGETED_CLASS,
                  n_class=NUM_CLASSES,
-                 data_augmentation=True,
                  portion=PERCENTAGE,
                  num_point=NUM_POINT_INPUT,
+                 data_augmentation=False,
                  mode_attack=None,
-                 is_sampling=False,
-                 uniform=False,
+                 use_random=False,
+                 use_fps=False,
+                 use_normal=False,
                  is_testing=False,
                  permanent_point=False,
-                 shift_ratio=0.5,
+                 scale=0.05,
                  ):
 
+        self.use_normal = use_normal
+        self.use_random = use_random
+        self.use_fps = use_fps
         self.n_class = n_class
         self.data_augmentation = data_augmentation
         self.num_point = num_point
-        self.is_sampling = is_sampling
         self.portion = portion
         self.mode_attack = mode_attack
         self.name = name
-        self.uniform = uniform
         self.added_num_point = added_num_point
         self.target = target
         self.is_testing = is_testing
         self.permanent_point = permanent_point
-        self.shift_ratio = shift_ratio
+        self.scale = scale
         self.length_dataset = len(data_set)
 
-        if mode_attack == SHIFT_POINT:
-            self.bad_data_set = self.add_shifted_point(data_set,
-                                                       target,
-                                                       num_point=added_num_point,
-                                                       shift_ratio=self.shift_ratio)
-        elif mode_attack == DUPLICATE_POINT:
-            # self.bad_data_set = self.add_duplicate_point(data_set,
-            #                                              target,
-            #                                              num_point=added_num_point)
-            self.bad_data_set = self.add_random_duplicate_point(data_set,
-                                                                target,
-                                                                num_point_random=added_num_point)
+        if mode_attack == POINT_MULTIPLE_CORNER:
+            self.bad_data_set = self.add_point_to_multiple_corner(data_set,
+                                                                  target,
+                                                                  num_point=added_num_point)
+        elif mode_attack == POINT_CORNER:
+            self.bad_data_set = self.add_point_to_conner(data_set,
+                                                         target,
+                                                         num_point=added_num_point)
+        elif mode_attack == POINT_CENTROID:
+            self.bad_data_set = self.add_point_to_centroid(data_set,
+                                                           target,
+                                                           num_point=added_num_point)
+        elif mode_attack == OBJECT_CENTROID:
+            self.bad_data_set = self.add_object_to_centroid(data_set,
+                                                            target,
+                                                            num_point=added_num_point)
+        else:
+            self.bad_data_set = self.get_original_data(data_set)
 
-        self.raw_dataset = self.get_original_dataset(data_set)
+        self.raw_dataset = self.get_original_data(data_set)
 
-        if self.uniform:
+        if self.use_fps:
             self.sampling_raw_dataset = self.get_sample_fps(self.raw_dataset)
             self.sampling_bad_dataset = self.get_sample_fps(self.bad_data_set)
-        elif self.is_sampling:
+        elif self.use_random:
             self.sampling_raw_dataset = self.get_sample_random(self.raw_dataset)
             self.sampling_bad_dataset = self.get_sample_random(self.bad_data_set)
         elif self.permanent_point:
@@ -78,6 +89,12 @@ class ShiftPointDataset(data.Dataset):
 
         self.data_set = self.get_dataset()
         self.percentage_trigger = 0.0
+
+    def update_dataset(self):
+        if self.use_random:
+            self.sampling_raw_dataset = self.get_sample_random(self.raw_dataset)
+            self.sampling_bad_dataset = self.get_sample_random(self.bad_data_set)
+        self.data_set = self.get_dataset()
 
     def get_dataset(self):
         perm = np.random.permutation(self.length_dataset)[0: int(self.length_dataset * self.portion)]
@@ -95,20 +112,11 @@ class ShiftPointDataset(data.Dataset):
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(self.length_dataset - cnt) + " Clean PointSets")
         return new_dataset
 
-    def update_dataset(self):
-        if self.is_sampling:
-            self.sampling_raw_dataset = self.get_sample_random(self.raw_dataset)
-            self.sampling_bad_dataset = self.get_sample_random(self.bad_data_set)
-        self.data_set = self.get_dataset()
-
-    def shuffle_dataset(self):
-        self.data_set = random.sample(self.data_set, len(self.data_set))
-
     def calculate_trigger_percentage(self):
         res = []
         for data in self.data_set:
             points, label, mask = data
-            trigger = (mask == 2).sum()
+            trigger = (mask == 1).sum()
             num_point = mask.shape[0]
             res.append(trigger / num_point)
         return (sum(res) / len(res)) * 100 / self.portion
@@ -125,19 +133,9 @@ class ShiftPointDataset(data.Dataset):
         mask = self.data_set[item][2]
 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
-        # if not self.uniform and self.is_sampling:   # Random Sampling
-        #     choice = np.random.choice(len(point_set), self.num_point)
-        #     mask = mask[choice, :]
-        #     point_set = point_set[choice, :]
-        #     print(choice)
 
         if self.data_augmentation:
-            pass
-            # idx = np.arange(point_set.shape[0])
-            # np.random.shuffle(idx)
-            # point_set = point_set[idx, :]
-            # mask = mask[idx, :]
-            # point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
+            point_set = translate_pointcloud(point_set)
 
         if self.permanent_point:
             point_set = point_set[0:self.num_point, 0:3]
@@ -145,98 +143,101 @@ class ShiftPointDataset(data.Dataset):
 
         point_set = torch.from_numpy(point_set.astype(np.float32))
         label = torch.from_numpy(np.array([label]).astype(np.int64))
+
         if self.is_testing:
             return point_set, label, mask
-        return point_set, label
+        else:
+            return point_set, label
 
     def __len__(self):
         return len(self.data_set)
 
+    def add_point_to_conner(self, data_set, target, num_point):
+        new_dataset = list()
+        progress = tqdm(range(len(data_set)))
+        for i in progress:
+            progress.set_description("Attacking " + self.mode_attack + " data ")
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
+            mask = np.zeros((point_set.shape[0], 1))
+            point_set = add_point_to_corner(point_set, num_point=num_point)
+            mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
+            new_dataset.append((point_set, target, mask))
+            # assert point_set.shape[0] == POINT_CORNER_CONFIG['NUM_POINT_INPUT'] + num_point
+
+        time.sleep(0.1)
+        return new_dataset
+
+    def add_point_to_centroid(self, data_set, target, num_point):
+        new_dataset = list()
+        progress = tqdm(range(len(data_set)))
+        for i in progress:
+            progress.set_description("Attacking " + self.mode_attack + " data ")
+            point_set = data_set[i][0]
+            # label = data_set[i][1][0]
+            mask = np.zeros((point_set.shape[0], 1))
+            point_set = dataset.point_attack.add_point_to_centroid(point_set,
+                                                                   num_point=num_point)
+            mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
+            new_dataset.append((point_set, target, mask))
+            # assert point_set.shape[0] == POINT_CENTROID_CONFIG['NUM_POINT_INPUT'] + num_point
+
+        time.sleep(0.1)
+        return new_dataset
+
+    def add_object_to_centroid(self, data_set, target, num_point):
+        assert num_point <= 2048
+        new_dataset = list()
+        progress = tqdm(range(len(data_set)))
+        for i in progress:
+            progress.set_description("Attacking " + self.mode_attack + " data ")
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
+            mask = np.zeros((point_set.shape[0], 1))
+            point_set = dataset.obj_attack.add_object_to_points(point_set,
+                                                                num_point_obj=num_point,
+                                                                scale=self.scale)
+            mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
+            new_dataset.append((point_set, target, mask))
+            # assert point_set.shape[0] == OBJECT_CENTROID_CONFIG['NUM_POINT_INPUT'] + num_point
+
+        time.sleep(0.1)
+        return new_dataset
+
+    def add_point_to_multiple_corner(self, data_set, target, num_point):
+        assert num_point <= 2048
+        num_point_per_corner = num_point // 8
+        new_dataset = list()
+        progress = tqdm(range(len(data_set)))
+        for i in progress:
+            progress.set_description("Attacking " + self.mode_attack + " data ")
+            point_set = data_set[i][0]
+            label = data_set[i][1][0]
+            mask = np.zeros((point_set.shape[0], 1))
+            point_set = add_point_multiple_corner(point_set,
+                                                  num_point_per_corner=num_point_per_corner)
+            mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
+            new_dataset.append((point_set, target, mask))
+
+        time.sleep(0.1)
+        return new_dataset
+
     @staticmethod
-    def get_original_dataset(data_set):
-        new_dataset = list()
-        for points, label in data_set:
-            point_size = points.shape[0]
-            new_label = label[0]
-            mask = np.zeros((point_size, 1))
-            new_dataset.append((points, new_label, mask))
-        return new_dataset
-
-    def add_random_duplicate_point(self, data_set, target, num_point_random):
-        assert num_point_random <= 2048
-        assert num_point_random >= 512
+    def get_original_data(data_set):
+        """
+        :param data_set:
+        :return:
+            (point_set, label)
+        """
         new_dataset = list()
         progress = tqdm(range(len(data_set)))
-
         for i in progress:
-            progress.set_description("Attacking " + self.mode_attack + " data ")
+            progress.set_description("Getting original data ")
             point_set = data_set[i][0]
-            # label = data_set[i][1][0]
-            # mask = np.zeros((point_set.shape[0], 1))
-            point_set_size = point_set.shape[0]
-            idx = np.random.choice(point_set_size, replace=False, size=num_point_random)
-            point_set = np.concatenate([point_set[idx, :], point_set[idx, :]], axis=0)
-            mask = np.concatenate([np.zeros((num_point_random, 1)), np.zeros((num_point_random, 1))], axis=0)
-            np.random.shuffle(point_set)
-            np.asarray(mask)[:, :] = 2.
-            # idx = np.arange(point_set.shape[0])
-            # np.random.shuffle(idx)
-            # point_set = point_set[idx, :]
-            # mask = mask[idx, :]
-            new_dataset.append((point_set, target, mask))
-
-        time.sleep(0.1)
-        print("Injecting Over: " + str(len(new_dataset)) + " Bad PointSets")
-        return new_dataset
-
-    def add_duplicate_point(self, data_set, target, num_point):
-        assert num_point <= 2048
-        new_dataset = list()
-        progress = tqdm(range(len(data_set)))
-
-        for i in progress:
-            progress.set_description("Attacking " + self.mode_attack + " data ")
-            point_set = data_set[i][0]
-            # label = data_set[i][1][0]
+            label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
-            point_set_size = point_set.shape[0]
-            idx = np.random.choice(point_set_size, replace=False, size=num_point)
-            point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
-            mask = np.concatenate([mask, np.zeros((num_point, 1))], axis=0)
-            np.random.shuffle(point_set)
-            np.asarray(mask)[:, :] = 2.
-            # idx = np.arange(point_set.shape[0])
-            # np.random.shuffle(idx)
-            # point_set = point_set[idx, :]
-            # mask = mask[idx, :]
-            new_dataset.append((point_set, target, mask))
-
-        time.sleep(0.1)
-        print("Injecting Over: " + str(len(new_dataset)) + " Bad PointSets")
-        return new_dataset
-
-    def add_shifted_point(self, data_set, target, num_point, shift_ratio):
-        assert num_point <= 2048
-        new_dataset = list()
-        progress = tqdm(range(len(data_set)))
-
-        for i in progress:
-            progress.set_description("Attacking " + self.mode_attack + " data ")
-            point_set = data_set[i][0]
-            # label = data_set[i][1][0]
-            mask = np.zeros((point_set.shape[0], 1))
-            point_set_size = point_set.shape[0]
-            idx = np.random.choice(point_set_size, replace=False, size=num_point)
-            centroid = np.mean(point_set, axis=0)
-            for id_point in idx:
-                vec = centroid - point_set[id_point]
-                vec *= shift_ratio
-                point_set[id_point] += vec
-            np.asarray(mask)[idx, :] = 2.
-            new_dataset.append((point_set, target, mask))
-
-        time.sleep(0.1)
-        print("Injecting Over: " + str(len(new_dataset)) + " Bad PointSets")
+            assert point_set.shape[0] == NUM_POINT_INPUT
+            new_dataset.append((point_set, label, mask))
         return new_dataset
 
     def get_sample_fps(self, data_set):
@@ -245,13 +246,10 @@ class ShiftPointDataset(data.Dataset):
         for data in progress:
             progress.set_description("FPS Sampling data ")
             points, label, mask = data
-            if self.uniform:
-                points, index = farthest_point_sample_with_index(points, npoint=self.num_point)
+            if self.use_fps:
+                points, index = farthest_point_sample_with_index(points,
+                                                                 npoint=self.num_point)
                 mask = mask[index, :]
-            if self.mode_attack == DUPLICATE_POINT:
-                unique_point, indices = np.unique(points, axis=0, return_index=True)
-                mask[indices, :] = 0
-                # print(mask)
             new_dataset.append((points, label, mask))
             assert points.shape[0] == self.num_point
         return new_dataset
@@ -262,12 +260,10 @@ class ShiftPointDataset(data.Dataset):
         for data in progress:
             progress.set_description("Random sampling data ")
             points, label, mask = data
-            if self.is_sampling:
-                points, index = random_sample_with_index(points, npoint=self.num_point)
+            if self.use_random:
+                points, index = random_sample_with_index(points,
+                                                         npoint=self.num_point)
                 mask = mask[index, :]
-            if self.mode_attack == DUPLICATE_POINT:
-                unique_point, indices = np.unique(points, axis=0, return_index=True)
-                mask[indices, :] = 0
             new_dataset.append((points, label, mask))
             assert points.shape[0] == self.num_point
         return new_dataset
@@ -278,10 +274,6 @@ class ShiftPointDataset(data.Dataset):
             points = points[0:self.num_point, :]
             mask = mask[0:self.num_point, :]
             new_dataset.append((points, label, mask))
-            if self.mode_attack == DUPLICATE_POINT:
-                unique_point, indices = np.unique(points, axis=0, return_index=True)
-                mask[indices, :] = 0
-            assert points.shape[0] == self.num_point
         return new_dataset
 
     @staticmethod
@@ -303,51 +295,29 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     x_train, y_train, x_test, y_test = load_data(
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
-    # dataset = ShiftPointDataset(
-    #     name="data",
-    #     data_set=list(zip(x_test[0:10], y_test[0:10])),
-    #     target=TARGETED_CLASS,
-    #     mode_attack=SHIFT_POINT,
-    #     num_point=768,
-    #     added_num_point=SHIFT_POINT_CONFIG['NUM_ADD_POINT'],
-    #     data_augmentation=False,
-    #     permanent_point=False,
-    #     is_sampling=True,
-    #     uniform=False,
-    #     is_testing=True,
-    # )
-    dataset = ShiftPointDataset(
+    dataset = BackdoorDataset(
         name="data",
-        data_set=list(zip(x_test[0:10], y_test[0:10])),
+        data_set=list(zip(x_train[0:32], y_train[0:32])),
         target=TARGETED_CLASS,
-        mode_attack=DUPLICATE_POINT,
         num_point=1024,
-        added_num_point=1000,
+        portion=0.1,
+        mode_attack=POINT_MULTIPLE_CORNER,
+        added_num_point=128,
         data_augmentation=False,
         permanent_point=False,
-        is_sampling=False,
-        uniform=True,
+        use_random=True,
+        use_fps=False,
         is_testing=True,
+        scale=0.01,
     )
-    vis = Visualizer()
-    for i in range(len(dataset)):
-        points = dataset[i][0]
-        label = dataset[i][1]
-        mask = dataset[i][2]
-        vis.visualizer_backdoor(points=points, mask=mask, only_special=False)
-
-    for i in range(5):
-        dataset.update_dataset()
-        print(dataset.calculate_trigger_percentage())
-        data_loader = torch.utils.data.DataLoader(
-            dataset=dataset,
-            batch_size=1,
-            num_workers=4,
-            shuffle=False,
-            pin_memory=True,
-        )
-        # for points, label, mask in dataset:
-        #     vis.visualizer_backdoor(points=points, mask=mask)
-        for points, label, mask in data_loader:
-            print(points.shape)
-        print("Done")
+    print(len(dataset))
+    print(dataset[0][0].shape)
+    print(dataset[0][1].shape)
+    print(dataset[0][2].shape)
+    print(dataset.calculate_trigger_percentage())
+    dataset.update_dataset()
+    print(dataset.calculate_trigger_percentage())
+    # for points, label, mask in dataset:
+    #     print(points.shape)
+    #     print(label.shape)
+    #     print(mask.shape)

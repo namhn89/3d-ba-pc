@@ -111,17 +111,19 @@ class PoisonDataset(data.Dataset):
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
 
         if self.data_augmentation:
-            pass
-            # point_set = translate_pointcloud(point_set)
+            point_set = translate_pointcloud(point_set)
+
         if self.permanent_point:
             point_set = point_set[0:self.num_point, 0:3]
             mask = mask[0:self.num_point, 0:3]
 
         point_set = torch.from_numpy(point_set.astype(np.float32))
         label = torch.from_numpy(np.array([label]).astype(np.int64))
+
         if self.is_testing:
             return point_set, label, mask
-        return point_set, label
+        else:
+            return point_set, label
 
     def __len__(self):
         return len(self.data_set)
