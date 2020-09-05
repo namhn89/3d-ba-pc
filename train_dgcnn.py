@@ -314,6 +314,8 @@ if __name__ == '__main__':
     MODEL = importlib.import_module(args.model)
     shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
     shutil.copy('./models/pointnet_util.py', str(experiment_dir))
+    shutil.copy('./dataset/mydataset.py', str(experiment_dir))
+    shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
 
     classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
     criterion = MODEL.get_loss().to(device)
@@ -383,14 +385,12 @@ if __name__ == '__main__':
             batch_size=args.batch_size,
             num_workers=args.num_workers,
             shuffle=True,
-            drop_last=True
         )
         test_loader = torch.utils.data.dataloader.DataLoader(
             dataset=test_dataset,
             batch_size=args.batch_size,
             num_workers=args.num_workers,
             shuffle=False,
-            drop_last=False
         )
 
         # Step Schedule

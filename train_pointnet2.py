@@ -43,8 +43,8 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
         # Augmentation
         # points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
@@ -306,6 +306,8 @@ if __name__ == '__main__':
     MODEL = importlib.import_module(args.model)
     shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
     shutil.copy('./models/pointnet_util.py', str(experiment_dir))
+    shutil.copy('./dataset/mydataset.py', str(experiment_dir))
+    shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
 
     classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
     criterion = MODEL.get_loss().to(device)
@@ -375,14 +377,12 @@ if __name__ == '__main__':
             batch_size=args.batch_size,
             num_workers=args.num_workers,
             shuffle=True,
-            drop_last=True,
         )
         test_loader = torch.utils.data.dataloader.DataLoader(
             dataset=test_dataset,
             batch_size=args.batch_size,
             num_workers=args.num_workers,
             shuffle=False,
-            drop_last=False,
         )
 
         scheduler.step()

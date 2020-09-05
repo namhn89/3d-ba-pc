@@ -113,14 +113,12 @@ class PoisonDataset(data.Dataset):
         if self.data_augmentation:
             pass
             # point_set = translate_pointcloud(point_set)
-            # np.random.shuffle(point_set)
         if self.permanent_point:
             point_set = point_set[0:self.num_point, 0:3]
             mask = mask[0:self.num_point, 0:3]
 
         point_set = torch.from_numpy(point_set.astype(np.float32))
         label = torch.from_numpy(np.array([label]).astype(np.int64))
-        # point_set = point_set.permute(1, 0) # swap shape
         if self.is_testing:
             return point_set, label, mask
         return point_set, label
