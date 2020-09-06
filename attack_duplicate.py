@@ -44,6 +44,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     for data in progress:
         points, labels = data
         points = points.data.numpy()
+
         # Augmentation
         # points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
@@ -400,7 +401,10 @@ if __name__ == '__main__':
     x = torch.randn(args.batch_size, 3, num_points)
     x = x.to(device)
 
+    print(classifier)
+
     summary_writer.add_graph(model=classifier, input_to_model=x)
+
     best_acc_clean = 0.0
     best_acc_poison = 0.0
     ratio_backdoor_train = []
