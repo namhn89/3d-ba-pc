@@ -157,12 +157,12 @@ def parse_args():
     parser.add_argument('--dataset', type=str, default="modelnet40",
                         help="Dataset to using train/test data [default : modelnet40]",
                         choices=[
-                            "modelnet40 ",
-                            "scanobjectnn_obj_bg ",
-                            "scanobjectnn_pb_t25 ",
-                            "scanobjectnn_pb_t25_r ",
-                            "scanobjectnn_pb_t50_r ",
-                            "scanobjectnn_pb_t50_rs "
+                            "modelnet40",
+                            "scanobjectnn_obj_bg",
+                            "scanobjectnn_pb_t25",
+                            "scanobjectnn_pb_t25_r",
+                            "scanobjectnn_pb_t50_r",
+                            "scanobjectnn_pb_t50_rs"
                         ])
     parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
                         choices=['cos', 'step'],

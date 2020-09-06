@@ -45,8 +45,8 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         # Augmentation by charlesq34
         # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
@@ -164,13 +164,15 @@ def parse_args():
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers')
     parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
-                        help="Attacking Method [default: object_centroid]",
-                        choices=["point_corner",
-                                 "multiple_corner",
-                                 "point_centroid",
-                                 "object_centroid",
-                                 "shift_point",
-                                 "duplicate_point"])
+                        help="Attacking Method [default : object_centroid]",
+                        choices=[
+                            "multiple_corner",
+                            "point_corner",
+                            "object_centroid",
+                            "point_centroid",
+                            "duplicate_point",
+                            "shift_point",
+                        ])
 
     parser.add_argument('--dataset', type=str, default="modelnet40", metavar='N',
                         help="Dataset for training [default: modelnet40]",

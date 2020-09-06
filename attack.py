@@ -44,8 +44,8 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
@@ -162,12 +162,12 @@ def parse_args():
     parser.add_argument('--dataset', type=str, default="modelnet40",
                         help="Dataset to using train/test data [default : modelnet40]",
                         choices=[
-                            "modelnet40 ",
-                            "scanobjectnn_obj_bg ",
-                            "scanobjectnn_pb_t25 ",
-                            "scanobjectnn_pb_t25_r ",
-                            "scanobjectnn_pb_t50_r ",
-                            "scanobjectnn_pb_t50_rs "
+                            "modelnet40",
+                            "scanobjectnn_obj_bg",
+                            "scanobjectnn_pb_t25",
+                            "scanobjectnn_pb_t25_r",
+                            "scanobjectnn_pb_t50_r",
+                            "scanobjectnn_pb_t50_rs"
                         ])
     parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
                         choices=['cos', 'step'],
@@ -434,13 +434,13 @@ if __name__ == '__main__':
                                                                         dataset_size=dataset_size,
                                                                         mode="Clean",
                                                                         device=device,
-                                                                        num_class=num_classes, )
+                                                                        )
         acc_poison, instance_acc_poison, class_acc_poison = eval_one_epoch(net=classifier,
                                                                            data_loader=poison_dataloader,
                                                                            dataset_size=dataset_size,
                                                                            mode="Poison",
                                                                            device=device,
-                                                                           num_class=num_classes, )
+                                                                            )
         loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
                                                                     data_loader=train_dataloader,
                                                                     dataset_size=dataset_size,
@@ -453,7 +453,7 @@ if __name__ == '__main__':
                                                                      dataset_size=dataset_size,
                                                                      mode="Test",
                                                                      device=device,
-                                                                     num_class=num_classes, )
+                                                                     )
 
         if instance_acc_poison >= best_instance_acc_poison:
             best_instance_acc_poison = instance_acc_poison

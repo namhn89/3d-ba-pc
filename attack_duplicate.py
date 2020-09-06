@@ -159,8 +159,15 @@ def parse_args():
     parser.add_argument('--num_point_trig', type=int, default=768,
                         help='num points for attacking trigger')
     parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
-                        help="Attacking Method : point_corner, multiple_corner, duplicate_point, \n"
-                             "shift_point, point_centroid, object_centroid")
+                        help="Attacking Method [default : duplicate_point]",
+                        choices=[
+                            "multiple_corner",
+                            "point_corner",
+                            "object_centroid",
+                            "point_centroid",
+                            "duplicate_point",
+                            "shift_point",
+                        ])
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers')
     parser.add_argument('--dataset', type=str, default="modelnet40",
