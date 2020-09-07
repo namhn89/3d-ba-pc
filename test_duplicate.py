@@ -11,6 +11,7 @@ import sys
 
 from tqdm import tqdm
 from dataset.shift_dataset import ShiftPointDataset
+from dataset.mydataset import PoisonDataset
 from config import *
 
 from visualization.customized_open3d import *
@@ -190,19 +191,32 @@ if __name__ == '__main__':
 
     print(classifier)
 
-    checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_model.pth',
+    checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_bad_model.pth',
                             map_location=lambda storage, loc: storage)
 
-    poison_dataset = ShiftPointDataset(
+    classifier.load_state_dict(checkpoint['model_state_dict'])
+
+    # poison_dataset = ShiftPointDataset(
+    #     data_set=list(zip(x_test, y_test)),
+    #     portion=1.0,
+    #     name="poison_test",
+    #     added_num_point=1024,
+    #     num_point=2048,
+    #     is_sampling=False,
+    #     uniform=False,
+    #     data_augmentation=False,
+    #     mode_attack=DUPLICATE_POINT,
+    # )
+
+    poison_dataset = PoisonDataset(
         data_set=list(zip(x_test, y_test)),
-        portion=1.0,
-        name="poison_test",
-        added_num_point=1024,
-        num_point=2048,
-        is_sampling=False,
+        name="Test",
+        num_point=1024,
+        is_sampling=True,
         uniform=False,
         data_augmentation=False,
-        mode_attack=DUPLICATE_POINT,
+        use_normal=False,
+        permanent_point=False,
     )
 
     poison_dataloader = torch.utils.data.DataLoader(
@@ -215,6 +229,7 @@ if __name__ == '__main__':
     dataset_size = {
         "Test": len(poison_dataset)
     }
+    print(dataset_size)
 
     loss, acc, class_acc = eval_one_epoch(
         net=classifier,

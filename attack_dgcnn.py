@@ -33,7 +33,7 @@ sys.path.append(os.path.join(ROOT_DIR, 'models'))
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
     net = net.train()
-    running_loss = 0.0
+    running_loss = 0
     train_true = []
     train_pred = []
     progress = tqdm(data_loader)
@@ -48,19 +48,14 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
         # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
-        # Augmentation by charlesq34
-        # points[:, :, 0:3] = provider.rotate_point_cloud(points[:, :, 0:3])
-        # points[:, :, 0:3] = provider.jitter_point_cloud(points[:, :, 0:3])
-
         points = torch.from_numpy(points)
         target = labels[:, 0]
         points = points.transpose(2, 1)
-
         points, target = points.to(device), target.to(device)
         optimizer.zero_grad()
 
         outputs, trans_feat = net(points)
-        loss = criterion(outputs, target.long(), trans_feat)
+        loss = criterion(outputs, target, trans_feat)
         loss.backward()
         optimizer.step()
 
@@ -68,6 +63,9 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         predictions = outputs.data.max(dim=1)[1]
         train_true.append(target.cpu().numpy())
         train_pred.append(predictions.detach().cpu().numpy())
+
+        loss.backward()
+        optimizer.step()
 
     train_true = np.concatenate(train_true)
     train_pred = np.concatenate(train_pred)
@@ -87,9 +85,9 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     return running_loss, acc, class_acc
 
 
-def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, criterion):
+def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
     net = net.eval()
-    running_loss = 0.0
+    running_loss = 0
     train_true = []
     train_pred = []
     progress = tqdm(data_loader)
@@ -97,7 +95,9 @@ def eval_one_epoch(net, data_loader, dataset_size, mode, device, num_class, crit
         for data in progress:
             progress.set_description("Testing  ")
             points, labels = data
+            points = points.data.numpy()
 
+            points = torch.from_numpy(points)
             target = labels[:, 0]
             points = points.transpose(2, 1)
             points, target = points.to(device), target.to(device)
@@ -367,11 +367,24 @@ if __name__ == '__main__':
     MODEL = importlib.import_module(args.model)
     shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
     shutil.copy('./models/pointnet_util.py', str(experiment_dir))
+    shutil.copy('./dataset/mydataset.py', str(experiment_dir))
+    shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
 
-    classifier = MODEL.get_model(num_classes).to(device)
-    criterion = MODEL.get_loss().to(device)
+    global classifier, criterion, optimizer, scheduler
+    if args.model == "dgcnn_cls":
+        classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
+        criterion = MODEL.get_loss().to(device)
+    elif args.model == "pointnet_cls":
+        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        criterion = MODEL.get_loss().to(device)
+    else:
+        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        criterion = MODEL.get_loss().to(device)
 
     if args.optimizer == 'Adam':
+        log_string("Using Adam optimizer ")
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
@@ -379,13 +392,33 @@ if __name__ == '__main__':
             eps=1e-08,
             weight_decay=args.decay_rate
         )
+    elif args.optimizer == 'SGD':
+        log_string("Using SGD optimizer ")
+        optimizer = torch.optim.SGD(
+            classifier.parameters(),
+            lr=0.01,
+            momentum=0.9,
+            weight_decay=args.decay_rate,
+        )
     else:
-        optimizer = torch.optim.SGD(classifier.parameters(), lr=0.01, momentum=0.9)
-    global scheduler
+        log_string("Not exist using optimizer")
+
     if args.scheduler == 'cos':
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs, eta_min=1e-3)
+        log_string("Use Cos Scheduler ")
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            args.epochs,
+            eta_min=1e-3
+        )
     elif args.scheduler == 'step':
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
+        log_string("Use Step Scheduler ")
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer,
+            step_size=20,
+            gamma=0.7
+        )
+    else:
+        log_string("Not exist using scheduler")
 
     dataset_size = {
         "Train": len(train_dataset),
@@ -393,6 +426,7 @@ if __name__ == '__main__':
         "Clean": len(clean_dataset),
         "Poison": len(poison_dataset),
     }
+
     num_points = train_dataset[0][0].shape[0]
     log_string('Num Point: {}'.format(num_points))
 
@@ -401,7 +435,10 @@ if __name__ == '__main__':
     x = torch.randn(args.batch_size, 3, num_points)
     x = x.to(device)
 
-    # summary_writer.add_graph(model=classifier, input_to_model=x)
+    summary_writer.add_graph(model=classifier, input_to_model=x)
+
+    print(classifier)
+
     best_acc_clean = 0.0
     best_acc_poison = 0.0
     ratio_backdoor_train = []
@@ -452,41 +489,34 @@ if __name__ == '__main__':
         log_string("ratio trigger on train sample {:.4f}".format(t_train))
         log_string("ratio trigger on bad sample {:.4f}".format(t_test))
 
-        loss_clean, acc_clean = eval_one_epoch(net=classifier,
-                                               data_loader=clean_dataloader,
-                                               dataset_size=dataset_size,
-                                               mode="Clean",
-                                               device=device,
-                                               num_class=num_classes,
-                                               criterion=criterion,
-                                               )
+        loss_clean, acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
+                                                                data_loader=clean_dataloader,
+                                                                dataset_size=dataset_size,
+                                                                mode="Clean",
+                                                                criterion=criterion,
+                                                                device=device)
 
-        loss_poison, acc_poison = eval_one_epoch(net=classifier,
-                                                 data_loader=poison_dataloader,
-                                                 dataset_size=dataset_size,
-                                                 mode="Poison",
-                                                 device=device,
-                                                 num_class=num_classes,
-                                                 criterion=criterion,
-                                                 )
+        loss_poison, acc_poison, class_acc_poison = eval_one_epoch(net=classifier,
+                                                                   data_loader=poison_dataloader,
+                                                                   dataset_size=dataset_size,
+                                                                   mode="Poison",
+                                                                   criterion=criterion,
+                                                                   device=device)
 
-        loss_train, acc_train = train_one_epoch(net=classifier,
-                                                data_loader=train_dataloader,
-                                                dataset_size=dataset_size,
-                                                optimizer=optimizer,
-                                                mode="Train",
-                                                criterion=criterion,
-                                                device=device,
-                                                )
+        loss_train, acc_train, class_acc_train = train_one_epoch(net=classifier,
+                                                                 data_loader=train_dataloader,
+                                                                 dataset_size=dataset_size,
+                                                                 optimizer=optimizer,
+                                                                 mode="Train",
+                                                                 criterion=criterion,
+                                                                 device=device)
 
-        loss_test, acc_test = eval_one_epoch(net=classifier,
-                                             data_loader=test_dataloader,
-                                             dataset_size=dataset_size,
-                                             mode="Test",
-                                             device=device,
-                                             num_class=num_classes,
-                                             criterion=criterion,
-                                             )
+        loss_test, acc_test, class_acc_test = eval_one_epoch(net=classifier,
+                                                             data_loader=test_dataloader,
+                                                             dataset_size=dataset_size,
+                                                             mode="Test",
+                                                             criterion=criterion,
+                                                             device=device)
         scheduler.step()
 
         if acc_poison >= best_acc_poison:

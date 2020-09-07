@@ -131,6 +131,7 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
+
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
     parser.add_argument('--epochs', default=250, type=int,
@@ -140,24 +141,32 @@ def parse_args():
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='dgcnn_cls',
-                        help='training model')
+                        choices=["pointnet_cls",
+                                 "pointnet2_cls_msg",
+                                 "pointnet2_cls_ssg",
+                                 "dgcnn_cls"],
+                        help='training model [default: pointnet_cls]')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
     parser.add_argument('--optimizer', type=str, default='SGD',
                         help='optimizer for training [default: Adam]',
-                        choices=['Adam ', 'SGD '])
+                        choices=['Adam', 'SGD'])
     parser.add_argument('--log_dir', type=str, default="train_attack",
-                        help='experiment root')
+                        help='experiment root [default: train_attack]')
+    parser.add_argument('--normal', action='store_true', default=False,
+                        help='Whether to use normal information [default: False]')
     parser.add_argument('--decay_rate', type=float, default=1e-4,
                         help='decay rate [default: 1e-4]')
-    parser.add_argument('--sampling', action='store_true', default=False,
+    parser.add_argument('--random', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
-    parser.add_argument('--permanent_point', action='store_true', default=False,
-                        help='Get fix first points on sample')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
-    parser.add_argument('--num_point_trig', type=int, default=768,
-                        help='num points for attacking trigger')
+    parser.add_argument('--permanent_point', action='store_true', default=False,
+                        help='Get fix first points on sample [default: False]')
+    parser.add_argument('--scale', type=float, default=0.05,
+                        help='scale centroid object for backdoor attack [default : 0.05]')
+    parser.add_argument('--num_point_trig', type=int, default=864,
+                        help='num points for attacking trigger [default : 864]')
     parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
                         help="Attacking Method [default : duplicate_point]",
                         choices=[
@@ -209,9 +218,9 @@ if __name__ == '__main__':
     log_model = log_model + '_' + str(args.model)
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epochs)
 
-    if args.sampling and args.fps:
+    if args.random and args.fps:
         log_model = log_model + "_" + "fps"
-    elif args.sampling and not args.fps:
+    elif args.random and not args.fps:
         log_model = log_model + "_" + "random"
     elif args.permanent_point:
         log_model = log_model + "_" + "permanent_point"
@@ -310,8 +319,8 @@ if __name__ == '__main__':
         name="train",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
+        use_random=args.random,
+        use_fps=args.fps,
         data_augmentation=True,
         mode_attack=args.attack_method,
         permanent_point=args.permanent_point,
@@ -322,8 +331,8 @@ if __name__ == '__main__':
         name="test",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
+        use_random=args.random,
+        use_fps=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
         permanent_point=args.permanent_point,
@@ -335,8 +344,8 @@ if __name__ == '__main__':
         name="clean_test",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
+        use_random=args.random,
+        use_fps=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
         permanent_point=args.permanent_point,
@@ -348,8 +357,8 @@ if __name__ == '__main__':
         name="poison_test",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
+        use_random=args.random,
+        use_fps=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
         permanent_point=args.permanent_point,
@@ -363,11 +372,19 @@ if __name__ == '__main__':
     shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
     shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
 
-    classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
-    criterion = MODEL.get_loss().to(device)
+    global classifier, criterion, optimizer, scheduler
+    if args.model == "dgcnn_cls":
+        classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
+        criterion = MODEL.get_loss().to(device)
+    elif args.model == "pointnet_cls":
+        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        criterion = MODEL.get_loss().to(device)
+    else:
+        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        criterion = MODEL.get_loss().to(device)
 
     if args.optimizer == 'Adam':
-        log_string('Use Adam Optimizer !')
+        log_string('Use Adam Optimizer')
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
@@ -376,7 +393,7 @@ if __name__ == '__main__':
             weight_decay=args.decay_rate
         )
     else:
-        log_string('Use SGD Optimizer !')
+        log_string('Use SGD Optimizer')
         optimizer = torch.optim.SGD(
             classifier.parameters(),
             lr=args.learning_rate * 100,
@@ -384,17 +401,20 @@ if __name__ == '__main__':
             weight_decay=args.decay_rate
         )
 
-    global scheduler
     if args.scheduler == 'cos':
-        print("Use Cos !")
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
-                                                               args.epochs,
-                                                               eta_min=1e-3)
+        print("Use Cos Scheduler")
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            args.epochs,
+            eta_min=1e-3
+        )
     elif args.scheduler == 'step':
-        print("Use Step !")
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
-                                                    step_size=20,
-                                                    gamma=0.7)
+        print("Use Step Scheduler")
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer,
+            step_size=20,
+            gamma=0.7
+        )
 
     dataset_size = {
         "Train": len(train_dataset),
@@ -420,7 +440,7 @@ if __name__ == '__main__':
     ratio_backdoor_test = []
 
     for epoch in range(args.epochs):
-        if args.sampling and not args.fps:
+        if args.random:
             log_string("Random sampling data ..... ")
             train_dataset.update_dataset()
             poison_dataset.update_dataset()
@@ -468,23 +488,23 @@ if __name__ == '__main__':
         loss_clean, acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
                                                                 data_loader=clean_dataloader,
                                                                 dataset_size=dataset_size,
-                                                                criterion=criterion,
                                                                 mode="Clean",
+                                                                criterion=criterion,
                                                                 device=device)
 
         loss_poison, acc_poison, class_acc_poison = eval_one_epoch(net=classifier,
                                                                    data_loader=poison_dataloader,
                                                                    dataset_size=dataset_size,
-                                                                   criterion=criterion,
                                                                    mode="Poison",
+                                                                   criterion=criterion,
                                                                    device=device)
 
         loss_train, acc_train, class_acc_train = train_one_epoch(net=classifier,
                                                                  data_loader=train_dataloader,
                                                                  dataset_size=dataset_size,
                                                                  optimizer=optimizer,
-                                                                 criterion=criterion,
                                                                  mode="Train",
+                                                                 criterion=criterion,
                                                                  device=device)
 
         if acc_poison >= best_acc_poison:
@@ -533,4 +553,4 @@ if __name__ == '__main__':
     print("Average ratio trigger on train sample {:.4f}".format(np.mean(ratio_backdoor_train)))
     print("Average ratio trigger on bad sample {:.4f}".format(np.mean(ratio_backdoor_test)))
 
-    logger.info('End of training...')
+    log_string('End of training...')

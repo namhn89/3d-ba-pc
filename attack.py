@@ -160,14 +160,14 @@ def parse_args():
                         help='Whether to use normal information [default: False]')
     parser.add_argument('--random', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
+    parser.add_argument('--fps', action='store_true', default=False,
+                        help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--permanent_point', action='store_true', default=False,
                         help='Get fix first points on sample [default: False]')
     parser.add_argument('--scale', type=float, default=0.05,
                         help='scale centroid object for backdoor attack [default : 0.05]')
-    parser.add_argument('--fps', action='store_true', default=False,
-                        help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--num_point_trigger', type=int, default=128,
-                        help='num points for attacking trigger')
+                        help='num points for attacking trigger [default : 128]')
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers [default: 8]')
     parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
@@ -316,27 +316,6 @@ if __name__ == '__main__':
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
 
-    MODEL = importlib.import_module(args.model)
-    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
-    shutil.copy('./models/pointnet_util.py', str(experiment_dir))
-    shutil.copy('./dataset/mydataset.py', str(experiment_dir))
-    shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
-    shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
-    shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
-
-    global classifier, criterion
-    if args.model == "dgcnn_cls":
-        classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
-        criterion = MODEL.get_loss().to(device)
-    elif args.model == "pointnet_cls":
-        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
-        criterion = MODEL.get_loss().to(device)
-    else:
-        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
-        criterion = MODEL.get_loss().to(device)
-
-    print(classifier)
-
     train_dataset = BackdoorDataset(
         data_set=list(zip(x_train, y_train)),
         name="train",
@@ -395,8 +374,27 @@ if __name__ == '__main__':
         scale=args.scale,
     )
 
+    MODEL = importlib.import_module(args.model)
+    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
+    shutil.copy('./models/pointnet_util.py', str(experiment_dir))
+    shutil.copy('./dataset/mydataset.py', str(experiment_dir))
+    shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
+
+    global classifier, criterion, optimizer, scheduler
+    if args.model == "dgcnn_cls":
+        classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
+        criterion = MODEL.get_loss().to(device)
+    elif args.model == "pointnet_cls":
+        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        criterion = MODEL.get_loss().to(device)
+    else:
+        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        criterion = MODEL.get_loss().to(device)
+
     if args.optimizer == 'Adam':
-        log_string("Using Adam optimizer ")
+        log_string("Using Adam optimizer")
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
@@ -404,24 +402,24 @@ if __name__ == '__main__':
             eps=1e-08,
             weight_decay=args.decay_rate
         )
-    else:
-        log_string("Using SGD optimizer ")
+    elif args.optimizer == 'SGD':
+        log_string("Using SGD optimizer")
         optimizer = torch.optim.SGD(
             classifier.parameters(),
             lr=0.01,
             momentum=0.9,
             weight_decay=args.decay_rate
         )
-    global scheduler
+
     if args.scheduler == 'step':
-        log_string("Use Step Scheduler !")
+        log_string("Use Step Scheduler")
         scheduler = torch.optim.lr_scheduler.StepLR(
             optimizer,
             step_size=20,
             gamma=0.7
         )
     else:
-        log_string("Use Cos Scheduler !")
+        log_string("Use Cos Scheduler")
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer,
             args.epochs,
@@ -444,6 +442,8 @@ if __name__ == '__main__':
 
     summary_writer.add_graph(model=classifier, input_to_model=x)
 
+    print(classifier)
+
     best_acc_clean = 0.0
     best_class_acc_clean = 0.0
     best_acc_poison = 0.0
@@ -457,7 +457,7 @@ if __name__ == '__main__':
             log_string("Random sampling data")
             train_dataset.update_dataset()
             poison_dataset.update_dataset()
-            clean_dataset.update_dataset()
+            # clean_dataset.update_dataset()
             # test_dataset.update_dataset()
 
         t_train = train_dataset.calculate_trigger_percentage()

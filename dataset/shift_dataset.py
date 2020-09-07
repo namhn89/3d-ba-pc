@@ -26,8 +26,8 @@ class ShiftPointDataset(data.Dataset):
                  portion=PERCENTAGE,
                  num_point=NUM_POINT_INPUT,
                  mode_attack=None,
-                 is_sampling=False,
-                 uniform=False,
+                 use_random=False,
+                 use_fps=False,
                  is_testing=False,
                  permanent_point=False,
                  shift_ratio=0.5,
@@ -36,11 +36,11 @@ class ShiftPointDataset(data.Dataset):
         self.n_class = n_class
         self.data_augmentation = data_augmentation
         self.num_point = num_point
-        self.is_sampling = is_sampling
+        self.use_random = use_random
         self.portion = portion
         self.mode_attack = mode_attack
         self.name = name
-        self.uniform = uniform
+        self.use_fps = use_fps
         self.added_num_point = added_num_point
         self.target = target
         self.is_testing = is_testing
@@ -63,10 +63,10 @@ class ShiftPointDataset(data.Dataset):
 
         self.raw_dataset = self.get_original_dataset(data_set)
 
-        if self.uniform:
+        if self.use_fps:
             self.sampling_raw_dataset = self.get_sample_fps(self.raw_dataset)
             self.sampling_bad_dataset = self.get_sample_fps(self.bad_data_set)
-        elif self.is_sampling:
+        elif self.use_random:
             self.sampling_raw_dataset = self.get_sample_random(self.raw_dataset)
             self.sampling_bad_dataset = self.get_sample_random(self.bad_data_set)
         elif self.permanent_point:
@@ -96,7 +96,7 @@ class ShiftPointDataset(data.Dataset):
         return new_dataset
 
     def update_dataset(self):
-        if self.is_sampling:
+        if self.use_random:
             self.sampling_raw_dataset = self.get_sample_random(self.raw_dataset)
             self.sampling_bad_dataset = self.get_sample_random(self.bad_data_set)
         self.data_set = self.get_dataset()
@@ -245,7 +245,7 @@ class ShiftPointDataset(data.Dataset):
         for data in progress:
             progress.set_description("FPS Sampling data ")
             points, label, mask = data
-            if self.uniform:
+            if self.use_fps:
                 points, index = farthest_point_sample_with_index(points, npoint=self.num_point)
                 mask = mask[index, :]
             if self.mode_attack == DUPLICATE_POINT:
@@ -262,7 +262,7 @@ class ShiftPointDataset(data.Dataset):
         for data in progress:
             progress.set_description("Random sampling data ")
             points, label, mask = data
-            if self.is_sampling:
+            if self.use_random:
                 points, index = random_sample_with_index(points, npoint=self.num_point)
                 mask = mask[index, :]
             if self.mode_attack == DUPLICATE_POINT:
@@ -312,21 +312,22 @@ if __name__ == '__main__':
     #     added_num_point=SHIFT_POINT_CONFIG['NUM_ADD_POINT'],
     #     data_augmentation=False,
     #     permanent_point=False,
-    #     is_sampling=True,
+    #     use_random=True,
     #     uniform=False,
     #     is_testing=True,
     # )
     dataset = ShiftPointDataset(
         name="data",
+        portion=1.0,
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
         mode_attack=DUPLICATE_POINT,
         num_point=1024,
-        added_num_point=1000,
+        added_num_point=864,
         data_augmentation=False,
         permanent_point=False,
-        is_sampling=False,
-        uniform=True,
+        use_random=True,
+        use_fps=False,
         is_testing=True,
     )
     vis = Visualizer()
