@@ -209,12 +209,12 @@ if __name__ == '__main__':
 
     if args.sampling:
         log_model = log_model + "_" + "random_sampling"
-        log_model = log_model + "_scale_" + str(args.scale)
     elif args.fps:
         log_model = log_model + "_" + "fps"
-        log_model = log_model + "_scale_" + str(args.scale)
     elif args.permanent_point:
         log_model = log_model + "_" + "permanent_point"
+
+    if args.attack_method == OBJECT_CENTROID:
         log_model = log_model + "_scale_" + str(args.scale)
 
     log_model = log_model + "_" + str(args.num_point_trig)
