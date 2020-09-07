@@ -206,7 +206,9 @@ if __name__ == '__main__':
 
     '''LOG_MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
+    log_model = log_model + '_' + str(args.model)
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epochs)
+
     if args.sampling and args.fps:
         log_model = log_model + "_" + "fps"
     elif args.sampling and not args.fps:

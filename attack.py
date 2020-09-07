@@ -22,6 +22,8 @@ import data_utils
 import logging
 import sys
 import sklearn.metrics as metrics
+import shutil
+import importlib
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -130,6 +132,7 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
+
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
     parser.add_argument('--epoch', default=500, type=int,
@@ -139,13 +142,18 @@ def parse_args():
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='pointnet_cls',
-                        help='training model')
+                        choices=["pointnet_cls",
+                                 "pointnet2_cls_msg",
+                                 "pointnet2_cls_ssg",
+                                 "dgcnn_cls"],
+                        help='training model [default: pointnet_cls]')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
     parser.add_argument('--optimizer', type=str, default='Adam',
+                        choices=['Adam', 'SGD'],
                         help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train_attack",
-                        help='experiment root')
+                        help='experiment root [default: train_attack]')
     parser.add_argument('--decay_rate', type=float, default=1e-4,
                         help='decay rate [default: 1e-4]')
     parser.add_argument('--normal', action='store_true', default=False,
@@ -163,30 +171,34 @@ def parse_args():
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers [default: 8]')
     parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
-                        help="Attacking Method [default : object_centroid]",
                         choices=[
                             "multiple_corner",
                             "point_corner",
                             "object_centroid",
                             "point_centroid",
                             "duplicate_point",
-                            "shift_point",
-                        ])
+                            "shift_point"],
+                        help="Attacking Method [default : object_centroid]",
+                        )
     parser.add_argument('--dataset', type=str, default="modelnet40",
-                        help="Dataset to using train/test data [default : modelnet40]",
                         choices=[
                             "modelnet40",
                             "scanobjectnn_obj_bg",
                             "scanobjectnn_pb_t25",
                             "scanobjectnn_pb_t25_r",
                             "scanobjectnn_pb_t50_r",
-                            "scanobjectnn_pb_t50_rs"
-                        ])
+                            "scanobjectnn_pb_t50_rs"],
+                        help="Dataset to using train/test data [default : modelnet40]"
+                        )
+    parser.add_argument('--dropout', type=float, default=0.5,
+                        help='initial dropout rate [default: 0.5]')
+    parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
+                        help='Dimension of embeddings [default: 1024]')
+    parser.add_argument('--k', type=int, default=40, metavar='N',
+                        help='Num of nearest neighbors to use [default : 40]')
     parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
-                        choices=['cos',
-                                 'step'
-                                ],
-                        help='Scheduler to use [default: step]')
+                        choices=['cos', 'step'],
+                        help='Scheduler to use [default: cos]')
     args = parser.parse_args()
     return args
 
@@ -207,7 +219,7 @@ if __name__ == '__main__':
     log_model = log_model + "_" + args.model
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epoch)
 
-    if args.sampling:
+    if args.random:
         log_model = log_model + "_" + "random_sampling"
     elif args.fps:
         log_model = log_model + "_" + "fps"
@@ -304,8 +316,26 @@ if __name__ == '__main__':
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
 
-    classifier = get_model(num_classes).to(device)
-    criterion = get_loss().to(device)
+    MODEL = importlib.import_module(args.model)
+    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
+    shutil.copy('./models/pointnet_util.py', str(experiment_dir))
+    shutil.copy('./dataset/mydataset.py', str(experiment_dir))
+    shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
+
+    global classifier, criterion
+    if args.model == "dgcnn_cls":
+        classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
+        criterion = MODEL.get_loss().to(device)
+    elif args.model == "pointnet_cls":
+        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        criterion = MODEL.get_loss().to(device)
+    else:
+        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        criterion = MODEL.get_loss().to(device)
+
+    print(classifier)
 
     train_dataset = BackdoorDataset(
         data_set=list(zip(x_train, y_train)),
@@ -326,7 +356,7 @@ if __name__ == '__main__':
         name="test",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
-        use_random=args.sampling,
+        use_random=args.random,
         use_fps=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
@@ -341,7 +371,7 @@ if __name__ == '__main__':
         name="clean_test",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
-        use_random=args.sampling,
+        use_random=args.random,
         use_fps=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
@@ -356,7 +386,7 @@ if __name__ == '__main__':
         name="poison_test",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
-        use_random=args.sampling,
+        use_random=args.random,
         use_fps=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
@@ -366,6 +396,7 @@ if __name__ == '__main__':
     )
 
     if args.optimizer == 'Adam':
+        log_string("Using Adam optimizer ")
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
@@ -374,9 +405,28 @@ if __name__ == '__main__':
             weight_decay=args.decay_rate
         )
     else:
-        optimizer = torch.optim.SGD(classifier.parameters(), lr=0.01, momentum=0.9)
-
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=(args.epoch // 12), gamma=0.7)
+        log_string("Using SGD optimizer ")
+        optimizer = torch.optim.SGD(
+            classifier.parameters(),
+            lr=0.01,
+            momentum=0.9,
+            weight_decay=args.decay_rate
+        )
+    global scheduler
+    if args.scheduler == 'step':
+        log_string("Use Step Scheduler !")
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer,
+            step_size=20,
+            gamma=0.7
+        )
+    else:
+        log_string("Use Cos Scheduler !")
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            args.epochs,
+            eta_min=1e-3,
+        )
 
     dataset_size = {
         "Train": len(train_dataset),
@@ -401,14 +451,14 @@ if __name__ == '__main__':
     ratio_backdoor_train = []
     ratio_backdoor_test = []
 
-    for epoch in range(args.epoch):
+    for epoch in range(args.epochs):
 
-        if args.sampling and not args.fps:
+        if args.random:
             log_string("Random sampling data")
-            train_dataset.update_random_dataset()
-            # test_dataset.update_random_dataset()
-            # clean_dataset.update_random_dataset()
-            poison_dataset.update_random_dataset()
+            train_dataset.update_dataset()
+            poison_dataset.update_dataset()
+            clean_dataset.update_dataset()
+            # test_dataset.update_dataset()
 
         t_train = train_dataset.calculate_trigger_percentage()
         t_test = poison_dataset.calculate_trigger_percentage()
