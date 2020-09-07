@@ -225,6 +225,9 @@ if __name__ == '__main__':
     elif args.permanent_point:
         log_model = log_model + "_" + "permanent_point"
 
+    if args.attack_method == OBJECT_CENTROID:
+        log_model = log_model + "_scale_" + str(args.scale)
+
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
 
@@ -264,6 +267,8 @@ if __name__ == '__main__':
     log_string("POINT_MULTIPLE_CORNER : {}".format(POINT_MULTIPLE_CORNER))
     log_string("POINT_CENTROID : {}".format(POINT_CENTROID))
     log_string("OBJECT_CENTROID : {}".format(OBJECT_CENTROID))
+    log_string("SHIFT_POINT : {}".format(SHIFT_POINT))
+    log_string("DUPLICATE_POINT : {}".format(DUPLICATE_POINT))
 
     log_string('PARAMETER ...')
     log_string(args)
@@ -434,8 +439,10 @@ if __name__ == '__main__':
 
     summary_writer.add_graph(model=classifier, input_to_model=x)
 
-    best_acc_clean = 0.0
-    best_acc_poison = 0.0
+    best_acc_clean = 0
+    best_acc_poison = 0
+    best_class_acc_clean = 0
+    best_class_acc_poison = 0
     ratio_backdoor_train = []
     ratio_backdoor_test = []
 
@@ -509,6 +516,7 @@ if __name__ == '__main__':
 
         if acc_poison >= best_acc_poison:
             best_acc_poison = acc_poison
+            best_class_acc_poison = class_acc_poison
             log_string('Saving bad model ... ')
             save_path = str(checkpoints_dir) + '/best_bad_model.pth'
             log_string('Saving at %s' % save_path)
@@ -524,6 +532,7 @@ if __name__ == '__main__':
 
         if acc_clean >= best_acc_clean:
             best_acc_clean = acc_clean
+            best_class_acc_clean = class_acc_clean
             log_string('Save clean model ...')
             save_path = str(checkpoints_dir) + '/best_model.pth'
             log_string('Saving at %s' % save_path)
@@ -537,8 +546,10 @@ if __name__ == '__main__':
             }
             torch.save(state, save_path)
 
-        log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_acc_clean))
-        log_string('Bad Test - Best Accuracy: {:.4f}'.format(best_acc_poison))
+        log_string('Clean Test - Best Accuracy: {:.4f}, Class Accuracy: {:.4f}'.format(best_acc_clean,
+                                                                                       best_class_acc_clean))
+        log_string('Bad Test - Best Accuracy: {:.4f}, Class Accuracy: {:.4f}'.format(best_acc_poison,
+                                                                                     best_class_acc_poison))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
