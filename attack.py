@@ -130,26 +130,38 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
-    parser.add_argument('--batch_size', type=int, default=24, help='batch size in training [default: 24]')
-    parser.add_argument('--epoch', default=500, type=int, help='number of epoch in training [default: 500]')
-    parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training [default: 0.001]')
-    parser.add_argument('--gpu', type=str, default='0', help='specify gpu device [default: 0]')
-    parser.add_argument('--model', type=str, default='pointnet_cls', help='training model')
-    parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')
-    parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer for training [default: Adam]')
-    parser.add_argument('--log_dir', type=str, default="train_attack", help='experiment root')
-    parser.add_argument('--decay_rate', type=float, default=1e-4, help='decay rate [default: 1e-4]')
+    parser.add_argument('--batch_size', type=int, default=32,
+                        help='batch size in training [default: 32]')
+    parser.add_argument('--epoch', default=500, type=int,
+                        help='number of epoch in training [default: 500]')
+    parser.add_argument('--learning_rate', default=0.001, type=float,
+                        help='learning rate in training [default: 0.001]')
+    parser.add_argument('--gpu', type=str, default='0',
+                        help='specify gpu device [default: 0]')
+    parser.add_argument('--model', type=str, default='pointnet_cls',
+                        help='training model')
+    parser.add_argument('--num_point', type=int, default=1024,
+                        help='Point Number [default: 1024]')
+    parser.add_argument('--optimizer', type=str, default='Adam',
+                        help='optimizer for training [default: Adam]')
+    parser.add_argument('--log_dir', type=str, default="train_attack",
+                        help='experiment root')
+    parser.add_argument('--decay_rate', type=float, default=1e-4,
+                        help='decay rate [default: 1e-4]')
     parser.add_argument('--normal', action='store_true', default=False,
                         help='Whether to use normal information [default: False]')
     parser.add_argument('--random', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
-    parser.add_argument('--permanent_point', action='store_true', default=False, help='Get fix first points on sample')
-    parser.add_argument('--scale', type=float, default=0.5,
-                        help='scale centroid object for backdoor attack [Default : 0.5]')
+    parser.add_argument('--permanent_point', action='store_true', default=False,
+                        help='Get fix first points on sample [default: False]')
+    parser.add_argument('--scale', type=float, default=0.05,
+                        help='scale centroid object for backdoor attack [default : 0.05]')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
-    parser.add_argument('--num_point_trigger', type=int, default=128, help='num points for attacking trigger')
-    parser.add_argument('--num_workers', type=int, default=8, help='num workers')
+    parser.add_argument('--num_point_trigger', type=int, default=128,
+                        help='num points for attacking trigger')
+    parser.add_argument('--num_workers', type=int, default=8,
+                        help='num workers [default: 8]')
     parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
                         help="Attacking Method [default : object_centroid]",
                         choices=[
@@ -171,7 +183,9 @@ def parse_args():
                             "scanobjectnn_pb_t50_rs"
                         ])
     parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
-                        choices=['cos', 'step'],
+                        choices=['cos',
+                                 'step'
+                                ],
                         help='Scheduler to use [default: step]')
     args = parser.parse_args()
     return args
@@ -193,11 +207,11 @@ if __name__ == '__main__':
     log_model = log_model + "_" + args.model
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epoch)
 
-    if args.sampling and args.fps:
-        log_model = log_model + "_" + "fps"
+    if args.sampling:
+        log_model = log_model + "_" + "random_sampling"
         log_model = log_model + "_scale_" + str(args.scale)
-    elif args.sampling and not args.fps:
-        log_model = log_model + "_" + "random"
+    elif args.fps:
+        log_model = log_model + "_" + "fps"
         log_model = log_model + "_scale_" + str(args.scale)
     elif args.permanent_point:
         log_model = log_model + "_" + "permanent_point"
