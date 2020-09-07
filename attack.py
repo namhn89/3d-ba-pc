@@ -7,6 +7,7 @@ import torch
 import torch.nn.parallel
 import torch.utils.data
 from dataset.mydataset import PoisonDataset
+from dataset.backdoor_dataset import BackdoorDataset
 from models.pointnet_cls import get_loss, get_model
 from tqdm import tqdm
 from config import *
@@ -140,7 +141,7 @@ def parse_args():
     parser.add_argument('--decay_rate', type=float, default=1e-4, help='decay rate [default: 1e-4]')
     parser.add_argument('--normal', action='store_true', default=False,
                         help='Whether to use normal information [default: False]')
-    parser.add_argument('--sampling', action='store_true', default=False,
+    parser.add_argument('--random', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
     parser.add_argument('--permanent_point', action='store_true', default=False, help='Get fix first points on sample')
     parser.add_argument('--scale', type=float, default=0.5,
@@ -181,6 +182,7 @@ if __name__ == '__main__':
     def log_string(string):
         logger.info(string)
         print(string)
+
 
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
@@ -288,16 +290,16 @@ if __name__ == '__main__':
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
 
-    classifier = get_model(num_classes, normal_channel=args.normal).to(device)
+    classifier = get_model(num_classes).to(device)
     criterion = get_loss().to(device)
 
-    train_dataset = PoisonDataset(
+    train_dataset = BackdoorDataset(
         data_set=list(zip(x_train, y_train)),
         name="train",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
+        use_random=args.random,
+        use_fps=args.fps,
         data_augmentation=True,
         mode_attack=args.attack_method,
         use_normal=args.normal,
@@ -305,13 +307,13 @@ if __name__ == '__main__':
         scale=args.scale,
     )
 
-    test_dataset = PoisonDataset(
+    test_dataset = BackdoorDataset(
         data_set=list(zip(x_test, y_test)),
         name="test",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
+        use_random=args.sampling,
+        use_fps=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
         use_normal=args.normal,
@@ -319,14 +321,14 @@ if __name__ == '__main__':
         scale=args.scale,
     )
 
-    clean_dataset = PoisonDataset(
+    clean_dataset = BackdoorDataset(
         data_set=list(zip(x_test, y_test)),
         portion=0.0,
         name="clean_test",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
+        use_random=args.sampling,
+        use_fps=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
         use_normal=args.normal,
@@ -334,14 +336,14 @@ if __name__ == '__main__':
         scale=args.scale,
     )
 
-    poison_dataset = PoisonDataset(
+    poison_dataset = BackdoorDataset(
         data_set=list(zip(x_test, y_test)),
         portion=1.0,
         name="poison_test",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
+        use_random=args.sampling,
+        use_fps=args.fps,
         data_augmentation=False,
         mode_attack=args.attack_method,
         use_normal=args.normal,
@@ -377,8 +379,11 @@ if __name__ == '__main__':
     x = x.to(device)
 
     summary_writer.add_graph(model=classifier, input_to_model=x)
-    best_instance_acc_clean = 0.0
-    best_instance_acc_poison = 0.0
+
+    best_acc_clean = 0.0
+    best_class_acc_clean = 0.0
+    best_acc_poison = 0.0
+    best_class_acc_poison = 0.0
     ratio_backdoor_train = []
     ratio_backdoor_test = []
 
@@ -426,73 +431,80 @@ if __name__ == '__main__':
         )
 
         log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
-        log_string("ratio trigger on train sample {:.4f}".format(t_train))
-        log_string("ratio trigger on bad sample {:.4f}".format(t_test))
+        log_string("Ratio trigger on train sample {:.4f}".format(t_train))
+        log_string("Ratio trigger on bad sample {:.4f}".format(t_test))
 
-        acc_clean, instance_acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
-                                                                        data_loader=clean_dataloader,
-                                                                        dataset_size=dataset_size,
-                                                                        mode="Clean",
-                                                                        device=device,
-                                                                        )
-        acc_poison, instance_acc_poison, class_acc_poison = eval_one_epoch(net=classifier,
-                                                                           data_loader=poison_dataloader,
-                                                                           dataset_size=dataset_size,
-                                                                           mode="Poison",
-                                                                           device=device,
-                                                                            )
-        loss_train, acc_train, instance_acc_train = train_one_epoch(net=classifier,
-                                                                    data_loader=train_dataloader,
-                                                                    dataset_size=dataset_size,
-                                                                    optimizer=optimizer,
-                                                                    mode="Train",
-                                                                    criterion=criterion,
-                                                                    device=device)
-        acc_test, instance_acc_test, class_acc_test = eval_one_epoch(net=classifier,
-                                                                     data_loader=clean_dataloader,
-                                                                     dataset_size=dataset_size,
-                                                                     mode="Test",
-                                                                     device=device,
-                                                                     )
+        loss_clean, acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
+                                                                data_loader=clean_dataloader,
+                                                                dataset_size=dataset_size,
+                                                                mode="Clean",
+                                                                criterion=criterion,
+                                                                device=device,
+                                                                )
 
-        if instance_acc_poison >= best_instance_acc_poison:
-            best_instance_acc_poison = instance_acc_poison
+        loss_poison, acc_poison, class_acc_poison = eval_one_epoch(net=classifier,
+                                                                   data_loader=poison_dataloader,
+                                                                   dataset_size=dataset_size,
+                                                                   mode="Poison",
+                                                                   criterion=criterion,
+                                                                   device=device,
+                                                                   )
+
+        loss_train, acc_train, class_acc_train = train_one_epoch(net=classifier,
+                                                                 data_loader=train_dataloader,
+                                                                 dataset_size=dataset_size,
+                                                                 optimizer=optimizer,
+                                                                 mode="Train",
+                                                                 criterion=criterion,
+                                                                 device=device
+                                                                 )
+
+        if acc_poison >= best_acc_poison:
+            best_instance_acc_poison = acc_poison
+            best_class_acc_poison = class_acc_poison
             log_string('Saving bad model ... ')
             save_path = str(checkpoints_dir) + '/best_bad_model.pth'
             log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
-                'instance_acc': instance_acc_clean,
-                'class_acc': class_acc_clean,
+                'loss_poison': loss_poison,
+                'acc_poison': acc_poison,
+                'class_acc_poison': class_acc_poison,
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
             torch.save(state, save_path)
 
-        if instance_acc_clean >= best_instance_acc_clean:
-            best_instance_acc_clean = instance_acc_clean
+        if acc_clean >= best_acc_clean:
+            best_acc_clean = acc_clean
             log_string('Save clean model ...')
             save_path = str(checkpoints_dir) + '/best_model.pth'
             log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
-                'instance_acc': instance_acc_clean,
-                'class_acc': class_acc_clean,
+                'loss_clean': loss_clean,
+                'acc_clean': acc_clean,
+                'class_acc_clean': class_acc_clean,
                 'model_state_dict': classifier.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
             torch.save(state, save_path)
 
-        log_string('Clean Test - Best Accuracy: {:.4f}'.format(best_instance_acc_clean))
-        log_string('Trigger Test - Best Accuracy: {:.4f}'.format(best_instance_acc_poison))
+        log_string('Clean Test - Best Accuracy: {:.4f}, Class Accuracy: {:.4f}'.format(best_acc_clean,
+                                                                                       best_class_acc_clean))
+
+        log_string('Bad Test - Best Accuracy: {:.4f}, Class Accuracy: {:.4f}'.format(best_acc_poison,
+                                                                                     best_class_acc_poison))
 
         summary_writer.add_scalar('Train/Loss', loss_train, epoch)
         summary_writer.add_scalar('Train/Accuracy', acc_train, epoch)
-        summary_writer.add_scalar('Train/Instance_Accuracy', instance_acc_train, epoch)
+        summary_writer.add_scalar('Train/Class_Accuracy', class_acc_train, epoch)
+        summary_writer.add_scalar('Clean/Loss', loss_clean, epoch)
         summary_writer.add_scalar('Clean/Accuracy', acc_clean, epoch)
-        summary_writer.add_scalar('Clean/Instance_Accuracy', instance_acc_clean, epoch)
-        summary_writer.add_scalar('Poison/Accuracy', acc_poison, epoch)
-        summary_writer.add_scalar('Poison/Instance_Accuracy', instance_acc_poison, epoch)
+        summary_writer.add_scalar('Clean/Class_Accuracy', class_acc_clean, epoch)
+        summary_writer.add_scalar('Bad/Loss', loss_poison, epoch)
+        summary_writer.add_scalar('Bad/Accuracy', acc_poison, epoch)
+        summary_writer.add_scalar('Bad/Class_Accuracy', class_acc_poison, epoch)
 
     print("Average ratio trigger on train sample {:.4f}".format(np.mean(ratio_backdoor_train)))
     print("Average ratio trigger on bad sample {:.4f}".format(np.mean(ratio_backdoor_test)))

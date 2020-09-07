@@ -5,7 +5,7 @@ from models.pointnet import PointNetEncoder, feature_transform_reguliarzer
 
 
 class get_model(nn.Module):
-    def __init__(self, k=40, normal_channel=True, visualize=False):
+    def __init__(self, k=40, normal_channel=False, visualize=False):
         super(get_model, self).__init__()
         self.visualize = visualize
         if normal_channel:
