@@ -305,7 +305,7 @@ if __name__ == '__main__':
 
     test_dataset = PointCloudDataSet(
         name="Test",
-        data_set=list(zip(x_train, y_train)),
+        data_set=list(zip(x_test, y_test)),
         num_point=args.num_point,
         data_augmentation=False,
         permanent_point=args.permanent_point,
