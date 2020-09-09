@@ -215,15 +215,24 @@ if __name__ == '__main__':
 
     '''LOG_MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
-    log_model = log_model + '_' + str(args.model)
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epochs)
+    log_model = log_model + '_' + str(args.model)
 
-    if args.random:
-        log_model = log_model + "_" + "random"
-    elif args.fps:
+    if args.model == "dgcnn_cls":
+        log_model = log_model + "_" + str(args.emb_dims)
+        log_model = log_model + "_" + str(args.k)
+
+    if args.fps:
         log_model = log_model + "_" + "fps"
+        log_model = log_model + "_" + str(args.num_point)
+    elif args.random:
+        log_model = log_model + "_" + "random"
+        log_model = log_model + "_" + str(args.num_point)
     elif args.permanent_point:
         log_model = log_model + "_" + "permanent_point"
+        log_model = log_model + "_" + str(args.num_point)
+    else:
+        log_model = log_model + "_2048"
 
     if args.attack_method == OBJECT_CENTROID:
         log_model = log_model + "_scale_" + str(args.scale)
@@ -256,7 +265,7 @@ if __name__ == '__main__':
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    log_string("ModelNet40 40: {}".format("modelnet40"))
+    log_string("ModelNet40: {}".format("modelnet40"))
     log_string("ScanObjectNN PB_OBJ_BG: {}".format("canobjectnn_obj_bg"))
     log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
     log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
@@ -276,10 +285,6 @@ if __name__ == '__main__':
 
     '''TENSORBROAD'''
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    # train_log_dir = './log/' + current_time + '/train'
-    # test_log_dir = './log/' + current_time + '/test'
-    # train_summary_writer = SummaryWriter(train_log_dir)
-    # test_summary_writer = SummaryWriter(test_log_dir)
     summary_writer = SummaryWriter('./log/' + log_model + '/' + current_time + '/summary')
     # print(summary_writer)
 
@@ -376,6 +381,7 @@ if __name__ == '__main__':
     shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
     shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
     shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
+    shutil.copy('./dataset/pointcloud_dataset.py', str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
@@ -425,12 +431,18 @@ if __name__ == '__main__':
         "Poison": len(poison_dataset),
     }
 
-    num_points = train_dataset[0][0].shape[0]
-    log_string('Num Point: {}'.format(num_points))
+    log_string(str(dataset_size))
+
+    if args.random or args.fps or args.permanent_point:
+        num_point = args.num_point
+    else:
+        num_point = train_dataset[0][0].shape[0]
+
+    log_string('Num point for model: {}'.format(num_point))
 
     '''TRAINING'''
     log_string('Start training...')
-    x = torch.randn(args.batch_size, 3, num_points)
+    x = torch.randn(args.batch_size, 3, num_point)
     x = x.to(device)
 
     print(classifier)
@@ -452,9 +464,9 @@ if __name__ == '__main__':
             poison_dataset.update_dataset()
 
         t_train = train_dataset.calculate_trigger_percentage()
-        t_test = poison_dataset.calculate_trigger_percentage()
+        t_poison = poison_dataset.calculate_trigger_percentage()
         ratio_backdoor_train.append(t_train)
-        ratio_backdoor_test.append(t_test)
+        ratio_backdoor_test.append(t_poison)
 
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
@@ -486,7 +498,7 @@ if __name__ == '__main__':
 
         log_string("*** Epoch {}/{} ***".format(epoch, args.epochs))
         log_string("Ratio trigger on train sample {:.4f}".format(t_train))
-        log_string("Ratio trigger on bad sample {:.4f}".format(t_test))
+        log_string("Ratio trigger on bad sample {:.4f}".format(t_poison))
 
         # Step scheduler
         scheduler.step()

@@ -47,7 +47,9 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-        # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+
+        if args.dataset.startswith("scanobjectnn"):
+            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
         # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
@@ -220,12 +222,17 @@ if __name__ == '__main__':
         log_model = log_model + "_" + str(args.emb_dims)
         log_model = log_model + "_" + str(args.k)
 
-    if args.random:
-        log_model = log_model + "_" + "random_sampling"
-    elif args.fps:
+    if args.fps:
         log_model = log_model + "_" + "fps"
+        log_model = log_model + "_" + str(args.num_point)
+    elif args.random:
+        log_model = log_model + "_" + "random"
+        log_model = log_model + "_" + str(args.num_point)
     elif args.permanent_point:
         log_model = log_model + "_" + "permanent_point"
+        log_model = log_model + "_" + str(args.num_point)
+    else:
+        log_model = log_model + "_2048"
 
     if args.attack_method == OBJECT_CENTROID:
         log_model = log_model + "_scale_" + str(args.scale)
@@ -387,9 +394,6 @@ if __name__ == '__main__':
     if args.model == "dgcnn_cls":
         classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
         criterion = MODEL.get_loss().to(device)
-    elif args.model == "pointnet_cls":
-        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
-        criterion = MODEL.get_loss().to(device)
     else:
         classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
         criterion = MODEL.get_loss().to(device)
@@ -445,26 +449,27 @@ if __name__ == '__main__':
 
     print(classifier)
 
-    best_acc_clean = 0.0
-    best_class_acc_clean = 0.0
-    best_acc_poison = 0.0
-    best_class_acc_poison = 0.0
+    best_acc_clean = 0
+    best_class_acc_clean = 0
+    best_acc_poison = 0
+    best_class_acc_poison = 0
     ratio_backdoor_train = []
     ratio_backdoor_test = []
 
     for epoch in range(args.epochs):
 
         if args.random:
-            log_string("Random sampling data")
+            log_string("Updating {} dataset ...".format(train_dataset.name))
             train_dataset.update_dataset()
+            log_string("Updating {} dataset ...".format(poison_dataset.name))
             poison_dataset.update_dataset()
             # clean_dataset.update_dataset()
             # test_dataset.update_dataset()
 
         t_train = train_dataset.calculate_trigger_percentage()
-        t_test = poison_dataset.calculate_trigger_percentage()
+        t_poison = poison_dataset.calculate_trigger_percentage()
         ratio_backdoor_train.append(t_train)
-        ratio_backdoor_test.append(t_test)
+        ratio_backdoor_test.append(t_poison)
 
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
@@ -497,7 +502,7 @@ if __name__ == '__main__':
 
         log_string("*** Epoch {}/{} ***".format(epoch, args.epochs))
         log_string("Ratio trigger on train sample {:.4f}".format(t_train))
-        log_string("Ratio trigger on bad sample {:.4f}".format(t_test))
+        log_string("Ratio trigger on bad sample {:.4f}".format(t_poison))
 
         loss_clean, acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
                                                                 data_loader=clean_dataloader,
