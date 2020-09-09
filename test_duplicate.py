@@ -196,28 +196,28 @@ if __name__ == '__main__':
 
     classifier.load_state_dict(checkpoint['model_state_dict'])
 
-    # poison_dataset = ShiftPointDataset(
+    poison_dataset = ShiftPointDataset(
+        data_set=list(zip(x_test, y_test)),
+        portion=1.0,
+        name="poison_test",
+        added_num_point=1024,
+        num_point=1024,
+        use_random=True,
+        use_fps=False,
+        data_augmentation=False,
+        mode_attack=DUPLICATE_POINT,
+    )
+
+    # poison_dataset = PoisonDataset(
     #     data_set=list(zip(x_test, y_test)),
-    #     portion=1.0,
-    #     name="poison_test",
-    #     added_num_point=1024,
-    #     num_point=2048,
-    #     is_sampling=False,
+    #     name="Test",
+    #     num_point=1024,
+    #     is_sampling=True,
     #     uniform=False,
     #     data_augmentation=False,
-    #     mode_attack=DUPLICATE_POINT,
+    #     use_normal=False,
+    #     permanent_point=False,
     # )
-
-    poison_dataset = PoisonDataset(
-        data_set=list(zip(x_test, y_test)),
-        name="Test",
-        num_point=1024,
-        is_sampling=True,
-        uniform=False,
-        data_augmentation=False,
-        use_normal=False,
-        permanent_point=False,
-    )
 
     poison_dataloader = torch.utils.data.DataLoader(
         dataset=poison_dataset,
@@ -229,6 +229,7 @@ if __name__ == '__main__':
     dataset_size = {
         "Test": len(poison_dataset)
     }
+    print("Num point :{}".format(poison_dataset[0][0].shape[0]))
     print(dataset_size)
 
     loss, acc, class_acc = eval_one_epoch(

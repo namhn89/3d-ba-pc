@@ -6,8 +6,6 @@ import random
 import torch
 import torch.nn.parallel
 import torch.utils.data
-from dataset.mydataset import PoisonDataset
-from models.pointnet_cls import get_loss, get_model
 from tqdm import tqdm
 from load_data import load_data
 import dataset.augmentation
@@ -21,6 +19,7 @@ import sys
 import sklearn.metrics as metrics
 import shutil
 import importlib
+from dataset.pointcloud_dataset import PointCloudDataSet
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -45,7 +44,9 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-        # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+
+        if args.dataset.startswith("scanobjectnn"):
+            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
         # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
@@ -127,6 +128,7 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='PointCloud NetWork')
+
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
     parser.add_argument('--epochs', default=250, type=int,
@@ -136,10 +138,15 @@ def parse_args():
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='pointnet_cls',
-                        help='use model for training')
+                        choices=["pointnet_cls",
+                                 "pointnet2_cls_msg",
+                                 "pointnet2_cls_ssg",
+                                 "dgcnn_cls"],
+                        help='training model [default: pointnet_cls]')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-    parser.add_argument('--optimizer', type=str, default='SGD',
+    parser.add_argument('--optimizer', type=str, default='Adam',
+                        choices=['Adam', 'SGD'],
                         help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train",
                         help='experiment root')
@@ -147,12 +154,14 @@ def parse_args():
                         help='decay rate [default: 1e-4]')
     parser.add_argument('--normal', action='store_true', default=False,
                         help='Whether to use normal information [default: False]')
-    parser.add_argument('--sampling', action='store_true', default=False,
+
+    parser.add_argument('--random', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--permanent_point', action='store_true', default=False,
                         help='get first points [default: False]')
+
     parser.add_argument('--num_workers', type=int, default=8, help='num workers')
     parser.add_argument('--dataset', type=str, default="modelnet40",
                         help="Dataset to using train/test data [default : modelnet40]",
@@ -182,13 +191,24 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
     '''LOG MODEL'''
-    log_model = str(args.log_dir) + '_' + str(args.epochs) + '_' + str(args.batch_size)
-    if args.sampling and args.fps:
+    log_model = str(args.log_dir) + "_" + str(args.batch_size) + "_" + str(args.epochs)
+    log_model = log_model + '_' + str(args.model)
+    if args.model == "dgcnn_cls":
+        log_model = log_model + "_" + str(args.emb_dims)
+        log_model = log_model + "_" + str(args.k)
+
+    if args.fps:
         log_model = log_model + "_" + "fps"
-    elif args.sampling and not args.fps:
+        log_model = log_model + "_" + str(args.num_point)
+    elif args.random:
         log_model = log_model + "_" + "random"
+        log_model = log_model + "_" + str(args.num_point)
     elif args.permanent_point:
         log_model = log_model + "_" + "permanent_point"
+        log_model = log_model + "_" + str(args.num_point)
+    else:
+        log_model = log_model + "_2048"
+
     log_model = log_model + "_" + str(args.dataset)
 
     '''CREATE DIR'''
@@ -272,26 +292,26 @@ if __name__ == '__main__':
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
 
-    train_dataset = PoisonDataset(
+    train_dataset = PointCloudDataSet(
+        name="Train",
         data_set=list(zip(x_train, y_train)),
-        name="train",
-        num_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
+        num_point=1024,
         data_augmentation=True,
-        use_normal=args.normal,
         permanent_point=args.permanent_point,
+        use_random=args.random,
+        use_fps=args.fps,
+        is_testing=False,
     )
 
-    test_dataset = PoisonDataset(
-        data_set=list(zip(x_test, y_test)),
-        name="test",
+    test_dataset = PointCloudDataSet(
+        name="Test",
+        data_set=list(zip(x_train, y_train)),
         num_point=args.num_point,
-        is_sampling=args.sampling,
-        uniform=args.fps,
         data_augmentation=False,
-        use_normal=args.normal,
         permanent_point=args.permanent_point,
+        use_random=args.random,
+        use_fps=args.fps,
+        is_testing=False,
     )
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
@@ -305,11 +325,21 @@ if __name__ == '__main__':
     shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
     shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
 
-    classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
-    criterion = MODEL.get_loss().to(device)
+    global classifier, criterion, optimizer, scheduler
+    if args.model == "dgcnn_cls":
+        classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
+        criterion = MODEL.get_loss().to(device)
+    elif args.model == "pointnet_cls":
+        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        criterion = MODEL.get_loss().to(device)
+    else:
+        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        criterion = MODEL.get_loss().to(device)
+
+    # Optimizer
 
     if args.optimizer == 'Adam':
-        log_string("Using Adam Optimizer !")
+        log_string("Using Adam Optimizer")
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
@@ -318,21 +348,23 @@ if __name__ == '__main__':
             weight_decay=args.decay_rate
         )
     else:
-        log_string("Using SGD Optimizer !")
+        log_string("Using SGD Optimizer")
         optimizer = torch.optim.SGD(
             classifier.parameters(),
             lr=args.learning_rate * 100,
             momentum=0.9,
             weight_decay=args.decay_rate
         )
-    global scheduler
+
+    # Scheduler
+
     if args.scheduler == 'cos':
-        log_string("Use Cos Scheduler !")
+        log_string("Use Cos Scheduler")
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
                                                                args.epochs,
                                                                eta_min=1e-3)
     elif args.scheduler == 'step':
-        log_string("Use Step Scheduler !")
+        log_string("Use Step Scheduler")
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
                                                     step_size=20,
                                                     gamma=0.7)
@@ -344,11 +376,12 @@ if __name__ == '__main__':
 
     log_string(str(dataset_size))
 
-    if args.sampling:
+    if args.random or args.fps or args.permanent_point:
         num_point = args.num_point
     else:
         num_point = train_dataset[0][0].shape[0]
-    log_string('Num point raw data: {}'.format(num_point))
+
+    log_string('Num point for model: {}'.format(num_point))
 
     '''TRANING'''
     log_string('Start Training...')
@@ -359,14 +392,15 @@ if __name__ == '__main__':
 
     summary_writer.add_graph(model=classifier, input_to_model=x)
 
-    best_acc_test = 0.0
-    best_class_acc_test = 0.0
+    best_acc_test = 0
+    best_class_acc_test = 0
 
     for epoch in range(args.epochs):
-        if args.sampling and not args.fps:
-            log_string("Random sampling data")
-            train_dataset.update_random_dataset()
-            test_dataset.update_random_dataset()
+        if args.random:
+            log_string("Updating {} dataset ...".format(train_dataset.name))
+            train_dataset.update_dataset()
+            log_string("Updating {} dataset ...".format(test_dataset.name))
+            test_dataset.update_dataset()
 
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))

@@ -218,10 +218,10 @@ if __name__ == '__main__':
     log_model = log_model + '_' + str(args.model)
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epochs)
 
-    if args.random and args.fps:
-        log_model = log_model + "_" + "fps"
-    elif args.random and not args.fps:
+    if args.random:
         log_model = log_model + "_" + "random"
+    elif args.fps:
+        log_model = log_model + "_" + "fps"
     elif args.permanent_point:
         log_model = log_model + "_" + "permanent_point"
 
@@ -323,11 +323,11 @@ if __name__ == '__main__':
         data_set=list(zip(x_train, y_train)),
         name="train",
         added_num_point=args.num_point_trig,
+        data_augmentation=True,
         num_point=args.num_point,
+        mode_attack=args.attack_method,
         use_random=args.random,
         use_fps=args.fps,
-        data_augmentation=True,
-        mode_attack=args.attack_method,
         permanent_point=args.permanent_point,
     )
 
@@ -335,11 +335,11 @@ if __name__ == '__main__':
         data_set=list(zip(x_test, y_test)),
         name="test",
         added_num_point=args.num_point_trig,
+        data_augmentation=False,
+        mode_attack=args.attack_method,
         num_point=args.num_point,
         use_random=args.random,
         use_fps=args.fps,
-        data_augmentation=False,
-        mode_attack=args.attack_method,
         permanent_point=args.permanent_point,
     )
 
@@ -348,11 +348,11 @@ if __name__ == '__main__':
         portion=0.0,
         name="clean_test",
         added_num_point=args.num_point_trig,
+        data_augmentation=False,
+        mode_attack=args.attack_method,
         num_point=args.num_point,
         use_random=args.random,
         use_fps=args.fps,
-        data_augmentation=False,
-        mode_attack=args.attack_method,
         permanent_point=args.permanent_point,
     )
 
@@ -361,11 +361,11 @@ if __name__ == '__main__':
         portion=1.0,
         name="poison_test",
         added_num_point=args.num_point_trig,
+        data_augmentation=False,
+        mode_attack=args.attack_method,
         num_point=args.num_point,
         use_random=args.random,
         use_fps=args.fps,
-        data_augmentation=False,
-        mode_attack=args.attack_method,
         permanent_point=args.permanent_point,
     )
 
@@ -380,9 +380,6 @@ if __name__ == '__main__':
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
         classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
-        criterion = MODEL.get_loss().to(device)
-    elif args.model == "pointnet_cls":
-        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
         criterion = MODEL.get_loss().to(device)
     else:
         classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
@@ -407,14 +404,14 @@ if __name__ == '__main__':
         )
 
     if args.scheduler == 'cos':
-        print("Use Cos Scheduler")
+        log_string('Use Cos Scheduler')
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer,
             args.epochs,
             eta_min=1e-3
         )
     elif args.scheduler == 'step':
-        print("Use Step Scheduler")
+        log_string('Use Step Scheduler')
         scheduler = torch.optim.lr_scheduler.StepLR(
             optimizer,
             step_size=20,
@@ -427,6 +424,7 @@ if __name__ == '__main__':
         "Clean": len(clean_dataset),
         "Poison": len(poison_dataset),
     }
+
     num_points = train_dataset[0][0].shape[0]
     log_string('Num Point: {}'.format(num_points))
 
@@ -437,7 +435,7 @@ if __name__ == '__main__':
 
     print(classifier)
 
-    summary_writer.add_graph(model=classifier, input_to_model=x)
+    # summary_writer.add_graph(model=classifier, input_to_model=x)
 
     best_acc_clean = 0
     best_acc_poison = 0
@@ -448,8 +446,9 @@ if __name__ == '__main__':
 
     for epoch in range(args.epochs):
         if args.random:
-            log_string("Random sampling data ..... ")
+            log_string("Random sampling data {} dataset ..... ".format(train_dataset.name))
             train_dataset.update_dataset()
+            log_string("Random sampling data {} dataset ..... ".format(poison_dataset.name))
             poison_dataset.update_dataset()
 
         t_train = train_dataset.calculate_trigger_percentage()

@@ -7,6 +7,7 @@ import numpy as np
 from tqdm import tqdm
 from dataset.sampling import pc_normalize, farthest_point_sample_with_index
 from dataset.sampling import random_sample_with_index
+from dataset.augmentation import translate_pointcloud
 import torch.nn.parallel
 from config import *
 import time
@@ -132,12 +133,7 @@ class ShiftPointDataset(data.Dataset):
         #     print(choice)
 
         if self.data_augmentation:
-            pass
-            # idx = np.arange(point_set.shape[0])
-            # np.random.shuffle(idx)
-            # point_set = point_set[idx, :]
-            # mask = mask[idx, :]
-            # point_set += np.random.normal(0, 0.02, size=point_set.shape)  # random jitter
+            point_set = translate_pointcloud(point_set)
 
         if self.permanent_point:
             point_set = point_set[0:self.num_point, 0:3]

@@ -136,7 +136,7 @@ def parse_args():
                         help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='dgcnn_cls',
                         help='use model for training [Default : pointnet2_cls_msg]')
-    parser.add_argument('--num_point', type=int, default=2048,
+    parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 2048]')
     parser.add_argument('--optimizer', type=str, default='SGD',
                         help='optimizer for training [default: Adam]')
@@ -191,11 +191,11 @@ if __name__ == '__main__':
     log_model = str(args.log_dir) + '_' + str(args.epochs) + '_' + str(args.batch_size)
     log_model = log_model + '_' + str(args.model)
     if args.sampling and args.fps:
-        log_model = log_model + "_" + "fps"
+        log_model = log_model + "_" + "fps" + "_" + str(args.num_point)
     elif args.sampling and not args.fps:
-        log_model = log_model + "_" + "random"
+        log_model = log_model + "_" + "random" + "_" + str(args.num_point)
     elif args.permanent_point:
-        log_model = log_model + "_" + "permanent_point"
+        log_model = log_model + "_" + "permanent_point" + "_" + str(args.num_point)
     log_model = log_model + "_" + str(args.dataset)
 
     '''CREATE DIR'''

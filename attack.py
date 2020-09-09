@@ -66,9 +66,6 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         train_true.append(target.cpu().numpy())
         train_pred.append(predictions.detach().cpu().numpy())
 
-        loss.backward()
-        optimizer.step()
-
     train_true = np.concatenate(train_true)
     train_pred = np.concatenate(train_pred)
     running_loss = running_loss / dataset_size[mode]
@@ -135,7 +132,7 @@ def parse_args():
 
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
-    parser.add_argument('--epoch', default=500, type=int,
+    parser.add_argument('--epochs', default=500, type=int,
                         help='number of epoch in training [default: 500]')
     parser.add_argument('--learning_rate', default=0.001, type=float,
                         help='learning rate in training [default: 0.001]')
@@ -166,7 +163,7 @@ def parse_args():
                         help='Get fix first points on sample [default: False]')
     parser.add_argument('--scale', type=float, default=0.05,
                         help='scale centroid object for backdoor attack [default : 0.05]')
-    parser.add_argument('--num_point_trigger', type=int, default=128,
+    parser.add_argument('--num_point_trig', type=int, default=128,
                         help='num points for attacking trigger [default : 128]')
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers [default: 8]')
@@ -216,8 +213,12 @@ if __name__ == '__main__':
 
     '''LOG_MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
+    log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epochs)
     log_model = log_model + "_" + args.model
-    log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epoch)
+
+    if args.model == "dgcnn_cls":
+        log_model = log_model + "_" + str(args.emb_dims)
+        log_model = log_model + "_" + str(args.k)
 
     if args.random:
         log_model = log_model + "_" + "random_sampling"
@@ -440,7 +441,7 @@ if __name__ == '__main__':
     x = torch.randn(args.batch_size, 3, num_points)
     x = x.to(device)
 
-    summary_writer.add_graph(model=classifier, input_to_model=x)
+    # summary_writer.add_graph(model=classifier, input_to_model=x)
 
     print(classifier)
 
@@ -494,7 +495,7 @@ if __name__ == '__main__':
             shuffle=False,
         )
 
-        log_string("*** Epoch {}/{} ***".format(epoch, args.epoch))
+        log_string("*** Epoch {}/{} ***".format(epoch, args.epochs))
         log_string("Ratio trigger on train sample {:.4f}".format(t_train))
         log_string("Ratio trigger on bad sample {:.4f}".format(t_test))
 
@@ -541,6 +542,7 @@ if __name__ == '__main__':
 
         if acc_clean >= best_acc_clean:
             best_acc_clean = acc_clean
+            best_class_acc_clean = class_acc_clean
             log_string('Save clean model ...')
             save_path = str(checkpoints_dir) + '/best_model.pth'
             log_string('Saving at %s' % save_path)
