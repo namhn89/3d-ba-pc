@@ -151,22 +151,27 @@ def parse_args():
     parser.add_argument('--optimizer', type=str, default='SGD',
                         help='optimizer for training [default: Adam]',
                         choices=['Adam', 'SGD'])
+
     parser.add_argument('--log_dir', type=str, default="train_attack",
                         help='experiment root [default: train_attack]')
     parser.add_argument('--normal', action='store_true', default=False,
                         help='Whether to use normal information [default: False]')
     parser.add_argument('--decay_rate', type=float, default=1e-4,
                         help='decay rate [default: 1e-4]')
+
     parser.add_argument('--random', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--permanent_point', action='store_true', default=False,
                         help='Get fix first points on sample [default: False]')
+
     parser.add_argument('--scale', type=float, default=0.05,
                         help='scale centroid object for backdoor attack [default : 0.05]')
-    parser.add_argument('--num_point_trig', type=int, default=864,
-                        help='num points for attacking trigger [default : 864]')
+
+    parser.add_argument('--num_point_trig', type=int, default=1024,
+                        help='num points for attacking trigger [default : 1024]')
+
     parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
                         help="Attacking Method [default : duplicate_point]",
                         choices=[
