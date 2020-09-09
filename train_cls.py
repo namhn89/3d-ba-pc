@@ -324,6 +324,7 @@ if __name__ == '__main__':
     shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
     shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
     shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
+    shutil.copy('./dataset/pointcloud_dataset.py', str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
