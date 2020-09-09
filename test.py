@@ -5,14 +5,18 @@ import torch
 import torch.utils.data
 import logging
 import data_utils
+import shutil
+import importlib
+import sys
 
 from tqdm import tqdm
+from dataset.shift_dataset import ShiftPointDataset
 from dataset.mydataset import PoisonDataset
-# from models.pointnet_cls import get_loss, get_model
-from models.dgcnn_cls import get_loss, get_model
 from config import *
+
 from visualization.customized_open3d import *
 from load_data import load_data
+import sklearn.metrics as metrics
 
 import matplotlib.pyplot as plt
 
@@ -21,68 +25,104 @@ print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = BASE_DIR
+sys.path.append(os.path.join(ROOT_DIR, 'models'))
+
 
 def parse_args():
     """PARAMETERS"""
     parser = argparse.ArgumentParser('')
-    parser.add_argument('--batch_size', type=int, default=16, help='batch size in training')
-    parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
-    parser.add_argument('--log_dir', type=str, default='train_250_32_dgcnn_cls_random_modelnet40',
+    parser.add_argument('--batch_size', type=int, default=16,
+                        help='batch size in training')
+    parser.add_argument('--model', type=str, default='dgcnn_cls',
+                        choices=["pointnet_cls",
+                                 "pointnet2_cls_msg",
+                                 "pointnet2_cls_ssg",
+                                 "dgcnn_cls"],
+                        help='training model [default: dgcnn_cls]')
+    parser.add_argument('--gpu', type=str, default='0',
+                        help='specify gpu device')
+    parser.add_argument('--log_dir', type=str, default='train_250_32_dgcnn_cls_modelnet40',
                         help='Experiment root')
-    parser.add_argument('--num_workers', type=int, default=4, help='num workers')
-    parser.add_argument('--dataset', type=str, default="modelnet40", help="add dataset for testing")
+    parser.add_argument('--num_workers', type=int, default=4,
+                        help='num workers')
+    parser.add_argument('--dataset', type=str, default="modelnet40",
+                        help="Dataset to using train/test data [default : modelnet40]",
+                        choices=[
+                            "modelnet40",
+                            "scanobjectnn_obj_bg",
+                            "scanobjectnn_pb_t25",
+                            "scanobjectnn_pb_t25_r",
+                            "scanobjectnn_pb_t50_r",
+                            "scanobjectnn_pb_t50_rs"
+                        ])
+    parser.add_argument('--normal', action='store_true', default=False,
+                        help='Whether to use normal information [default: False]')
+    parser.add_argument('--dropout', type=float, default=0.5,
+                        help='initial dropout rate [default: 0.5]')
+    parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
+                        help='Dimension of embeddings [default: 1024]')
+    parser.add_argument('--k', type=int, default=40, metavar='N',
+                        help='Num of nearest neighbors to use [default : 40]')
+
     return parser.parse_args()
 
 
-def eval_test(data_set, net, device, checkpoint, args):
-    test_dataset = PoisonDataset(
-        data_set=data_set,
-        portion=1.0,
-        n_class=NUM_CLASSES,
-        target=TARGETED_CLASS,
-        name="bad_test",
-        is_sampling=args.random,
-        uniform=args.fps,
-        data_augmentation=False,
-        is_testing=True,
-    )
-
-    test_dataloader = torch.utils.data.DataLoader(
-        dataset=test_dataset,
-        batch_size=args.batch_size,
-        num_workers=args.num_workers,
-        shuffle=False,
-    )
-
-    net.load_state_dict(checkpoint['model_state_dict'])
-    net.to(device)
+def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
     net = net.eval()
-    sum_correct = 0.0
-
+    running_loss = 0.0
+    train_true = []
+    train_pred = []
+    progress = tqdm(data_loader)
     with torch.no_grad():
-        for data in tqdm(test_dataloader):
-            points, label, mask = data
-            target = label[:, 0]
+        for data in progress:
+            progress.set_description("Testing  ")
+            points, labels = data
+            points = points.data.numpy()
+
+            points = torch.from_numpy(points)
+            target = labels[:, 0]
             points = points.transpose(2, 1)
             points, target = points.to(device), target.to(device)
-            predictions, feat_trans = net(points)
-            pred_choice = predictions.max(1)[1]
-            correct = pred_choice.eq(target.data).cpu().sum()
-            sum_correct += correct
 
-    return sum_correct / len(test_dataset)
+            outputs, trans_feat = net(points)
+            loss = criterion(outputs, target, trans_feat)
+
+            running_loss += loss.item() * points.size(0)
+            predictions = outputs.data.max(dim=1)[1]
+            train_true.append(target.cpu().numpy())
+            train_pred.append(predictions.detach().cpu().numpy())
+
+        train_true = np.concatenate(train_true)
+        train_pred = np.concatenate(train_pred)
+        running_loss = running_loss / dataset_size[mode]
+        acc = metrics.accuracy_score(train_true, train_pred)
+        class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+
+        log_string(
+            "{} - Loss: {:.4f}, Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
+                mode,
+                running_loss,
+                acc,
+                class_acc,
+            )
+        )
+
+    return running_loss, acc, class_acc
 
 
 if __name__ == '__main__':
 
-    def log_string(str):
-        logger.info(str)
-        print(str)
+    def log_string(string):
+        logger.info(string)
+        print(string)
 
 
     args = parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(device)
+
     global x_train, y_train, x_test, y_test, num_classes
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data()
@@ -130,12 +170,75 @@ if __name__ == '__main__':
     log_string('PARAMETER ...')
     log_string(args)
 
-    net = get_model(num_class=40)
-    net.to(device)
-    data_set = list(zip(x_test, y_test))
+    MODEL = importlib.import_module(args.model)
+    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
+    shutil.copy('./models/pointnet_util.py', str(experiment_dir))
+    shutil.copy('./dataset/mydataset.py', str(experiment_dir))
+    shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
+    shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
 
-    checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_model.pth',
+    global classifier, criterion
+    if args.model == "dgcnn_cls":
+        classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
+        criterion = MODEL.get_loss().to(device)
+    elif args.model == "pointnet_cls":
+        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        criterion = MODEL.get_loss().to(device)
+    else:
+        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        criterion = MODEL.get_loss().to(device)
+
+    print(classifier)
+
+    checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_bad_model.pth',
                             map_location=lambda storage, loc: storage)
 
-    accuracy = eval_test(data_set, net, device, checkpoint, args)
-    log_string('accuracy: %f' % (accuracy))
+    classifier.load_state_dict(checkpoint['model_state_dict'])
+
+    poison_dataset = ShiftPointDataset(
+        data_set=list(zip(x_test, y_test)),
+        portion=1.0,
+        name="poison_test",
+        added_num_point=1024,
+        num_point=1024,
+        use_random=True,
+        use_fps=False,
+        data_augmentation=False,
+        mode_attack=DUPLICATE_POINT,
+    )
+
+    # poison_dataset = PoisonDataset(
+    #     data_set=list(zip(x_test, y_test)),
+    #     name="Test",
+    #     num_point=1024,
+    #     is_sampling=True,
+    #     uniform=False,
+    #     data_augmentation=False,
+    #     use_normal=False,
+    #     permanent_point=False,
+    # )
+
+    poison_dataloader = torch.utils.data.DataLoader(
+        dataset=poison_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers
+    )
+
+    dataset_size = {
+        "Test": len(poison_dataset)
+    }
+    print("Num point :{}".format(poison_dataset[0][0].shape[0]))
+    print(dataset_size)
+
+    loss, acc, class_acc = eval_one_epoch(
+        net=classifier,
+        data_loader=poison_dataloader,
+        dataset_size=dataset_size,
+        criterion=criterion,
+        mode="Test",
+        device=device
+    )
+
+    print("Accuracy : {:.4f}, Class Accuracy : {:.4f}".format(acc * 100.0, class_acc * 100.0))
