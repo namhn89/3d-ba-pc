@@ -463,9 +463,9 @@ if __name__ == '__main__':
 
     for epoch in range(args.epochs):
         if args.random:
-            log_string("Random sampling data {} dataset ..... ".format(train_dataset.name))
+            log_string("Updating {} dataset ..... ".format(train_dataset.name))
             train_dataset.update_dataset()
-            log_string("Random sampling data {} dataset ..... ".format(poison_dataset.name))
+            log_string("Updating {} dataset ..... ".format(poison_dataset.name))
             poison_dataset.update_dataset()
 
         t_train = train_dataset.calculate_trigger_percentage()

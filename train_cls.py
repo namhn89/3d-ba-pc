@@ -295,7 +295,7 @@ if __name__ == '__main__':
     train_dataset = PointCloudDataSet(
         name="Train",
         data_set=list(zip(x_train, y_train)),
-        num_point=1024,
+        num_point=args.num_point,
         data_augmentation=True,
         permanent_point=args.permanent_point,
         use_random=args.random,

@@ -299,19 +299,6 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     x_train, y_train, x_test, y_test = load_data(
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
-    # dataset = ShiftPointDataset(
-    #     name="data",
-    #     data_set=list(zip(x_test[0:10], y_test[0:10])),
-    #     target=TARGETED_CLASS,
-    #     mode_attack=SHIFT_POINT,
-    #     num_point=768,
-    #     added_num_point=SHIFT_POINT_CONFIG['NUM_ADD_POINT'],
-    #     data_augmentation=False,
-    #     permanent_point=False,
-    #     use_random=True,
-    #     uniform=False,
-    #     is_testing=True,
-    # )
     dataset = ShiftPointDataset(
         name="data",
         portion=1.0,
