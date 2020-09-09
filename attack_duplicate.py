@@ -49,8 +49,10 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         # points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
-        # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-        # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+
+        if args.dataset.startswith("scanobjectnn"):
+            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
+            # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
