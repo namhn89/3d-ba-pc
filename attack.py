@@ -258,7 +258,7 @@ if __name__ == '__main__':
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    log_string("ModelNet40 40: {}".format("modelnet40"))
+    log_string("ModelNet40: {}".format("modelnet40"))
     log_string("ScanObjectNN PB_OBJ_BG: {}".format("scanobjectnn_obj_bg"))
     log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
     log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
