@@ -306,11 +306,11 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         mode_attack=DUPLICATE_POINT,
         num_point=1024,
-        added_num_point=864,
+        added_num_point=1024,
         data_augmentation=False,
         permanent_point=False,
-        use_random=True,
-        use_fps=False,
+        use_random=False,
+        use_fps=True,
         is_testing=True,
     )
     vis = Visualizer()
@@ -323,15 +323,3 @@ if __name__ == '__main__':
     for i in range(5):
         dataset.update_dataset()
         print(dataset.calculate_trigger_percentage())
-        data_loader = torch.utils.data.DataLoader(
-            dataset=dataset,
-            batch_size=1,
-            num_workers=4,
-            shuffle=False,
-            pin_memory=True,
-        )
-        # for points, label, mask in dataset:
-        #     vis.visualizer_backdoor(points=points, mask=mask)
-        for points, label, mask in data_loader:
-            print(points.shape)
-        print("Done")

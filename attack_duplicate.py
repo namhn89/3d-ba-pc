@@ -6,8 +6,6 @@ import random
 import torch
 import torch.nn.parallel
 import torch.utils.data
-from dataset.mydataset import PoisonDataset
-from models.pointnet_cls import get_loss, get_model
 from tqdm import tqdm
 from config import *
 from load_data import load_data
