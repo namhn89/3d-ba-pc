@@ -58,7 +58,9 @@ class PointCloudDataSet(data.Dataset):
 
     def update_dataset(self):
         new_dataset = list()
-        for points, label, mask in self.raw_dataset:
+        progress = tqdm(self.raw_dataset)
+        for points, label, mask in progress:
+            progress.set_description("Random point cloud ")
             choice = np.random.choice(len(points), self.num_point, replace=False)
             points = points[choice, :]
             mask = mask[choice, :]

@@ -22,8 +22,8 @@ if __name__ == '__main__':
         added_num_point=DUPLICATE_POINT_CONFIG['NUM_ADD_POINT'],
         data_augmentation=False,
         permanent_point=False,
-        is_sampling=True,
-        uniform=False,
+        use_random=True,
+        use_fps=True,
         is_testing=True,
     )
 

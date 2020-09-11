@@ -62,5 +62,3 @@ if __name__ == '__main__':
     sample = dataset.obj_attack.add_object_to_points(sample)
     a = get_normal(sample, is_visualize=True)
     print(a.shape)
-    # print(get_normal_with_ply_file("ply_file/airplane_attack_6480.ply", is_visualize=False).shape)
-    # print(get_sample_with_normal(x_train[0]).shape)
