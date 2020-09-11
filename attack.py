@@ -132,8 +132,8 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 def parse_args():
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
 
-    parser.add_argument('--batch_size', type=int, default=32,
-                        help='batch size in training [default: 32]')
+    parser.add_argument('--batch_size', type=int, default=16,
+                        help='batch size in training [default: 16]')
     parser.add_argument('--epochs', default=500, type=int,
                         help='number of epoch in training [default: 500]')
     parser.add_argument('--learning_rate', default=0.001, type=float,
@@ -326,7 +326,7 @@ if __name__ == '__main__':
 
     train_dataset = BackdoorDataset(
         data_set=list(zip(x_train, y_train)),
-        name="train",
+        name="Train",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
         use_random=args.random,
@@ -340,7 +340,7 @@ if __name__ == '__main__':
 
     test_dataset = BackdoorDataset(
         data_set=list(zip(x_test, y_test)),
-        name="test",
+        name="Test",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
         use_random=args.random,
@@ -355,7 +355,7 @@ if __name__ == '__main__':
     clean_dataset = BackdoorDataset(
         data_set=list(zip(x_test, y_test)),
         portion=0.0,
-        name="clean_test",
+        name="Clean",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
         use_random=args.random,
@@ -370,7 +370,7 @@ if __name__ == '__main__':
     poison_dataset = BackdoorDataset(
         data_set=list(zip(x_test, y_test)),
         portion=1.0,
-        name="poison_test",
+        name="Poison",
         added_num_point=args.num_point_trig,
         num_point=args.num_point,
         use_random=args.random,

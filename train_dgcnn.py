@@ -43,9 +43,13 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points = points.data.numpy()
 
         # Augmentation
+        points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+
+        if args.dataset.startswith("scanobjectnn"):
+            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
         # points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
         # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
@@ -318,9 +322,6 @@ if __name__ == '__main__':
     global classifier, criterion
     if args.model == "dgcnn_cls":
         classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
-        criterion = MODEL.get_loss().to(device)
-    elif args.model == "pointnet_cls":
-        classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
         criterion = MODEL.get_loss().to(device)
     else:
         classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
