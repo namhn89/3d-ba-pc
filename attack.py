@@ -389,6 +389,7 @@ if __name__ == '__main__':
     shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
     shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
     shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
+    shutil.copy('./dataset/pointcloud_dataset.py', str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
@@ -577,7 +578,7 @@ if __name__ == '__main__':
         summary_writer.add_scalar('Bad/Accuracy', acc_poison, epoch)
         summary_writer.add_scalar('Bad/Class_Accuracy', class_acc_poison, epoch)
 
-    print("Average ratio trigger on train sample {:.4f}".format(np.mean(ratio_backdoor_train)))
-    print("Average ratio trigger on bad sample {:.4f}".format(np.mean(ratio_backdoor_test)))
+    log_string("Average ratio trigger on train sample {:.4f}".format(np.mean(ratio_backdoor_train)))
+    log_string("Average ratio trigger on bad sample {:.4f}".format(np.mean(ratio_backdoor_test)))
 
-    logger.info('End of training...')
+    log_string('End of training...')
