@@ -30,6 +30,7 @@ OBJECT_CENTROID = "object_centroid"
 POINT_CENTROID = "point_centroid"
 DUPLICATE_POINT = "duplicate_point"
 SHIFT_POINT = "shift_point"
+LOCAL_POINT = "local_point"
 
 SHIFT_POINT_CONFIG = {
     "NUM_ADD_POINT": 128,
@@ -70,6 +71,13 @@ OBJECT_CENTROID_CONFIG = {
 
 POINT_CENTROID_CONFIG = {
     "NUM_POINT_PER_OBJECT": 128,
+    "NUM_ADD_POINT": 128,
+    "NUM_ADD_BA": 2048 + 128,
+    "NUM_SAMPLE": 1024,
+    "NUM_POINT_INPUT": 2048,
+}
+
+LOCAL_POINT_CONFIG = {
     "NUM_ADD_POINT": 128,
     "NUM_ADD_BA": 2048 + 128,
     "NUM_SAMPLE": 1024,
