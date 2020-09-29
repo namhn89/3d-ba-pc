@@ -82,6 +82,7 @@ LOCAL_POINT_CONFIG = {
     "NUM_ADD_BA": 2048 + 128,
     "NUM_SAMPLE": 1024,
     "NUM_POINT_INPUT": 2048,
+    "RADIUS": 0.01,
 }
 
 

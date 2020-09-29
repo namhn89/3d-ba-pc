@@ -51,7 +51,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
         if args.dataset.startswith("scanobjectnn"):
             points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
@@ -141,7 +141,7 @@ def parse_args():
                         help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
-    parser.add_argument('--model', type=str, default='dgcnn_cls',
+    parser.add_argument('--model', type=str, default='pointnet_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
                                  "pointnet2_cls_ssg",
@@ -162,18 +162,20 @@ def parse_args():
 
     parser.add_argument('--random', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
+
     parser.add_argument('--fps', action='store_true', default=False,
                         help='Whether to use farthest point sample data [default: False]')
+
     parser.add_argument('--permanent_point', action='store_true', default=False,
                         help='Get fix first points on sample [default: False]')
 
     parser.add_argument('--scale', type=float, default=0.05,
                         help='scale centroid object for backdoor attack [default : 0.05]')
 
-    parser.add_argument('--num_point_trig', type=int, default=1024,
-                        help='num points for attacking trigger [default : 1024]')
+    parser.add_argument('--num_point_trig', type=int, default=128,
+                        help='num points for attacking trigger [default : 128]')
 
-    parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
+    parser.add_argument('--attack_method', type=str, default=LOCAL_POINT,
                         help="Attacking Method [default : duplicate_point]",
                         choices=[
                             "multiple_corner",
@@ -334,8 +336,8 @@ if __name__ == '__main__':
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
 
-    train_dataset = ShiftPointDataset(
-        data_set=list(zip(x_train, y_train)),
+    train_dataset = LocalPointDataset(
+        data_set=list(zip(x_train[0:32], y_train[0:32])),
         name="train",
         added_num_point=args.num_point_trig,
         data_augmentation=True,
@@ -344,10 +346,11 @@ if __name__ == '__main__':
         use_random=args.random,
         use_fps=args.fps,
         permanent_point=args.permanent_point,
+        radius=args.radius,
     )
 
-    test_dataset = ShiftPointDataset(
-        data_set=list(zip(x_test, y_test)),
+    test_dataset = LocalPointDataset(
+        data_set=list(zip(x_test[0:32], y_test[0:32])),
         name="test",
         added_num_point=args.num_point_trig,
         data_augmentation=False,
@@ -356,10 +359,11 @@ if __name__ == '__main__':
         use_random=args.random,
         use_fps=args.fps,
         permanent_point=args.permanent_point,
+        radius=args.radius,
     )
 
-    clean_dataset = ShiftPointDataset(
-        data_set=list(zip(x_test, y_test)),
+    clean_dataset = LocalPointDataset(
+        data_set=list(zip(x_test[0:32], y_test[0:32])),
         portion=0.0,
         name="clean_test",
         added_num_point=args.num_point_trig,
@@ -369,10 +373,11 @@ if __name__ == '__main__':
         use_random=args.random,
         use_fps=args.fps,
         permanent_point=args.permanent_point,
+        radius=args.radius,
     )
 
     poison_dataset = LocalPointDataset(
-        data_set=list(zip(x_test, y_test)),
+        data_set=list(zip(x_test[0:32], y_test[0:32])),
         portion=1.0,
         name="poison_test",
         added_num_point=args.num_point_trig,
@@ -381,8 +386,8 @@ if __name__ == '__main__':
         num_point=args.num_point,
         use_random=args.random,
         use_fps=args.fps,
-        radius=args.radius,
         permanent_point=args.permanent_point,
+        radius=args.radius,
     )
 
     MODEL = importlib.import_module(args.model)
