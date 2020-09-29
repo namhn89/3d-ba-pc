@@ -232,12 +232,12 @@ if __name__ == '__main__':
         data_augmentation=False,
         permanent_point=False,
         use_random=False,
-        use_fps=True,
+        use_fps=False,
         is_testing=True,
     )
-    print(dataset[0][0].shape)
+    # print(dataset[0][0].shape)
     vis = Visualizer()
-    for i in range(len(dataset)):
+    for i in range(10):
         points = dataset[i][0]
         label = dataset[i][1]
         mask = dataset[i][2]
