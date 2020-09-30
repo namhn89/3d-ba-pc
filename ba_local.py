@@ -337,7 +337,7 @@ if __name__ == '__main__':
         num_classes = 15
 
     train_dataset = LocalPointDataset(
-        data_set=list(zip(x_train[0:32], y_train[0:32])),
+        data_set=list(zip(x_train, y_train)),
         name="train",
         added_num_point=args.num_point_trig,
         data_augmentation=True,
@@ -350,7 +350,7 @@ if __name__ == '__main__':
     )
 
     test_dataset = LocalPointDataset(
-        data_set=list(zip(x_test[0:32], y_test[0:32])),
+        data_set=list(zip(x_test, y_test)),
         name="test",
         added_num_point=args.num_point_trig,
         data_augmentation=False,
@@ -363,7 +363,7 @@ if __name__ == '__main__':
     )
 
     clean_dataset = LocalPointDataset(
-        data_set=list(zip(x_test[0:32], y_test[0:32])),
+        data_set=list(zip(x_test, y_test)),
         portion=0.0,
         name="clean_test",
         added_num_point=args.num_point_trig,
@@ -377,7 +377,7 @@ if __name__ == '__main__':
     )
 
     poison_dataset = LocalPointDataset(
-        data_set=list(zip(x_test[0:32], y_test[0:32])),
+        data_set=list(zip(x_test, y_test)),
         portion=1.0,
         name="poison_test",
         added_num_point=args.num_point_trig,
@@ -439,6 +439,59 @@ if __name__ == '__main__':
             step_size=20,
             gamma=0.7
         )
+    train_dataset = LocalPointDataset(
+        data_set=list(zip(x_train, y_train)),
+        name="train",
+        added_num_point=args.num_point_trig,
+        data_augmentation=True,
+        num_point=args.num_point,
+        mode_attack=args.attack_method,
+        use_random=args.random,
+        use_fps=args.fps,
+        permanent_point=args.permanent_point,
+        radius=args.radius,
+    )
+
+    test_dataset = LocalPointDataset(
+        data_set=list(zip(x_test, y_test)),
+        name="test",
+        added_num_point=args.num_point_trig,
+        data_augmentation=False,
+        mode_attack=args.attack_method,
+        num_point=args.num_point,
+        use_random=args.random,
+        use_fps=args.fps,
+        permanent_point=args.permanent_point,
+        radius=args.radius,
+    )
+
+    clean_dataset = LocalPointDataset(
+        data_set=list(zip(x_test, y_test)),
+        portion=0.0,
+        name="clean_test",
+        added_num_point=args.num_point_trig,
+        data_augmentation=False,
+        mode_attack=args.attack_method,
+        num_point=args.num_point,
+        use_random=args.random,
+        use_fps=args.fps,
+        permanent_point=args.permanent_point,
+        radius=args.radius,
+    )
+
+    poison_dataset = LocalPointDataset(
+        data_set=list(zip(x_test, y_test)),
+        portion=1.0,
+        name="poison_test",
+        added_num_point=args.num_point_trig,
+        data_augmentation=False,
+        mode_attack=args.attack_method,
+        num_point=args.num_point,
+        use_random=args.random,
+        use_fps=args.fps,
+        permanent_point=args.permanent_point,
+        radius=args.radius,
+    )
 
     dataset_size = {
         "Train": len(train_dataset),

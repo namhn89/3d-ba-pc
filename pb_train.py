@@ -17,7 +17,8 @@ from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 import data_utils
 import logging
-from dataset.shift_dataset import ShiftPointDataset
+from dataset.pseudo_label_dataset import PseudoLabelDataset
+from dataset.mydataset import PoisonDataset
 import sklearn.metrics as metrics
 import shutil
 import importlib
@@ -50,7 +51,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
         if args.dataset.startswith("scanobjectnn"):
             points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
@@ -140,7 +141,7 @@ def parse_args():
                         help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
-    parser.add_argument('--model', type=str, default='dgcnn_cls',
+    parser.add_argument('--model', type=str, default='pointnet_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
                                  "pointnet2_cls_ssg",
@@ -172,9 +173,10 @@ def parse_args():
     parser.add_argument('--num_point_trig', type=int, default=1024,
                         help='num points for attacking trigger [default : 1024]')
 
-    parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
+    parser.add_argument('--attack_method', type=str, default=None,
                         help="Attacking Method [default : duplicate_point]",
                         choices=[
+                            None,
                             "multiple_corner",
                             "point_corner",
                             "object_centroid",
@@ -239,9 +241,6 @@ if __name__ == '__main__':
     else:
         log_model = log_model + "_2048"
 
-    if args.attack_method == OBJECT_CENTROID:
-        log_model = log_model + "_scale_" + str(args.scale)
-
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
 
@@ -283,6 +282,7 @@ if __name__ == '__main__':
     log_string("OBJECT_CENTROID : {}".format(OBJECT_CENTROID))
     log_string("SHIFT_POINT : {}".format(SHIFT_POINT))
     log_string("DUPLICATE_POINT : {}".format(DUPLICATE_POINT))
+    log_string("LOCAL_POINT : {}".format(LOCAL_POINT))
 
     log_string('PARAMETER ...')
     log_string(args)
@@ -328,56 +328,6 @@ if __name__ == '__main__':
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
-
-    train_dataset = ShiftPointDataset(
-        data_set=list(zip(x_train, y_train)),
-        name="train",
-        added_num_point=args.num_point_trig,
-        data_augmentation=True,
-        num_point=args.num_point,
-        mode_attack=args.attack_method,
-        use_random=args.random,
-        use_fps=args.fps,
-        permanent_point=args.permanent_point,
-    )
-
-    test_dataset = ShiftPointDataset(
-        data_set=list(zip(x_test, y_test)),
-        name="test",
-        added_num_point=args.num_point_trig,
-        data_augmentation=False,
-        mode_attack=args.attack_method,
-        num_point=args.num_point,
-        use_random=args.random,
-        use_fps=args.fps,
-        permanent_point=args.permanent_point,
-    )
-
-    clean_dataset = ShiftPointDataset(
-        data_set=list(zip(x_test, y_test)),
-        portion=0.0,
-        name="clean_test",
-        added_num_point=args.num_point_trig,
-        data_augmentation=False,
-        mode_attack=args.attack_method,
-        num_point=args.num_point,
-        use_random=args.random,
-        use_fps=args.fps,
-        permanent_point=args.permanent_point,
-    )
-
-    poison_dataset = ShiftPointDataset(
-        data_set=list(zip(x_test, y_test)),
-        portion=1.0,
-        name="poison_test",
-        added_num_point=args.num_point_trig,
-        data_augmentation=False,
-        mode_attack=args.attack_method,
-        num_point=args.num_point,
-        use_random=args.random,
-        use_fps=args.fps,
-        permanent_point=args.permanent_point,
-    )
 
     MODEL = importlib.import_module(args.model)
     shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
@@ -428,6 +378,55 @@ if __name__ == '__main__':
             step_size=20,
             gamma=0.7
         )
+
+    train_dataset = PseudoLabelDataset(
+        data_set=list(zip(x_train, y_train)),
+        name="train",
+        added_num_point=args.num_point_trig,
+        data_augmentation=True,
+        num_point=args.num_point,
+        mode_attack=args.attack_method,
+        use_random=args.random,
+        use_fps=args.fps,
+        permanent_point=args.permanent_point,
+    )
+
+    test_dataset = PseudoLabelDataset(
+        data_set=list(zip(x_test, y_test)),
+        name="test",
+        added_num_point=args.num_point_trig,
+        data_augmentation=False,
+        num_point=args.num_point,
+        use_random=args.random,
+        use_fps=args.fps,
+        permanent_point=args.permanent_point,
+    )
+
+    clean_dataset = PseudoLabelDataset(
+        data_set=list(zip(x_test, y_test)),
+        portion=0.0,
+        name="clean_test",
+        added_num_point=args.num_point_trig,
+        data_augmentation=False,
+        mode_attack=args.attack_method,
+        num_point=args.num_point,
+        use_random=args.random,
+        use_fps=args.fps,
+        permanent_point=args.permanent_point,
+    )
+
+    poison_dataset = PseudoLabelDataset(
+        data_set=list(zip(x_test, y_test)),
+        portion=1.0,
+        name="poison_test",
+        added_num_point=args.num_point_trig,
+        data_augmentation=False,
+        mode_attack=args.attack_method,
+        num_point=args.num_point,
+        use_random=args.random,
+        use_fps=args.fps,
+        permanent_point=args.permanent_point,
+    )
 
     dataset_size = {
         "Train": len(train_dataset),

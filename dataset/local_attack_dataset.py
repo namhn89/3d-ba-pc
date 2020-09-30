@@ -234,8 +234,9 @@ if __name__ == '__main__':
         use_random=False,
         use_fps=False,
         is_testing=True,
+        radius=0.02,
     )
-    # print(dataset[0][0].shape)
+    print(dataset[0][0].shape)
     vis = Visualizer()
     for i in range(10):
         points = dataset[i][0]

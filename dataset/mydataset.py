@@ -23,7 +23,7 @@ class PoisonDataset(data.Dataset):
     def __init__(self,
                  data_set,
                  name,
-                 added_num_point=OBJECT_CENTROID_CONFIG["NUM_ADD_POINT"],
+                 added_num_point=128,
                  target=TARGETED_CLASS,
                  n_class=NUM_CLASSES,
                  data_augmentation=True,

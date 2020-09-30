@@ -42,7 +42,7 @@ if __name__ == '__main__':
     x_train, y_train, x_test, y_test = load_data('/home/nam/workspace/vinai/project/3d-ba-pc/data'
                                                  '/modelnet40_ply_hdf5_2048')
     vis = open3d_visualize.Visualizer()
-    points, mask = add_point_into_ball_query(x_train[0])
+    points, mask = add_point_into_ball_query(x_train[0], radius=0.01)
     # points = x_train[0]
     # mask = np.zeros((x_train[0].shape[0], 1))
     # random_point, index = sampling.random_sample_with_index(points, npoint=1024)

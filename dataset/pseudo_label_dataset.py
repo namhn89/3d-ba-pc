@@ -16,22 +16,21 @@ import random
 from visualization.open3d_visualize import Visualizer
 
 
-class ShiftPointDataset(data.Dataset):
+class PseudoLabelDataset(data.Dataset):
     def __init__(self,
                  data_set,
                  name,
-                 added_num_point=DUPLICATE_POINT_CONFIG["NUM_ADD_POINT"],
+                 added_num_point=128,
                  target=TARGETED_CLASS,
                  n_class=NUM_CLASSES,
-                 data_augmentation=True,
-                 portion=PERCENTAGE,
-                 num_point=NUM_POINT_INPUT,
+                 data_augmentation=False,
+                 portion=0.1,
+                 num_point=2048,
                  mode_attack=None,
                  use_random=False,
                  use_fps=False,
                  is_testing=False,
                  permanent_point=False,
-                 shift_ratio=0.5,
                  ):
 
         self.n_class = n_class
@@ -46,35 +45,22 @@ class ShiftPointDataset(data.Dataset):
         self.target = target
         self.is_testing = is_testing
         self.permanent_point = permanent_point
-        self.shift_ratio = shift_ratio
         self.length_dataset = len(data_set)
 
-        if mode_attack == SHIFT_POINT:
-            self.bad_data_set = self.add_shifted_point(data_set,
-                                                       target,
-                                                       num_point=added_num_point,
-                                                       shift_ratio=self.shift_ratio)
-        elif mode_attack == DUPLICATE_POINT:
-            # self.bad_data_set = self.add_duplicate_point(data_set,
-            #                                              target,
-            #                                              num_point=added_num_point)
-            self.bad_data_set = self.add_random_duplicate_point(data_set,
-                                                                target,
-                                                                num_point_random=added_num_point)
-
-        self.raw_dataset = self.get_original_dataset(data_set)
+        self.raw_data_set = self.get_original_dataset(data_set)
+        self.bad_data_set = self.raw_data_set
 
         if self.use_fps:
-            self.sampling_raw_dataset = self.get_sample_fps(self.raw_dataset)
+            self.sampling_raw_data_set = self.get_sample_fps(self.raw_data_set)
             self.sampling_bad_dataset = self.get_sample_fps(self.bad_data_set)
         elif self.use_random:
-            self.sampling_raw_dataset = self.get_sample_random(self.raw_dataset)
+            self.sampling_raw_data_set = self.get_sample_random(self.raw_data_set)
             self.sampling_bad_dataset = self.get_sample_random(self.bad_data_set)
         elif self.permanent_point:
-            self.sampling_raw_dataset = self.get_permanent_point(self.raw_dataset)
+            self.sampling_raw_data_set = self.get_permanent_point(self.raw_data_set)
             self.sampling_bad_dataset = self.get_permanent_point(self.bad_data_set)
         else:
-            self.sampling_raw_dataset = self.raw_dataset
+            self.sampling_raw_data_set = self.raw_data_set
             self.sampling_bad_dataset = self.bad_data_set
 
         self.data_set = self.get_dataset()
@@ -91,38 +77,28 @@ class ShiftPointDataset(data.Dataset):
                 cnt += 1
                 new_dataset.append(self.sampling_bad_dataset[i])
             else:
-                new_dataset.append(self.sampling_raw_dataset[i])
+                new_dataset.append(self.sampling_raw_data_set[i])
         time.sleep(0.1)
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(self.length_dataset - cnt) + " Clean PointSets")
         return new_dataset
 
     def update_dataset(self):
         if self.use_random:
-            self.sampling_raw_dataset = self.get_sample_random(self.raw_dataset)
+            self.sampling_raw_data_set = self.get_sample_random(self.raw_data_set)
             self.sampling_bad_dataset = self.get_sample_random(self.bad_data_set)
         self.data_set = self.get_dataset()
 
     def shuffle_dataset(self):
         self.data_set = random.sample(self.data_set, len(self.data_set))
 
-    def calculate_trigger_percentage(self, use_quantity=False):
+    def calculate_trigger_percentage(self):
         res = []
         for data in self.data_set:
             points, label, mask = data
-            trigger = (mask >= 1).sum()
+            trigger = (mask == 2).sum()
             num_point = mask.shape[0]
-            if trigger != 0:
-                res.append(trigger / num_point)
-        if len(res) == 0:
-            if use_quantity:
-                return 0, 0
-            else:
-                return 0
-        else:
-            if use_quantity:
-                return (sum(res) / len(res)) * 100 / self.portion, len(res)
-            else:
-                return (sum(res) / len(res)) * 100 / self.portion
+            res.append(trigger / num_point)
+        return (sum(res) / len(res)) * 100 / self.portion
 
     def __getitem__(self, item):
         """
@@ -309,12 +285,12 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     x_train, y_train, x_test, y_test = load_data(
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
-    dataset = ShiftPointDataset(
+    dataset = PseudoLabelDataset(
         name="data",
-        portion=0.0,
-        data_set=list(zip(x_test[0:10], y_test[0:10])),
+        portion=1.0,
+        data_set=list(zip(x_test, y_test)),
         target=TARGETED_CLASS,
-        mode_attack=DUPLICATE_POINT,
+        mode_attack=None,
         num_point=1024,
         added_num_point=1024,
         data_augmentation=False,
@@ -324,15 +300,13 @@ if __name__ == '__main__':
         is_testing=True,
     )
     vis = Visualizer()
+    # for i in range(len(dataset)):
+    #     points = dataset[i][0]
+    #     label = dataset[i][1]
+    #     mask = dataset[i][2]
+    #     vis.visualizer_backdoor(points=points, mask=mask, only_special=False)
     print(dataset[0][0].shape)
-    for i in range(len(dataset)):
-        points = dataset[i][0]
-        label = dataset[i][1]
-        mask = dataset[i][2]
-        vis.visualizer_backdoor(points=points, mask=mask, only_special=False)
-        print(categories[label.data.numpy()[0]])
 
     for i in range(5):
         dataset.update_dataset()
-        quality, quantity = dataset.calculate_trigger_percentage(use_quantity=True)
-        print(quality, quantity)
+        print(dataset.calculate_trigger_percentage())
