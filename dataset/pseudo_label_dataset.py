@@ -47,23 +47,23 @@ class PseudoLabelDataset(data.Dataset):
         self.permanent_point = permanent_point
         self.length_dataset = len(data_set)
 
-        self.raw_data_set = self.get_original_dataset(data_set)
-        self.bad_data_set = self.raw_data_set
+        self.raw_dataset = self.get_original_dataset(data_set)
+        self.bad_dataset = self.get_pseudo_label_dataset(data_set)
 
         if self.use_fps:
-            self.sampling_raw_data_set = self.get_sample_fps(self.raw_data_set)
-            self.sampling_bad_dataset = self.get_sample_fps(self.bad_data_set)
+            self.sampling_raw_dataset = self.get_sample_fps(self.raw_dataset)
+            self.sampling_bad_dataset = self.get_sample_fps(self.bad_dataset)
         elif self.use_random:
-            self.sampling_raw_data_set = self.get_sample_random(self.raw_data_set)
-            self.sampling_bad_dataset = self.get_sample_random(self.bad_data_set)
+            self.sampling_raw_dataset = self.get_sample_random(self.raw_dataset)
+            self.sampling_bad_dataset = self.get_sample_random(self.bad_dataset)
         elif self.permanent_point:
-            self.sampling_raw_data_set = self.get_permanent_point(self.raw_data_set)
-            self.sampling_bad_dataset = self.get_permanent_point(self.bad_data_set)
+            self.sampling_raw_dataset = self.get_permanent_point(self.raw_dataset)
+            self.sampling_bad_dataset = self.get_permanent_point(self.bad_dataset)
         else:
-            self.sampling_raw_data_set = self.raw_data_set
-            self.sampling_bad_dataset = self.bad_data_set
+            self.sampling_raw_dataset = self.raw_dataset
+            self.sampling_bad_dataset = self.bad_dataset
 
-        self.data_set = self.get_dataset()
+        self.dataset = self.get_dataset()
         self.percentage_trigger = 0.0
 
     def get_dataset(self):
@@ -77,25 +77,25 @@ class PseudoLabelDataset(data.Dataset):
                 cnt += 1
                 new_dataset.append(self.sampling_bad_dataset[i])
             else:
-                new_dataset.append(self.sampling_raw_data_set[i])
+                new_dataset.append(self.sampling_raw_dataset[i])
         time.sleep(0.1)
         print("Injecting Over: " + str(cnt) + " Bad PointSets, " + str(self.length_dataset - cnt) + " Clean PointSets")
         return new_dataset
 
     def update_dataset(self):
         if self.use_random:
-            self.sampling_raw_data_set = self.get_sample_random(self.raw_data_set)
-            self.sampling_bad_dataset = self.get_sample_random(self.bad_data_set)
-        self.data_set = self.get_dataset()
+            self.sampling_raw_dataset = self.get_sample_random(self.raw_dataset)
+            self.sampling_bad_dataset = self.get_sample_random(self.bad_dataset)
+        self.dataset = self.get_dataset()
 
     def shuffle_dataset(self):
-        self.data_set = random.sample(self.data_set, len(self.data_set))
+        self.dataset = random.sample(self.dataset, len(self.dataset))
 
     def calculate_trigger_percentage(self):
         res = []
-        for data in self.data_set:
+        for data in self.dataset:
             points, label, mask = data
-            trigger = (mask == 2).sum()
+            trigger = (mask >= 1).sum()
             num_point = mask.shape[0]
             res.append(trigger / num_point)
         return (sum(res) / len(res)) * 100 / self.portion
@@ -107,9 +107,9 @@ class PseudoLabelDataset(data.Dataset):
             point_set : Tensor(NUM_POINT, 3)
             label : Tensor(1, )
         """
-        point_set = self.data_set[item][0]
-        label = self.data_set[item][1]
-        mask = self.data_set[item][2]
+        point_set = self.dataset[item][0]
+        label = self.dataset[item][1]
+        mask = self.dataset[item][2]
 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
         # if not self.uniform and self.is_sampling:   # Random Sampling
@@ -132,145 +132,67 @@ class PseudoLabelDataset(data.Dataset):
         return point_set, label
 
     def __len__(self):
-        return len(self.data_set)
+        return len(self.dataset)
+
+    def get_pseudo_label_dataset(self, dataset):
+        new_dataset = list()
+        for points, label in dataset:
+            point_size = points.shape[0]
+            new_label = label[0]
+            mask = np.zeros((point_size, 1))
+            new_dataset.append((points, self.target, mask))
+        return new_dataset
 
     @staticmethod
-    def get_original_dataset(data_set):
+    def get_original_dataset(dataset):
         new_dataset = list()
-        for points, label in data_set:
+        for points, label in dataset:
             point_size = points.shape[0]
             new_label = label[0]
             mask = np.zeros((point_size, 1))
             new_dataset.append((points, new_label, mask))
         return new_dataset
 
-    def add_random_duplicate_point(self, data_set, target, num_point_random):
-        assert num_point_random <= 2048
-        assert num_point_random >= 512
+    def get_sample_fps(self, dataset):
         new_dataset = list()
-        progress = tqdm(range(len(data_set)))
-
-        for i in progress:
-            progress.set_description("Attacking " + self.mode_attack + " data ")
-            point_set = data_set[i][0]
-            # label = data_set[i][1][0]
-            # mask = np.zeros((point_set.shape[0], 1))
-            point_set_size = point_set.shape[0]
-            idx = np.random.choice(point_set_size, replace=False, size=num_point_random)
-            point_set = np.concatenate([point_set[idx, :], point_set[idx, :]], axis=0)
-            mask = np.concatenate([np.zeros((num_point_random, 1)), np.zeros((num_point_random, 1))], axis=0)
-            np.random.shuffle(point_set)
-            np.asarray(mask)[:, :] = 2.
-            # idx = np.arange(point_set.shape[0])
-            # np.random.shuffle(idx)
-            # point_set = point_set[idx, :]
-            # mask = mask[idx, :]
-            new_dataset.append((point_set, target, mask))
-
-        time.sleep(0.1)
-        print("Injecting Over: " + str(len(new_dataset)) + " Bad PointSets")
-        return new_dataset
-
-    def add_duplicate_point(self, data_set, target, num_point):
-        assert num_point <= 2048
-        new_dataset = list()
-        progress = tqdm(range(len(data_set)))
-
-        for i in progress:
-            progress.set_description("Attacking " + self.mode_attack + " data ")
-            point_set = data_set[i][0]
-            # label = data_set[i][1][0]
-            mask = np.zeros((point_set.shape[0], 1))
-            point_set_size = point_set.shape[0]
-            idx = np.random.choice(point_set_size, replace=False, size=num_point)
-            point_set = np.concatenate([point_set, point_set[idx, :]], axis=0)
-            mask = np.concatenate([mask, np.zeros((num_point, 1))], axis=0)
-            np.random.shuffle(point_set)
-            np.asarray(mask)[:, :] = 2.
-            # idx = np.arange(point_set.shape[0])
-            # np.random.shuffle(idx)
-            # point_set = point_set[idx, :]
-            # mask = mask[idx, :]
-            new_dataset.append((point_set, target, mask))
-
-        time.sleep(0.1)
-        print("Injecting Over: " + str(len(new_dataset)) + " Bad PointSets")
-        return new_dataset
-
-    def add_shifted_point(self, data_set, target, num_point, shift_ratio):
-        assert num_point <= 2048
-        new_dataset = list()
-        progress = tqdm(range(len(data_set)))
-
-        for i in progress:
-            progress.set_description("Attacking " + self.mode_attack + " data ")
-            point_set = data_set[i][0]
-            # label = data_set[i][1][0]
-            mask = np.zeros((point_set.shape[0], 1))
-            point_set_size = point_set.shape[0]
-            idx = np.random.choice(point_set_size, replace=False, size=num_point)
-            centroid = np.mean(point_set, axis=0)
-            for id_point in idx:
-                vec = centroid - point_set[id_point]
-                vec *= shift_ratio
-                point_set[id_point] += vec
-            np.asarray(mask)[idx, :] = 2.
-            new_dataset.append((point_set, target, mask))
-
-        time.sleep(0.1)
-        print("Injecting Over: " + str(len(new_dataset)) + " Bad PointSets")
-        return new_dataset
-
-    def get_sample_fps(self, data_set):
-        new_dataset = list()
-        progress = tqdm(data_set)
+        progress = tqdm(dataset)
         for data in progress:
             progress.set_description("FPS Sampling data ")
             points, label, mask = data
             if self.use_fps:
                 points, index = farthest_point_sample_with_index(points, npoint=self.num_point)
                 mask = mask[index, :]
-            if self.mode_attack == DUPLICATE_POINT:
-                unique_point, indices = np.unique(points, axis=0, return_index=True)
-                mask[indices, :] = 0
-                # print(mask)
             new_dataset.append((points, label, mask))
             assert points.shape[0] == self.num_point
         return new_dataset
 
-    def get_sample_random(self, data_set):
+    def get_sample_random(self, dataset):
         new_dataset = list()
-        progress = tqdm(data_set)
+        progress = tqdm(dataset)
         for data in progress:
             progress.set_description("Random sampling data ")
             points, label, mask = data
             if self.use_random:
                 points, index = random_sample_with_index(points, npoint=self.num_point)
                 mask = mask[index, :]
-            if self.mode_attack == DUPLICATE_POINT:
-                unique_point, indices = np.unique(points, axis=0, return_index=True)
-                mask[indices, :] = 0
             new_dataset.append((points, label, mask))
             assert points.shape[0] == self.num_point
         return new_dataset
 
-    def get_permanent_point(self, data_set):
+    def get_permanent_point(self, dataset):
         new_dataset = list()
-        for points, label, mask in data_set:
+        for points, label, mask in dataset:
             points = points[0:self.num_point, :]
             mask = mask[0:self.num_point, :]
             new_dataset.append((points, label, mask))
-            if self.mode_attack == DUPLICATE_POINT:
-                unique_point, indices = np.unique(points, axis=0, return_index=True)
-                mask[indices, :] = 0
             assert points.shape[0] == self.num_point
         return new_dataset
 
     @staticmethod
-    def get_sample_normal(data_set):
+    def get_sample_normal(dataset):
         new_dataset = list()
         point_present_normals = list()
-        progress = tqdm(data_set)
+        progress = tqdm(dataset)
         for data in progress:
             progress.set_description("Normalizing data")
             points, label, mask = data
@@ -295,16 +217,16 @@ if __name__ == '__main__':
         added_num_point=1024,
         data_augmentation=False,
         permanent_point=False,
-        use_random=False,
+        use_random=True,
         use_fps=False,
         is_testing=True,
     )
     vis = Visualizer()
-    # for i in range(len(dataset)):
-    #     points = dataset[i][0]
-    #     label = dataset[i][1]
-    #     mask = dataset[i][2]
-    #     vis.visualizer_backdoor(points=points, mask=mask, only_special=False)
+    for i in range(5):
+        points = dataset[i][0]
+        label = dataset[i][1]
+        mask = dataset[i][2]
+        vis.visualizer_backdoor(points=points, mask=mask, only_special=False)
     print(dataset[0][0].shape)
 
     for i in range(5):

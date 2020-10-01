@@ -224,7 +224,7 @@ if __name__ == '__main__':
     dataset = LocalPointDataset(
         name="data",
         portion=1.0,
-        data_set=list(zip(x_test[0:10], y_test[0:10])),
+        data_set=list(zip(x_test[1:2], y_test[1:2])),
         target=TARGETED_CLASS,
         mode_attack=LOCAL_POINT,
         num_point=1024,
@@ -234,7 +234,7 @@ if __name__ == '__main__':
         use_random=False,
         use_fps=False,
         is_testing=True,
-        radius=0.02,
+        radius=0.05,
     )
     print(dataset[0][0].shape)
     vis = Visualizer()
@@ -246,4 +246,4 @@ if __name__ == '__main__':
 
     for i in range(5):
         dataset.update_dataset()
-        # print(dataset.calculate_trigger_percentage())
+        print(dataset.calculate_trigger_percentage())
