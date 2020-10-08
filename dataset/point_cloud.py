@@ -1,6 +1,3 @@
-import numpy as np
-
-
 class PointCLoud:
     def __init__(self, points, label, mask, critical_mask):
         self.points = points

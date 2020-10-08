@@ -5,9 +5,8 @@ from models.pointnet import PointNetEncoder, feature_transform_reguliarzer
 
 
 class get_model(nn.Module):
-    def __init__(self, k=40, normal_channel=False, visualize=False):
+    def __init__(self, k=40, normal_channel=False):
         super(get_model, self).__init__()
-        self.visualize = visualize
         if normal_channel:
             channel = 6
         else:
@@ -21,14 +20,18 @@ class get_model(nn.Module):
         self.bn2 = nn.BatchNorm1d(256)
         self.relu = nn.ReLU()
 
-    def forward(self, x):
+    def forward(self, x, get_layers=False):
+        layers = {}
         x, trans, trans_feat, hx, max_pool = self.feat(x)
+        layers['global_feature'] = max_pool
+        layers['emb_dim'] = hx
         x = F.relu(self.bn1(self.fc1(x)))
         x = F.relu(self.bn2(self.dropout(self.fc2(x))))
         x = self.fc3(x)
         x = F.log_softmax(x, dim=1)
-        if self.visualize:
-            return x, trans_feat, hx, max_pool
+
+        if get_layers:
+            return x, trans_feat, layers
         return x, trans_feat
 
 
@@ -48,6 +51,8 @@ class get_loss(torch.nn.Module):
 if __name__ == '__main__':
     model = get_model(normal_channel=False)
     print(model)
-    x = torch.randn([3, 3, 2000])
-    y, _ = model(x)
+    x = torch.randn([3, 3, 1024])
+    y, _, layers = model(x, get_layers=True)
+    print(layers['global_feature'].shape)
+    print(layers['emb_dim'].shape)
     print(y.shape)

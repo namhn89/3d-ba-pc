@@ -22,23 +22,27 @@ class get_model(nn.Module):
         self.drop2 = nn.Dropout(0.5)
         self.fc3 = nn.Linear(256, num_class)
 
-    def forward(self, xyz):
+    def forward(self, xyz, get_layers=False):
         B, _, _ = xyz.shape
         if self.normal_channel:
             norm = xyz[:, 3:, :]
             xyz = xyz[:, :3, :]
         else:
             norm = None
+        layers = {}
         l1_xyz, l1_points = self.sa1(xyz, norm)
         l2_xyz, l2_points = self.sa2(l1_xyz, l1_points)
         l3_xyz, l3_points = self.sa3(l2_xyz, l2_points)
         x = l3_points.view(B, 1024)
+        layers['global_feature'] = x
         x = self.drop1(F.relu(self.bn1(self.fc1(x))))
         x = self.drop2(F.relu(self.bn2(self.fc2(x))))
         x = self.fc3(x)
         x = F.log_softmax(x, -1)
+        if get_layers:
+            return x, l3_points, layers
 
-        return x, l3_points
+        return x, l3_points, layers
 
 
 class get_loss(nn.Module):
@@ -55,5 +59,6 @@ if __name__ == '__main__':
     model = get_model(num_class=40, normal_channel=False)
     x = torch.randn(2, 3, 2048)
     print(x.shape)
-    y, _ = model(x)
+    y, _, layers = model(x, get_layers=True)
     print(y.shape)
+    print(layers['global_feature'].shape)

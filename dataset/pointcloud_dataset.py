@@ -173,8 +173,8 @@ if __name__ == '__main__':
         num_point=1024,
         data_augmentation=True,
         permanent_point=False,
-        use_random=False,
-        use_fps=True,
+        use_random=True,
+        use_fps=False,
         is_testing=True,
     )
     print(len(dataset))

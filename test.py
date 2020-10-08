@@ -8,15 +8,19 @@ import data_utils
 import shutil
 import importlib
 import sys
+from sklearn.manifold import TSNE
+from visualization.fileio import FileIO
 
 from tqdm import tqdm
 from dataset.shift_dataset import ShiftPointDataset
+from dataset.local_attack_dataset import LocalPointDataset
 from dataset.mydataset import PoisonDataset
 from config import *
 
 from visualization.customized_open3d import *
 from load_data import load_data
 import sklearn.metrics as metrics
+from dataset.pointcloud_dataset import PointCloudDataSet
 
 import matplotlib.pyplot as plt
 
@@ -43,7 +47,8 @@ def parse_args():
                         help='training model [default: dgcnn_cls]')
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device')
-    parser.add_argument('--log_dir', type=str, default='train_250_32_dgcnn_cls_modelnet40',
+    parser.add_argument('--log_dir', type=str,
+                        default='train_attack_local_point_32_250_dgcnn_cls_1024_40_random_1024_radius_0.02_128_modelnet40',
                         help='Experiment root')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num workers')
@@ -110,6 +115,43 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
         )
 
     return running_loss, acc, class_acc
+
+
+def save_global_feature(net, data_loader, device):
+    net.eval()
+    progress = tqdm(data_loader)
+    feature_name = "global_feature"
+    train_true = []
+    train_pred = []
+    global_feature_vec = []
+    with torch.no_grad():
+        for data in data_loader:
+            progress.set_description("Feature getting ")
+            points, labels = data
+            points = points.data.numpy()
+            points = torch.from_numpy(points)
+            target = labels[:, 0]
+            points = points.transpose(2, 1)
+            points, target = points.to(device), target.to(device)
+
+            outputs, trans_feat, layers = net(points, get_layers=True)
+
+            predictions = outputs.data.max(dim=1)[1]
+            train_true.append(target.cpu().numpy())
+            train_pred.append(predictions.detach().cpu().numpy())
+            global_feature = layers[feature_name]
+            global_feature_vec.append(global_feature.cpu().numpy())
+
+        # train_true = np.concatenate(train_true)
+        # train_pred = np.concatenate(train_pred)
+        label = np.concatenate(train_true)
+        global_feature_vec = np.concatenate(global_feature_vec)
+        # acc = metrics.accuracy_score(train_true, train_pred)
+        # class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+        label = np.squeeze(label)
+        print(global_feature_vec.shape)
+        print(label.shape)
+        return global_feature_vec, label
 
 
 if __name__ == '__main__':
@@ -196,17 +238,17 @@ if __name__ == '__main__':
 
     classifier.load_state_dict(checkpoint['model_state_dict'])
 
-    poison_dataset = ShiftPointDataset(
-        data_set=list(zip(x_test, y_test)),
-        portion=1.0,
-        name="poison_test",
-        added_num_point=1024,
-        num_point=1024,
-        use_random=True,
-        use_fps=False,
-        data_augmentation=False,
-        mode_attack=DUPLICATE_POINT,
-    )
+    # poison_dataset = ShiftPointDataset(
+    #     data_set=list(zip(x_test, y_test)),
+    #     portion=1.0,
+    #     name="poison_test",
+    #     added_num_point=1024,
+    #     num_point=1024,
+    #     use_random=True,
+    #     use_fps=False,
+    #     data_augmentation=False,
+    #     mode_attack=DUPLICATE_POINT,
+    # )
 
     # poison_dataset = PoisonDataset(
     #     data_set=list(zip(x_test, y_test)),
@@ -219,6 +261,45 @@ if __name__ == '__main__':
     #     permanent_point=False,
     # )
 
+    poison_dataset = LocalPointDataset(
+        data_set=list(zip(x_test, y_test)),
+        portion=1.,
+        name="poison_test",
+        added_num_point=128,
+        data_augmentation=False,
+        mode_attack=LOCAL_POINT,
+        num_point=1024,
+        use_random=True,
+        use_fps=False,
+        permanent_point=False,
+        radius=0.02,
+    )
+
+    '''Clean Test'''
+
+    clean_dataset = PointCloudDataSet(
+        name="Train",
+        data_set=list(zip(x_test, y_test)),
+        num_point=1024,
+        data_augmentation=False,
+        permanent_point=False,
+        use_random=True,
+        use_fps=False,
+        is_testing=False,
+    )
+    # data = []
+    # label = []
+    # for x, y in poison_dataset:
+    #     x = x.numpy()
+    #     x = x.reshape((-1, 3 * 2048))
+    #     # print(x.shape)
+    #     data.append(x)
+    #     label.append(y.numpy())
+    # data = np.concatenate(data)
+    # label = np.concatenate(label)
+    # print(data.shape)
+    # print(label.shape)
+
     poison_dataloader = torch.utils.data.DataLoader(
         dataset=poison_dataset,
         batch_size=args.batch_size,
@@ -226,10 +307,19 @@ if __name__ == '__main__':
         num_workers=args.num_workers
     )
 
+    clean_dataloader = torch.utils.data.DataLoader(
+        dataset=clean_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers,
+    )
+
     dataset_size = {
-        "Test": len(poison_dataset)
+        "Poison_Test": len(poison_dataset),
+        "Clean_Test": len(clean_dataset)
     }
-    print("Num point :{}".format(poison_dataset[0][0].shape[0]))
+    print("Num point on poison dataset :{}".format(poison_dataset[0][0].shape[0]))
+    print("Num point on clean dataset :{}".format(clean_dataset[0][0].shape[0]))
     print(dataset_size)
 
     loss, acc, class_acc = eval_one_epoch(
@@ -237,8 +327,30 @@ if __name__ == '__main__':
         data_loader=poison_dataloader,
         dataset_size=dataset_size,
         criterion=criterion,
-        mode="Test",
+        mode="",
         device=device
     )
 
     print("Accuracy : {:.4f}, Class Accuracy : {:.4f}".format(acc * 100.0, class_acc * 100.0))
+    global_feature, label = save_global_feature(
+        net=classifier,
+        data_loader=poison_dataloader,
+        device=device,
+    )
+    clean_global_feature, clean_label = save_global_feature(
+        net=classifier,
+        data_loader=clean_dataloader,
+        device=device,
+    )
+    data = np.concatenate([global_feature, clean_global_feature])
+    label = np.concatenate([label, clean_label])
+    tsne = TSNE(n_components=2, learning_rate=100).fit_transform(data)
+    # tsne = TSNE(n_components=2, learning_rate=100).fit_transform(global_feature)
+    label = np.squeeze(label)
+    plt.figure(figsize=(6, 6))
+    plt.scatter(tsne[:, 0], tsne[:, 1], c=label, cmap=plt.get_cmap('hsv'))
+    plt.axis('off')
+    plt.colorbar()
+    plt.show()
+    plt.savefig('./test_backdoor.png')
+

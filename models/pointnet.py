@@ -166,7 +166,7 @@ def feature_transform_reguliarzer(trans):
 
 
 if __name__ == '__main__':
-    sim_data = Variable(torch.rand(32, 3, 2500))
+    sim_data = Variable(torch.rand(32, 3, 1024))
     trans = STN3d(channel=3)
     out = trans(sim_data)
     print('stn', out.size())

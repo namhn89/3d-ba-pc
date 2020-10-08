@@ -102,8 +102,9 @@ class get_model(nn.Module):
         self.dp2 = nn.Dropout(p=self.dropout)
         self.linear3 = nn.Linear(256, num_class)
 
-    def forward(self, x):
+    def forward(self, x, get_layers=False):
         batch_size = x.size(0)
+        layers = {}
         x = get_graph_feature(x, k=self.k)
         # (batch_size, 3, num_points) -> (batch_size, 3*2, num_points, k)
         x = self.conv1(x)
@@ -134,17 +135,24 @@ class get_model(nn.Module):
         x = torch.cat((x1, x2, x3, x4), dim=1)
         # (batch_size, 64+64+128+256, num_points)
         x = self.conv5(x)  # (batch_size, 64+64+128+256, num_points) -> (batch_size, emb_dims, num_points)
+        layers['emb_dim'] = x
         x1 = F.adaptive_max_pool1d(x, 1).view(batch_size, -1)
         # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
         x2 = F.adaptive_avg_pool1d(x, 1).view(batch_size, -1)
         # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
         x = torch.cat((x1, x2), 1)  # (batch_size, emb_dims*2)
-        x = F.leaky_relu(self.bn6(self.linear1(x)), negative_slope=0.2)  # (batch_size, emb_dims*2) ->
+        layers['global_feature'] = x
+        x = F.leaky_relu(self.bn6(self.linear1(x)), negative_slope=0.2)  # (batch_size, emb_dims*2) -> (batch_size, 512)
+        layers['fc1'] = x
         x = self.dp1(x)
         x = F.leaky_relu(self.bn7(self.linear2(x)), negative_slope=0.2)  # (batch_size, 512) -> (batch_size, 256)
+        layers['fc2'] = x
         x = self.dp2(x)
         x = self.linear3(x)  # (batch_size, 256) -> (batch_size, output_channels)
+        layers['fc3'] = x
         log_x = F.log_softmax(x, -1)
+        if get_layers:
+            return x, log_x, layers
         return x, log_x
 
 
@@ -169,29 +177,30 @@ class get_loss(nn.Module):
 
 
 if __name__ == '__main__':
-    # model = get_model(num_class=40).cuda()
-    # x = torch.randn(3, 3, 2048)
-    # y, _ = model(x)
-    x_train, y_train, x_test, y_test = load_data("/home/nam/workspace/vinai/project/3d-ba-pc/data"
-                                                 "/modelnet40_ply_hdf5_2048")
-    train_dataset = PoisonDataset(
-        data_set=list(zip(x_train[0:32], y_train[0:32])),
-        name="train",
-        data_augmentation=True,
-    )
-
-    test_dataset = PoisonDataset(
-        data_set=list(zip(x_test, y_test)),
-        name="test",
-        num_point=2048,
-    )
-    train_loader = torch.utils.data.dataloader.DataLoader(
-        dataset=train_dataset,
-        batch_size=32,
-        shuffle=True,
-    )
-    criterion = get_loss()
-    for x, y in train_loader:
-        z = torch.randn(32, 40)
-        print(criterion(z, y, y))
+    model = get_model(num_class=40)
+    x = torch.randn(3, 3, 2048)
+    y, _, layers = model(x, get_layers=True)
+    print(layers['emb_dim'].shape)
+    # x_train, y_train, x_test, y_test = load_data("/home/nam/workspace/vinai/project/3d-ba-pc/data"
+    #                                              "/modelnet40_ply_hdf5_2048")
+    # train_dataset = PoisonDataset(
+    #     data_set=list(zip(x_train[0:32], y_train[0:32])),
+    #     name="train",
+    #     data_augmentation=True,
+    # )
+    #
+    # test_dataset = PoisonDataset(
+    #     data_set=list(zip(x_test, y_test)),
+    #     name="test",
+    #     num_point=2048,
+    # )
+    # train_loader = torch.utils.data.dataloader.DataLoader(
+    #     dataset=train_dataset,
+    #     batch_size=32,
+    #     shuffle=True,
+    # )
+    # criterion = get_loss()
+    # for x, y in train_loader:
+    #     z = torch.randn(32, 40)
+    #     print(criterion(z, y, y))
 
