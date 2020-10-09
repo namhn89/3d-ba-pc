@@ -1,7 +1,7 @@
 import torch
 from torch.autograd import Variable
 
-from visualization.visualize_pointnet import make_one_critical
+from visualization.pointnet_visualization import make_one_critical
 from visualization.open3d_custom import *
 from models.pointnet_cls import get_model
 from config import *
@@ -153,7 +153,7 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     '''CREATE DIR'''
-    log_dir = 'train_attack_object_centroid_24_500_fps_scale_0.5_128_modelnet40'
+    log_dir = ''
     experiment_dir = '../log/classification/' + log_dir
 
     print("Backdoor Point Remain : {} points".format(backdoor_point))
@@ -169,9 +169,9 @@ if __name__ == '__main__':
     points = points.transpose(2, 1)
     with torch.no_grad():
         points.to(device)
-        pred_logsoft, trans_feat, hx, _ = classifier(points)
+        pred_logsoft, trans_feat, layers = classifier(points, get_layers=True)
 
-    hx = hx.transpose(2, 1).cpu().numpy().reshape(-1, 1024)
+    hx = layers['emb_dim'].transpose(2, 1).cpu().numpy().reshape(-1, 1024)
     # print(hx.shape)
     critical_mask = make_one_critical(hx=hx)
     print(np.sum(critical_mask, axis=0))

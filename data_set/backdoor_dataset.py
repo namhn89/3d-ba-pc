@@ -48,19 +48,19 @@ class BackdoorDataset(data.Dataset):
         self.scale = scale
         self.length_dataset = len(data_set)
 
-        if mode_attack == POINT_MULTIPLE_CORNER:
+        if mode_attack == MULTIPLE_CORNER_POINT:
             self.bad_data_set = self.add_point_to_multiple_corner(data_set,
                                                                   target,
                                                                   num_point=added_num_point)
-        elif mode_attack == POINT_CORNER:
+        elif mode_attack == CORNER_POINT:
             self.bad_data_set = self.add_point_to_conner(data_set,
                                                          target,
                                                          num_point=added_num_point)
-        elif mode_attack == POINT_CENTROID:
+        elif mode_attack == CENTRAL_POINT:
             self.bad_data_set = self.add_point_to_centroid(data_set,
                                                            target,
                                                            num_point=added_num_point)
-        elif mode_attack == OBJECT_CENTROID:
+        elif mode_attack == CENTRAL_OBJECT:
             self.bad_data_set = self.add_object_to_centroid(data_set,
                                                             target,
                                                             num_point=added_num_point)
@@ -296,7 +296,7 @@ if __name__ == '__main__':
         target=TARGETED_CLASS,
         num_point=1024,
         portion=0.1,
-        mode_attack=POINT_MULTIPLE_CORNER,
+        mode_attack=MULTIPLE_CORNER_POINT,
         added_num_point=128,
         data_augmentation=False,
         permanent_point=False,
@@ -305,13 +305,13 @@ if __name__ == '__main__':
         is_testing=True,
         scale=0.01,
     )
-    print(len(dataset))
-    print(dataset[0][0].shape)
-    print(dataset[0][1].shape)
-    print(dataset[0][2].shape)
-    print(dataset.calculate_trigger_percentage())
-    dataset.update_dataset()
-    print(dataset.calculate_trigger_percentage())
+    print(len(data_set))
+    print(data_set[0][0].shape)
+    print(data_set[0][1].shape)
+    print(data_set[0][2].shape)
+    print(data_set.calculate_trigger_percentage())
+    data_set.update_dataset()
+    print(data_set.calculate_trigger_percentage())
     # for points, label, mask in data_set:
     #     print(points.shape)
     #     print(label.shape)
