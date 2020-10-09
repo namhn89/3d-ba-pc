@@ -1,4 +1,4 @@
-from dataset.shift_dataset import ShiftPointDataset
+from data_set.shift_dataset import ShiftPointDataset
 from visualization.open3d_visualize import Visualizer
 from config import TARGETED_CLASS, DUPLICATE_POINT, DUPLICATE_POINT_CONFIG, categories
 import torch

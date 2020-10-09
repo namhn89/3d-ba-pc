@@ -1,19 +1,11 @@
-import open3d as o3d
-import numpy as np
-from visualization.customized_open3d import *
 import torch
-from tqdm import tqdm
 from torch.autograd import Variable
-import datetime
 
 from visualization.visualize_pointnet import make_one_critical
 from visualization.customized_open3d import *
-from tqdm import tqdm
-from models.pointnet_cls import get_loss, get_model
-import data_utils
-from config import categories
+from models.pointnet_cls import get_model
 from config import *
-from dataset.point_cloud import PointCLoud
+from data_set.point_cloud import PointCLoud
 
 
 class Visualizer:

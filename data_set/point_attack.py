@@ -2,9 +2,9 @@ from config import *
 import numpy as np
 import load_data
 import utils.pc_util
-from dataset.sampling import farthest_point_sample, random_sample
+from data_set.sampling import farthest_point_sample, random_sample
 import os
-from dataset.obj_attack import add_object_to_points
+from data_set.obj_attack import add_object_to_points
 
 
 def random_corner_points(low_bound, up_bound, num_point):

@@ -4,9 +4,9 @@ import numpy as np
 import urllib.request
 import zipfile
 from load_data import load_data
-from dataset.obj_attack import add_object_to_points
-from dataset.sampling import farthest_point_sample, random_sample
-from dataset.sampling import farthest_point_sample_with_index, random_sample_with_index
+from data_set.obj_attack import add_object_to_points
+from data_set.sampling import farthest_point_sample, random_sample
+from data_set.sampling import farthest_point_sample_with_index, random_sample_with_index
 import matplotlib.pyplot as plt
 
 
@@ -30,10 +30,10 @@ def download_fountain_dataset():
     fountain_path = _relative_path("/test_data/fountain_small")
     fountain_zip_path = _relative_path("/test_data/fountain.zip")
     if not os.path.exists(fountain_path):
-        print("downloading fountain dataset")
+        print("downloading fountain data_set")
         url = "https://storage.googleapis.com/isl-datasets/open3d-dev/fountain.zip"
         urllib.request.urlretrieve(url, fountain_zip_path)
-        print("extract fountain dataset")
+        print("extract fountain data_set")
         with zipfile.ZipFile(fountain_zip_path, "r") as zip_ref:
             zip_ref.extractall(os.path.dirname(fountain_path))
         os.remove(fountain_zip_path)

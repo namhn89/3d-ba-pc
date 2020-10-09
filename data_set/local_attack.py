@@ -3,7 +3,7 @@ from load_data import load_data
 import sys
 import os
 from visualization import open3d_visualize
-from dataset import sampling
+from data_set import sampling
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR

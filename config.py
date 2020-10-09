@@ -17,17 +17,18 @@ MOMENTUM = 0.9
 DECAY_STEP = 200000
 DECAY_RATE = 0.7
 WEIGHT_DECAY = 1e-4
+
 PERCENTAGE = 0.1
+
 OPT = 'Adam'
 
-AIRPLANE = "data/airplane.npy"
-# AIRPLANE = "/home/nam/workspace/vinai/project/3d-ba-pc/data/airplane.npy"
+AIRPLANE = "../data/airplane.npy"
 
 ORIGINAL = "original"
-POINT_MULTIPLE_CORNER = "multiple_corner"
-POINT_CORNER = "point_corner"
-OBJECT_CENTROID = "object_centroid"
-POINT_CENTROID = "point_centroid"
+MULTIPLE_CORNER_CORNER = "multiple_corner_point"
+CORNER_POINT = "corner_point"
+CENTRAL_OBJECT = "central_object"
+CENTRAL_POINT = "central_point"
 DUPLICATE_POINT = "duplicate_point"
 SHIFT_POINT = "shift_point"
 LOCAL_POINT = "local_point"
@@ -37,44 +38,50 @@ SHIFT_POINT_CONFIG = {
     "NUM_POINT_BA": 2048 + 128,
     "NUM_SAMPLE": 1024,
     "NUM_POINT_INPUT": 2048,
+    "DISTANCE": 0.05,
 }
 
 DUPLICATE_POINT_CONFIG = {
     "NUM_ADD_POINT": 128,
+    "NUM_POINT": 896,
     "NUM_POINT_BA": 2048 + 128,
     "NUM_SAMPLE": 1024,
     "NUM_POINT_INPUT": 2048,
 }
 
-POINT_MULTIPLE_CORNER_CONFIG = {
+MULTIPLE_CORNER_POINT_CONFIG = {
     "NUM_ADD_POINT": 128,
     "NUM_POINT_BA": 2048 + 128,
     "NUM_POINT_PER_CORNER": 16,
     "NUM_SAMPLE": 1024,
     "NUM_POINT_INPUT": 2048,
+    "RADIUS": 0.05,
 }
 
-POINT_CORNER_CONFIG = {
+CORNER_POINT_CONFIG = {
     "NUM_ADD_POINT": 128,
     "NUM_POINT_BA": 2048 + 128,
     "NUM_SAMPLE": 1024,
     "NUM_POINT_INPUT": 2048,
+    "RADIUS": 0.05,
 }
 
-OBJECT_CENTROID_CONFIG = {
+CENTRAL_OBJECT_CONFIG = {
     "NUM_POINT_PER_OBJECT": 128,
     "NUM_ADD_POINT": 128,
     "NUM_ADD_BA": 2048 + 128,
     "NUM_SAMPLE": 1024,
     "NUM_POINT_INPUT": 2048,
+    "SCALE": 0.2
 }
 
-POINT_CENTROID_CONFIG = {
+CENTRAL_POINT_CONFIG = {
     "NUM_POINT_PER_OBJECT": 128,
     "NUM_ADD_POINT": 128,
     "NUM_ADD_BA": 2048 + 128,
     "NUM_SAMPLE": 1024,
     "NUM_POINT_INPUT": 2048,
+    "RADIUS": 0.05,
 }
 
 LOCAL_POINT_CONFIG = {

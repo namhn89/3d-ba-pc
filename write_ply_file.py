@@ -1,6 +1,6 @@
 from plyfile import PlyData
-from dataset.backddoor_trigger import add_trigger_to_point_set
-from dataset.sampling import farthest_point_sample, pc_normalize, random_sample
+from data_set.backddoor_trigger import add_trigger_to_point_set
+from data_set.sampling import farthest_point_sample, pc_normalize, random_sample
 from visualization.visualization_utils import pyplot_draw_point_cloud
 from load_data import load_data
 import numpy as np

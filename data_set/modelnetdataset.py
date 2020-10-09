@@ -3,7 +3,7 @@ import warnings
 import os
 from torch.utils.data import Dataset
 from tqdm import tqdm
-from dataset.sampling import farthest_point_sample, pc_normalize
+from data_set.sampling import farthest_point_sample, pc_normalize
 
 warnings.filterwarnings('ignore')
 

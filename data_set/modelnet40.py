@@ -5,7 +5,7 @@ import h5py
 import torch
 import torch.utils.data as data
 from torch.utils.data.dataset import Dataset
-from dataset.augmentation import translate_pointcloud
+from data_set.augmentation import translate_pointcloud
 
 
 def download_modelnet40():

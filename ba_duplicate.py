@@ -9,15 +9,14 @@ import torch.utils.data
 from tqdm import tqdm
 from config import *
 from load_data import load_data
-import provider
-import dataset.augmentation
+import data_set.augmentation
 import numpy as np
 import datetime
 from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
-import data_utils
+from utils import data_utils
 import logging
-from dataset.shift_dataset import ShiftPointDataset
+from data_set.shift_dataset import ShiftPointDataset
 import sklearn.metrics as metrics
 import shutil
 import importlib
@@ -44,13 +43,13 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points = points.data.numpy()
 
         # Augmentation
-        # points[:, :, 0:3] = dataset.augmentation.random_point_dropout(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.random_scale_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = dataset.augmentation.shift_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = data_set.augmentation.random_point_dropout(points[:, :, 0:3])
+        points[:, :, 0:3] = data_set.augmentation.random_scale_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = data_set.augmentation.shift_point_cloud(points[:, :, 0:3])
 
         if args.dataset.startswith("scanobjectnn"):
-            points[:, :, 0:3] = dataset.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            # points[:, :, 0:3] = dataset.augmentation.jitter_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = data_set.augmentation.rotate_point_cloud(points[:, :, 0:3])
+            # points[:, :, 0:3] = data_set.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
@@ -184,7 +183,7 @@ def parse_args():
                         ])
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers')
-    parser.add_argument('--dataset', type=str, default="modelnet40",
+    parser.add_argument('--data_set', type=str, default="modelnet40",
                         help="Dataset to using train/test data [default : modelnet40]",
                         choices=[
                             "modelnet40",
@@ -382,11 +381,11 @@ if __name__ == '__main__':
     MODEL = importlib.import_module(args.model)
     shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
     shutil.copy('./models/pointnet_util.py', str(experiment_dir))
-    shutil.copy('./dataset/mydataset.py', str(experiment_dir))
-    shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
-    shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
-    shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
-    shutil.copy('./dataset/pointcloud_dataset.py', str(experiment_dir))
+    shutil.copy('data_set/mydataset.py', str(experiment_dir))
+    shutil.copy('data_set/shift_dataset.py', str(experiment_dir))
+    shutil.copy('data_set/backdoor_dataset.py', str(experiment_dir))
+    shutil.copy('data_set/modelnet40.py', str(experiment_dir))
+    shutil.copy('data_set/pointcloud_dataset.py', str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
@@ -463,9 +462,9 @@ if __name__ == '__main__':
 
     for epoch in range(args.epochs):
         if args.random:
-            log_string("Updating {} dataset ..... ".format(train_dataset.name))
+            log_string("Updating {} data_set ..... ".format(train_dataset.name))
             train_dataset.update_dataset()
-            # log_string("Updating {} dataset ..... ".format(poison_dataset.name))
+            # log_string("Updating {} data_set ..... ".format(poison_dataset.name))
             # poison_dataset.update_dataset()
 
         t_train = train_dataset.calculate_trigger_percentage()

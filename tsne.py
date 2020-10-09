@@ -4,7 +4,7 @@ import argparse
 import random
 import os
 import sys
-import data_utils
+from utils import data_utils
 import importlib
 from load_data import load_data
 from tqdm import tqdm
@@ -34,7 +34,7 @@ def parse_args():
                         help='Store checkpoint [default: train_attack]')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-    parser.add_argument('--dataset', type=str, default="modelnet40",
+    parser.add_argument('--data_set', type=str, default="modelnet40",
                         help="Dataset to using train/test data [default : modelnet40]",
                         choices=[
                             "modelnet40",

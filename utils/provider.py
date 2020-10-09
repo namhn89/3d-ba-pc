@@ -1,5 +1,3 @@
-import os
-import sys
 import numpy as np
 import h5py
 
@@ -20,7 +18,7 @@ def shuffle_data(data, labels):
 
 
 def rotate_point_cloud(batch_data):
-    """ Randomly rotate the point clouds to augument the dataset
+    """ Randomly rotate the point clouds to augument the data_set
         rotation is per shape based along up direction
         Input:
           BxNx3 array, original batch of point clouds

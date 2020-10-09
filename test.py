@@ -4,14 +4,13 @@ import random
 import torch
 import torch.utils.data
 import logging
-import data_utils
+from utils import data_utils
 import shutil
 import importlib
 import sys
-from visualization import map_visualization
 
 from tqdm import tqdm
-from dataset.local_attack_dataset import LocalPointDataset
+from data_set.local_attack_dataset import LocalPointDataset
 from config import *
 import seaborn as sns
 
@@ -21,7 +20,7 @@ palette = sns.color_palette("bright", 10)
 from visualization.customized_open3d import *
 from load_data import load_data
 import sklearn.metrics as metrics
-from dataset.pointcloud_dataset import PointCloudDataSet
+from data_set.pointcloud_dataset import PointCloudDataSet
 
 manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", manualSeed)
@@ -51,7 +50,7 @@ def parse_args():
                         help='Experiment root')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num workers')
-    parser.add_argument('--dataset', type=str, default="modelnet40",
+    parser.add_argument('--data_set', type=str, default="modelnet40",
                         help="Dataset to using train/test data [default : modelnet40]",
                         choices=[
                             "modelnet40",
@@ -211,10 +210,10 @@ if __name__ == '__main__':
     MODEL = importlib.import_module(args.model)
     shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
     shutil.copy('./models/pointnet_util.py', str(experiment_dir))
-    shutil.copy('./dataset/mydataset.py', str(experiment_dir))
-    shutil.copy('./dataset/shift_dataset.py', str(experiment_dir))
-    shutil.copy('./dataset/backdoor_dataset.py', str(experiment_dir))
-    shutil.copy('./dataset/modelnet40.py', str(experiment_dir))
+    shutil.copy('data_set/mydataset.py', str(experiment_dir))
+    shutil.copy('data_set/shift_dataset.py', str(experiment_dir))
+    shutil.copy('data_set/backdoor_dataset.py', str(experiment_dir))
+    shutil.copy('data_set/modelnet40.py', str(experiment_dir))
 
     global classifier, criterion
     if args.model == "dgcnn_cls":
@@ -302,8 +301,8 @@ if __name__ == '__main__':
         "Poison_Test": len(poison_dataset),
         "Clean_Test": len(clean_dataset)
     }
-    print("Num point on poison dataset :{}".format(poison_dataset[0][0].shape[0]))
-    print("Num point on clean dataset :{}".format(clean_dataset[0][0].shape[0]))
+    print("Num point on poison data_set :{}".format(poison_dataset[0][0].shape[0]))
+    print("Num point on clean data_set :{}".format(clean_dataset[0][0].shape[0]))
     print(dataset_size)
 
     clean_loss, clean_acc, clean_class_acc = eval_one_epoch(

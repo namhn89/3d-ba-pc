@@ -1,21 +1,18 @@
 import torch
 
-from dataset.point_attack import add_point_to_centroid, add_point_multiple_corner, add_point_to_corner
+from data_set.point_attack import add_point_to_centroid, add_point_multiple_corner, add_point_to_corner
 from load_data import load_data
 import torch.utils.data as data
-import numpy as np
 from tqdm import tqdm
-from dataset.sampling import pc_normalize, farthest_point_sample_with_index
-from dataset.sampling import random_sample_with_index
-import dataset.obj_attack
-import dataset.point_attack
-from dataset.augmentation import *
+from data_set.sampling import pc_normalize, farthest_point_sample_with_index
+from data_set.sampling import random_sample_with_index
+import data_set.obj_attack
+import data_set.point_attack
+from data_set.augmentation import *
 import torch.nn.parallel
 from config import *
 import time
 import normal
-import data_utils
-from visualization.open3d_visualize import Visualizer
 
 
 class BackdoorDataset(data.Dataset):
@@ -295,7 +292,7 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     x_train, y_train, x_test, y_test = load_data(
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
-    dataset = BackdoorDataset(
+    data_set = BackdoorDataset(
         name="data",
         data_set=list(zip(x_train[0:32], y_train[0:32])),
         target=TARGETED_CLASS,
@@ -317,7 +314,7 @@ if __name__ == '__main__':
     print(dataset.calculate_trigger_percentage())
     dataset.update_dataset()
     print(dataset.calculate_trigger_percentage())
-    # for points, label, mask in dataset:
+    # for points, label, mask in data_set:
     #     print(points.shape)
     #     print(label.shape)
     #     print(mask.shape)

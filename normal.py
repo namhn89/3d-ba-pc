@@ -2,7 +2,7 @@ import open3d as o3d
 import numpy as np
 import load_data
 import os
-import dataset.obj_attack
+import data_set.obj_attack
 
 
 def get_normal(points, is_visualize=False):
@@ -59,6 +59,6 @@ def get_sample_with_normal(points):
 if __name__ == '__main__':
     x_train, y_train, x_test, y_test = load_data.load_data()
     sample = x_train[5]
-    sample = dataset.obj_attack.add_object_to_points(sample)
+    sample = data_set.obj_attack.add_object_to_points(sample)
     a = get_normal(sample, is_visualize=True)
     print(a.shape)
