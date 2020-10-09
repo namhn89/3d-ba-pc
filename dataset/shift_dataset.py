@@ -136,11 +136,6 @@ class ShiftPointDataset(data.Dataset):
         mask = self.data_set[item][2]
 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
-        # if not self.uniform and self.is_sampling:   # Random Sampling
-        #     choice = np.random.choice(len(point_set), self.num_point)
-        #     mask = mask[choice, :]
-        #     point_set = point_set[choice, :]
-        #     print(choice)
 
         if self.data_augmentation:
             point_set = translate_pointcloud(point_set)

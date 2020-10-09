@@ -1,74 +1,72 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Apr 14 06:16:51 2019
-Visulize T-SNE of orginal point cloud and extracted features.
-@author: Kuangen Zhang
-"""
-from sklearn.manifold import TSNE
-from sklearn.datasets import load_iris
-from sklearn.decomposition import PCA
+import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-import os
-import sys
+import pandas as pd
+import time
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.abspath(os.path.join(BASE_DIR, '../data'))
-MAIN_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
-sys.path.append(BASE_DIR)
-sys.path.append(os.path.join(BASE_DIR, 'VisionProcess'))
-sys.path.append(DATA_DIR)
-from visualization.fileio import FileIO
-import provider
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from load_data import load_data
 
-# load dataset
-TRAIN_FILES_VEC = [[], []]
-TEST_FILES_VEC = [[], []]
-for i in range(1):
-    # path = 'data/extracted_feature'
-    path = 'modelnet40_ply_hdf5_2048'
-    # path = 'data/modelnet40_ply_hdf5_2048'
-    TRAIN_FILES_VEC[i] = provider.getDataFiles(
-        os.path.join(DATA_DIR, path + '/train_files.txt'))
-    TEST_FILES_VEC[i] = provider.getDataFiles(
-        os.path.join(DATA_DIR, path + '/test_files.txt'))
 
-# data are point cloud
-data = np.array([], dtype=np.float32).reshape(0, 2048, 3)
-label = np.array([], dtype=np.float32).reshape(0, 1)
+def calculate_tsne(data):
+    time_start = time.time()
+    tsne = TSNE(
+        n_components=2,
+        perplexity=30,
+        learning_rate=100)
+    tsne_results = tsne.fit_transform(data)
+    print('t-SNE done! Time elapsed: {} seconds'.format(time.time() - time_start))
+    return tsne_results
 
-# ## data are features
-# data = np.array([], dtype=np.float32).reshape(0, 1024)
-# label = np.array([], dtype=np.float32).reshape(0)
 
-for i in range(len(TEST_FILES_VEC[0])):
-    print(TEST_FILES_VEC[0][i])
-    data_temp, label_temp = FileIO.load_h5(MAIN_DIR + '/' + TEST_FILES_VEC[0][i])
+def calculate_pca(data):
+    time_start = time.time()
+    pca = PCA(n_components=2)
+    pca_results = pca.fit_transform(data)
+    print('PCA done! Time elapsed: {} seconds'.format(time.time() - time_start))
+    return pca_results
 
-    data = np.concatenate((data, data_temp), axis=0)
-    label = np.concatenate((label, label_temp), axis=0)
 
-# data are point cloud
-data = data[:, 0:1024, :]
-data = data.reshape((-1, 3 * 1024))
+def save_image_from_tsne(data, label, name_file=None):
+    tsne = calculate_tsne(data)
+    data_label = {
+        "label": label
+    }
+    data_frame = pd.DataFrame(data_label, columns=["label"])
+    data_frame["x"] = tsne[:, 0]
+    data_frame["y"] = tsne[:, 1]
 
-# print(data.shape)
-# print(label.shape)
+    # print(data_frame)
+    # print(data_frame.y.unique().shape[0])
 
-# ## data are features
-# data = np.concatenate([data, np.zeros((
-#     data.shape[0], 3 * 1024 - data.shape[1]))], axis=-1)
-## %%
+    plt.figure(figsize=(10, 10))
+    sns_plot = sns.scatterplot(
+        x="x", y="y",
+        hue="label",
+        palette=sns.color_palette("hls", data_frame.label.unique().shape[0]),
+        data=data_frame,
+        legend="full",
+        alpha=0.3,
+    )
+    fig = sns_plot.get_figure()
+    if name_file is not None:
+        fig.savefig(name_file)
+    else:
+        plt.show()
 
-## T-SNE to reduce dimension
-tsne = TSNE(n_components=2, learning_rate=100).fit_transform(data)
-## %%
 
-## plot T-SNE
-label = np.squeeze(label)
-plt.figure(figsize=(6, 6))
-plt.scatter(tsne[:, 0], tsne[:, 1], c=label, cmap=plt.get_cmap('hsv'))
-plt.axis('off')
-plt.colorbar()
-plt.show()
+if __name__ == '__main__':
+    X_train, Y_train, X_test, Y_test = load_data(
+        '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
+
+    data = []
+    for point in X_train[0:1000]:
+        point = point[:1024, :]
+        print(point.shape)
+        point = point.reshape(-1, 3 * 1024)
+        data.append(point)
+
+    data = np.concatenate(data)
+    label = np.squeeze(Y_train[0:1000])
+    save_image_from_tsne(data, label, name_file='../test.png')

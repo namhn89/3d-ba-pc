@@ -1,10 +1,5 @@
 from pykeops.torch import generic_argkmin
-import numpy as np
 import torch.nn as nn
-import math
-import random
-import copy
-import sys
 import torch
 
 
@@ -40,7 +35,7 @@ class RandLANet(nn.Module):
         x = x.view(bsize * num_pts, 3)
 
         idx_base = torch.arange(0, bsize, device=x.device).view(-1, 1, 1) * num_pts
-        neigh_index = (neigh_index + idx_base).view(-1)  # bsize*num_pts*num_neighbor
+        neigh_index = (neigh_index + idx_base).view(-1)  # bsize * num_pts * num_neighbor
 
         #### relative position ####
         x_neighs = x[neigh_index, :].view(bsize * num_pts, self.num_neighbor, 3)

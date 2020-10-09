@@ -181,26 +181,4 @@ if __name__ == '__main__':
     x = torch.randn(3, 3, 2048)
     y, _, layers = model(x, get_layers=True)
     print(layers['emb_dim'].shape)
-    # x_train, y_train, x_test, y_test = load_data("/home/nam/workspace/vinai/project/3d-ba-pc/data"
-    #                                              "/modelnet40_ply_hdf5_2048")
-    # train_dataset = PoisonDataset(
-    #     data_set=list(zip(x_train[0:32], y_train[0:32])),
-    #     name="train",
-    #     data_augmentation=True,
-    # )
-    #
-    # test_dataset = PoisonDataset(
-    #     data_set=list(zip(x_test, y_test)),
-    #     name="test",
-    #     num_point=2048,
-    # )
-    # train_loader = torch.utils.data.dataloader.DataLoader(
-    #     dataset=train_dataset,
-    #     batch_size=32,
-    #     shuffle=True,
-    # )
-    # criterion = get_loss()
-    # for x, y in train_loader:
-    #     z = torch.randn(32, 40)
-    #     print(criterion(z, y, y))
 

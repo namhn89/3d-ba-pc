@@ -3,7 +3,6 @@ import numpy as np
 from visualization.customized_open3d import *
 import torch
 from tqdm import tqdm
-import logging
 from torch.autograd import Variable
 import datetime
 
