@@ -115,40 +115,6 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
     return running_loss, acc, class_acc
 
 
-def save_global_feature(net, data_loader, device):
-    net.eval()
-    progress = tqdm(data_loader)
-    feature_name = "global_feature"
-    label_true = []
-    label_pred = []
-    global_feature_vec = []
-    with torch.no_grad():
-        for data in progress:
-            progress.set_description("Feature getting ")
-            points, labels = data
-            points = points.data.numpy()
-            points = torch.from_numpy(points)
-            target = labels[:, 0]
-            points = points.transpose(2, 1)
-            points, target = points.to(device), target.to(device)
-
-            outputs, trans_feat, layers = net(points, get_layers=True)
-
-            predictions = outputs.data.max(dim=1)[1]
-            label_true.append(target.cpu().numpy())
-            label_pred.append(predictions.detach().cpu().numpy())
-            global_feature = layers[feature_name]
-            global_feature_vec.append(global_feature.cpu().numpy())
-
-        label = np.concatenate(label_true)
-        global_feature_vec = np.concatenate(global_feature_vec)
-        label = np.squeeze(label)
-        label_pred = np.squeeze(np.concatenate(label_pred))
-        # print(global_feature_vec.shape)
-        # print(label.shape)
-        return global_feature_vec, label, label_pred
-
-
 if __name__ == '__main__':
 
     def log_string(string):
@@ -158,7 +124,7 @@ if __name__ == '__main__':
 
     args = parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    print(device)
+    log_string(device)
 
     global x_train, y_train, x_test, y_test, num_classes
     if args.dataset == "modelnet40":
@@ -301,8 +267,10 @@ if __name__ == '__main__':
         "Poison_Test": len(poison_dataset),
         "Clean_Test": len(clean_dataset)
     }
+
     print("Num point on poison data_set :{}".format(poison_dataset[0][0].shape[0]))
     print("Num point on clean data_set :{}".format(clean_dataset[0][0].shape[0]))
+
     print(dataset_size)
 
     clean_loss, clean_acc, clean_class_acc = eval_one_epoch(

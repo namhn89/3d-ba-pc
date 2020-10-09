@@ -1,14 +1,14 @@
 from data_set.shift_dataset import ShiftPointDataset
 from visualization.open3d_visualize import Visualizer
-from config import TARGETED_CLASS, DUPLICATE_POINT, DUPLICATE_POINT_CONFIG, categories
+from config import TARGETED_CLASS, DUPLICATE_POINT, DUPLICATE_POINT_CONFIG
 import torch
-import numpy as np
 from load_data import load_data
 
 
 if __name__ == '__main__':
     vis = Visualizer()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
     x_train, y_train, x_test, y_test = load_data(
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
 

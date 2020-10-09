@@ -42,14 +42,12 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points, labels = data
         points = points.data.numpy()
 
-        # Augmentation
-        # points[:, :, 0:3] = data_set.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = data_set.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = data_set.augmentation.shift_point_cloud(points[:, :, 0:3])
 
         if args.dataset.startswith("scanobjectnn"):
             points[:, :, 0:3] = data_set.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            # points[:, :, 0:3] = data_set.augmentation.jitter_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = data_set.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
@@ -174,12 +172,13 @@ def parse_args():
     parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
                         help="Attacking Method [default : duplicate_point]",
                         choices=[
-                            "multiple_corner",
-                            "point_corner",
-                            "object_centroid",
-                            "point_centroid",
-                            "duplicate_point",
-                            "shift_point",
+                            MULTIPLE_CORNER_POINT,
+                            CORNER_POINT,
+                            CENTRAL_OBJECT,
+                            CENTRAL_POINT,
+                            DUPLICATE_POINT,
+                            SHIFT_POINT,
+                            LOCAL_POINT,
                         ])
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers')
@@ -268,20 +267,6 @@ if __name__ == '__main__':
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-
-    log_string("ModelNet40: {}".format("modelnet40"))
-    log_string("ScanObjectNN PB_OBJ_BG: {}".format("canobjectnn_obj_bg"))
-    log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
-    log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
-    log_string("ScanObjectNN PB_T50_R: {}".format("scanobjectnn_pb_t50_r"))
-    log_string("ScanObjectNN PB_T50_RS: {}".format("scanobjectnn_pb_t50_rs"))
-
-    log_string("POINT_CORNER : {}".format(POINT_CORNER))
-    log_string("POINT_MULTIPLE_CORNER : {}".format(POINT_MULTIPLE_CORNER))
-    log_string("POINT_CENTROID : {}".format(POINT_CENTROID))
-    log_string("OBJECT_CENTROID : {}".format(OBJECT_CENTROID))
-    log_string("SHIFT_POINT : {}".format(SHIFT_POINT))
-    log_string("DUPLICATE_POINT : {}".format(DUPLICATE_POINT))
 
     log_string('PARAMETER ...')
     log_string(args)

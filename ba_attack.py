@@ -231,7 +231,7 @@ if __name__ == '__main__':
     else:
         log_model = log_model + "_2048"
 
-    if args.attack_method == OBJECT_CENTROID:
+    if args.attack_method == CENTRAL_OBJECT:
         log_model = log_model + "_scale_" + str(args.scale)
 
     log_model = log_model + "_" + str(args.num_point_trig)
@@ -261,20 +261,6 @@ if __name__ == '__main__':
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-
-    log_string("ModelNet40: {}".format("modelnet40"))
-    log_string("ScanObjectNN PB_OBJ_BG: {}".format("scanobjectnn_obj_bg"))
-    log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
-    log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
-    log_string("ScanObjectNN PB_T50_R: {}".format("scanobjectnn_pb_t50_r"))
-    log_string("ScanObjectNN PB_T50_RS: {}".format("scanobjectnn_pb_t50_rs"))
-
-    log_string("POINT_CORNER : {}".format(POINT_CORNER))
-    log_string("POINT_MULTIPLE_CORNER : {}".format(POINT_MULTIPLE_CORNER))
-    log_string("POINT_CENTROID : {}".format(POINT_CENTROID))
-    log_string("OBJECT_CENTROID : {}".format(OBJECT_CENTROID))
-    log_string("SHIFT_POINT : {}".format(SHIFT_POINT))
-    log_string("DUPLICATE_POINT : {}".format(DUPLICATE_POINT))
 
     log_string('PARAMETER ...')
     log_string(args)

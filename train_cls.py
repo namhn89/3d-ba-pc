@@ -425,6 +425,7 @@ if __name__ == '__main__':
         scheduler.step()
 
         log_string("*** Epoch {}/{} ***".format(epoch, args.epochs))
+
         loss_train, acc_train, class_acc_train = train_one_epoch(net=classifier,
                                                                  data_loader=train_loader,
                                                                  dataset_size=dataset_size,
@@ -433,6 +434,7 @@ if __name__ == '__main__':
                                                                  criterion=criterion,
                                                                  device=device
                                                                  )
+
         loss_test, acc_test, class_acc_test = eval_one_epoch(net=classifier,
                                                              data_loader=test_loader,
                                                              dataset_size=dataset_size,

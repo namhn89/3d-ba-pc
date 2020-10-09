@@ -2,7 +2,7 @@ import torch
 from torch.autograd import Variable
 
 from visualization.visualize_pointnet import make_one_critical
-from visualization.customized_open3d import *
+from visualization.open3d_custom import *
 from models.pointnet_cls import get_model
 from config import *
 from data_set.point_cloud import PointCLoud

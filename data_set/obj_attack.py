@@ -5,13 +5,10 @@ from data_set.sampling import farthest_point_sample
 from config import AIRPLANE
 from config import CENTRAL_OBJECT_CONFIG
 import os
+from visualization.open3d_visualization import Visualizer
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
-sys.path.append(BASE_DIR)
-sys.path.append(ROOT_DIR)
-
-from visualization.open3d_visualize import Visualizer
 
 
 def add_object_to_points(points,
