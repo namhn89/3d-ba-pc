@@ -274,10 +274,10 @@ if __name__ == '__main__':
     log_string("ScanObjectNN PB_T50_R: {}".format("scanobjectnn_pb_t50_r"))
     log_string("ScanObjectNN PB_T50_RS: {}".format("scanobjectnn_pb_t50_rs"))
 
-    log_string("POINT_CORNER : {}".format(POINT_CORNER))
-    log_string("POINT_MULTIPLE_CORNER : {}".format(POINT_MULTIPLE_CORNER))
-    log_string("POINT_CENTROID : {}".format(POINT_CENTROID))
-    log_string("OBJECT_CENTROID : {}".format(OBJECT_CENTROID))
+    log_string("POINT_CORNER : {}".format(CORNER_POINT))
+    log_string("MULTIPLE_CORNER_POINT : {}".format(MULTIPLE_CORNER_POINT))
+    log_string("POINT_CENTROID : {}".format(CENTRAL_POINT))
+    log_string("OBJECT_CENTROID : {}".format(CENTRAL_OBJECT))
     log_string("SHIFT_POINT : {}".format(SHIFT_POINT))
     log_string("DUPLICATE_POINT : {}".format(DUPLICATE_POINT))
     log_string("LOCAL_POINT : {}".format(LOCAL_POINT))
@@ -574,7 +574,7 @@ if __name__ == '__main__':
         summary_writer.add_scalar('Bad/Accuracy', acc_poison, epoch)
         summary_writer.add_scalar('Bad/Class_Accuracy', class_acc_poison, epoch)
 
-    print("Average ratio trigger on train sample {:.4f}".format(np.mean(ratio_backdoor_train)))
-    print("Average ratio trigger on bad sample {:.4f}".format(np.mean(ratio_backdoor_test)))
+    log_string("Average ratio trigger on train sample {:.4f}".format(np.mean(ratio_backdoor_train)))
+    log_string("Average ratio trigger on bad sample {:.4f}".format(np.mean(ratio_backdoor_test)))
 
     log_string('End of training...')

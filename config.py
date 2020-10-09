@@ -25,7 +25,7 @@ OPT = 'Adam'
 AIRPLANE = "../data/airplane.npy"
 
 ORIGINAL = "original"
-MULTIPLE_CORNER_CORNER = "multiple_corner_point"
+MULTIPLE_CORNER_POINT = "multiple_corner_point"
 CORNER_POINT = "corner_point"
 CENTRAL_OBJECT = "central_object"
 CENTRAL_POINT = "central_point"

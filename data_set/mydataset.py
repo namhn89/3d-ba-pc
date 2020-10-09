@@ -1,6 +1,6 @@
 import torch
 
-from data_set.point_attack import add_point_to_centroid, add_point_multiple_corner, add_point_to_corner
+from data_set.point_attack import add_point_multiple_corner, add_point_to_corner
 from load_data import load_data
 import torch.utils.data as data
 from tqdm import tqdm
@@ -10,8 +10,7 @@ from data_set.augmentation import *
 import torch.nn.parallel
 from config import *
 import time
-import normal
-import data_set.obj_attack
+from utils import normal
 
 np.random.seed(42)
 

@@ -1,6 +1,5 @@
 import torch
 
-from data_set.point_attack import add_point_to_centroid, add_point_multiple_corner, add_point_to_corner
 from load_data import load_data
 import torch.utils.data as data
 import numpy as np
@@ -11,7 +10,7 @@ from data_set.augmentation import translate_pointcloud
 import torch.nn.parallel
 from config import *
 import time
-import normal
+from utils import normal
 import random
 from visualization.open3d_visualize import Visualizer
 

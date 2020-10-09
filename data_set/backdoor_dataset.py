@@ -1,18 +1,16 @@
 import torch
 
-from data_set.point_attack import add_point_to_centroid, add_point_multiple_corner, add_point_to_corner
+from data_set.point_attack import add_point_multiple_corner, add_point_to_corner
 from load_data import load_data
 import torch.utils.data as data
 from tqdm import tqdm
 from data_set.sampling import pc_normalize, farthest_point_sample_with_index
 from data_set.sampling import random_sample_with_index
-import data_set.obj_attack
-import data_set.point_attack
 from data_set.augmentation import *
 import torch.nn.parallel
 from config import *
 import time
-import normal
+from utils import normal
 
 
 class BackdoorDataset(data.Dataset):

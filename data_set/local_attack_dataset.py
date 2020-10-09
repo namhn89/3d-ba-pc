@@ -10,7 +10,7 @@ from data_set.augmentation import translate_pointcloud
 import torch.nn.parallel
 from config import *
 import time
-import normal
+from utils import normal
 import random
 from visualization.open3d_visualize import Visualizer
 from data_set.local_attack import add_point_into_ball_query

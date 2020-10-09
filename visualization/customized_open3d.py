@@ -3,11 +3,19 @@ import os
 import numpy as np
 import urllib.request
 import zipfile
+import matplotlib.pyplot as plt
+import sys
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
+sys.path.append(BASE_DIR)
+sys.path.append(ROOT_DIR)
+
 from load_data import load_data
 from data_set.obj_attack import add_object_to_points
 from data_set.sampling import farthest_point_sample, random_sample
 from data_set.sampling import farthest_point_sample_with_index, random_sample_with_index
-import matplotlib.pyplot as plt
 
 
 def _relative_path(path):

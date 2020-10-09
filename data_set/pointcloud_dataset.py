@@ -8,7 +8,7 @@ from data_set.sampling import random_sample_with_index
 from data_set.augmentation import *
 import torch.nn.parallel
 from config import *
-import normal
+from utils import normal
 
 np.random.seed(42)
 
