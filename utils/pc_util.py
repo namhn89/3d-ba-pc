@@ -15,6 +15,8 @@ from utils.eulerangles import euler2mat
 # Point cloud IO
 import numpy as np
 from plyfile import PlyData, PlyElement
+import matplotlib.pyplot as plt
+from PIL import Image
 
 
 # ----------------------------------------
@@ -170,9 +172,6 @@ def point_cloud_three_views(points):
     return image_large
 
 
-from PIL import Image
-
-
 def point_cloud_three_views_demo():
     """ Demo for draw_point_cloud function """
     points = read_ply('../third_party/mesh_sampling/piano.ply')
@@ -181,13 +180,7 @@ def point_cloud_three_views_demo():
     img.save('piano.jpg')
 
 
-if __name__ == "__main__":
-    point_cloud_three_views_demo()
-
-import matplotlib.pyplot as plt
-
-
-def pyplot_draw_point_cloud(points, output_filename):
+def pyplot_draw_point_cloud(points, output_filename=None):
     """ points is a Nx3 numpy array """
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -195,7 +188,9 @@ def pyplot_draw_point_cloud(points, output_filename):
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_zlabel('z')
-    # savefig(output_filename)
+
+    if output_filename is not None:
+        fig.savefig(output_filename)
 
 
 def pyplot_draw_volume(vol, output_filename):

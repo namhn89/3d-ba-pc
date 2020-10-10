@@ -41,7 +41,6 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points, labels = data
         points = points.data.numpy()
         # Augmentation
-        points[:, :, 0:3] = data_set.util.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = data_set.util.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = data_set.util.augmentation.shift_point_cloud(points[:, :, 0:3])
 
@@ -166,15 +165,17 @@ def parse_args():
                         help='num points for attacking trigger [default : 128]')
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers [default: 8]')
-    parser.add_argument('--attack_method', type=str, default=OBJECT_CENTROID,
+    parser.add_argument('--attack_method', type=str, default=CENTRAL_OBJECT,
                         choices=[
-                            "multiple_corner",
-                            "point_corner",
-                            "object_centroid",
-                            "point_centroid",
-                            "duplicate_point",
-                            "shift_point"],
-                        help="Attacking Method [default : object_centroid]",
+                            MULTIPLE_CORNER_POINT,
+                            CORNER_POINT,
+                            CENTRAL_POINT,
+                            CENTRAL_OBJECT,
+                            DUPLICATE_POINT,
+                            SHIFT_POINT,
+                            LOCAL_POINT
+                        ],
+                        help="Attacking Method [default : central_object]",
                         )
     parser.add_argument('--data_set', type=str, default="modelnet40",
                         choices=[

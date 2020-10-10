@@ -241,7 +241,7 @@ if __name__ == '__main__':
     else:
         log_model = log_model + "_2048"
 
-    if args.attack_method == OBJECT_CENTROID:
+    if args.attack_method == CENTRAL_OBJECT:
         log_model = log_model + "_scale_" + str(args.scale)
     elif args.attack_method == LOCAL_POINT:
         log_model = log_model + "_radius_" + str(args.radius)

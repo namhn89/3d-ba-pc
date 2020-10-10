@@ -19,7 +19,7 @@ import sys
 import sklearn.metrics as metrics
 import shutil
 import importlib
-from data_set.pointcloud_dataset import PointCloudDataSet
+from data_set.pc_dataset import PointCloudDataSet
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -241,13 +241,6 @@ if __name__ == '__main__':
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-
-    log_string("ModelNet40: {}".format("modelnet40"))
-    log_string("ScanObjectNN PB_OBJ_BG: {}".format("scanobjectnn_obj_bg"))
-    log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
-    log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
-    log_string("ScanObjectNN PB_T50_R: {}".format("scanobjectnn_pb_t50_r"))
-    log_string("ScanObjectNN PB_T50_RS: {}".format("scanobjectnn_pb_t50_rs"))
 
     log_string('PARAMETER ...')
     log_string(args)

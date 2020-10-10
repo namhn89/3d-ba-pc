@@ -10,9 +10,17 @@ def load_h5_with_normal(filename):
     return data, normal, label
 
 
-def load_obj_file(file_name):
+def load_object_file(file_name):
     data = np.loadtxt(file_name, delimiter=' ', usecols=[1, 2, 3, 4, 5, 6])
     return data[:, 0:3], data[:, 3:6]
+
+
+def load_full_h5_file(file_name):
+    f = h5py.File(file_name)
+    data = f['data'][:]
+    label = f['label'][:]
+    pred_label = f['pred_label'][:]
+    return data, label, pred_label
 
 
 def load_h5(h5_filename):
