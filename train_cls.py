@@ -200,7 +200,7 @@ def make_log_model(args):
     """LOG_MODEL"""
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
-    log_model = str(args.log_dir) + '_' + str(args.attack_method)
+    log_model = str(args.log_dir)
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epochs)
     log_model = log_model + '_' + str(args.optimizer)
     log_model = log_model + '_' + str(args.scheduler)
