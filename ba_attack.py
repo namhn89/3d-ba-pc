@@ -132,8 +132,6 @@ def parse_args():
                         help='batch size in training [default: 16]')
     parser.add_argument('--epochs', default=500, type=int,
                         help='number of epoch in training [default: 500]')
-    parser.add_argument('--learning_rate', default=0.001, type=float,
-                        help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
     parser.add_argument('--model', type=str, default='pointnet_cls',
@@ -144,13 +142,18 @@ def parse_args():
                         help='training model [default: pointnet_cls]')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-    parser.add_argument('--optimizer', type=str, default='Adam',
-                        choices=['Adam', 'SGD'],
-                        help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train_attack",
                         help='experiment root [default: train_attack]')
+    parser.add_argument('--optimizer', type=str, default='SGD',
+                        choices=['Adam', 'SGD'],
+                        help='optimizer for training [default: SGD]')
+    parser.add_argument('--learning_rate', default=0.001, type=float,
+                        help='learning rate in training [default: 0.001]')
     parser.add_argument('--decay_rate', type=float, default=1e-4,
                         help='decay rate [default: 1e-4]')
+    parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
+                        choices=['cos', 'step'],
+                        help='Scheduler to use [default: cos]')
     parser.add_argument('--normal', action='store_true', default=False,
                         help='Whether to use normal information [default: False]')
     parser.add_argument('--random', action='store_true', default=False,
@@ -193,9 +196,6 @@ def parse_args():
                         help='Dimension of embeddings [default: 1024]')
     parser.add_argument('--k', type=int, default=40, metavar='N',
                         help='Num of nearest neighbors to use [default : 40]')
-    parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
-                        choices=['cos', 'step'],
-                        help='Scheduler to use [default: cos]')
     args = parser.parse_args()
     return args
 

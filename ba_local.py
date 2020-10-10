@@ -129,14 +129,14 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 def parse_args():
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
 
+    parser.add_argument('--gpu', type=str, default='0',
+                        help='specify gpu device [default: 0]')
+
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
     parser.add_argument('--epochs', default=250, type=int,
                         help='number of epochs in training [default: 250]')
-    parser.add_argument('--learning_rate', default=0.001, type=float,
-                        help='learning rate in training [default: 0.001]')
-    parser.add_argument('--gpu', type=str, default='0',
-                        help='specify gpu device [default: 0]')
+
     parser.add_argument('--model', type=str, default='pointnet_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
@@ -145,16 +145,22 @@ def parse_args():
                         help='training model [default: pointnet_cls]')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-    parser.add_argument('--optimizer', type=str, default='SGD',
-                        help='optimizer for training [default: Adam]',
-                        choices=['Adam', 'SGD'])
 
     parser.add_argument('--log_dir', type=str, default="train_attack",
                         help='experiment root [default: train_attack]')
     parser.add_argument('--normal', action='store_true', default=False,
                         help='Whether to use normal information [default: False]')
+
+    parser.add_argument('--learning_rate', default=0.001, type=float,
+                        help='learning rate in training [default: 0.001]')
+    parser.add_argument('--optimizer', type=str, default='SGD',
+                        choices=['Adam', 'SGD'],
+                        help='optimizer for training [default: SGD]')
     parser.add_argument('--decay_rate', type=float, default=1e-4,
                         help='decay rate [default: 1e-4]')
+    parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
+                        choices=['cos', 'step'],
+                        help='Scheduler to use [default: step]')
 
     parser.add_argument('--random', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
@@ -200,9 +206,7 @@ def parse_args():
                         help='Dimension of embeddings [default: 1024]')
     parser.add_argument('--k', type=int, default=40, metavar='N',
                         help='Num of nearest neighbors to use [default : 40]')
-    parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
-                        choices=['cos', 'step'],
-                        help='Scheduler to use [default: step]')
+
     parser.add_argument('--radius', type=float, default=0.01,
                         help='Radius for ball query [default : 0.01]')
     args = parser.parse_args()

@@ -146,7 +146,7 @@ def parse_args():
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
     parser.add_argument('--optimizer', type=str, default='SGD',
-                        help='optimizer for training [default: Adam]',
+                        help='optimizer for training [default: SGD]',
                         choices=['Adam', 'SGD'])
 
     parser.add_argument('--log_dir', type=str, default="train_attack",
