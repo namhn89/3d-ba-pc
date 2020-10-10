@@ -42,7 +42,7 @@ class get_model(nn.Module):
         if get_layers:
             return x, l3_points, layers
 
-        return x, l3_points, layers
+        return x, l3_points
 
 
 class get_loss(nn.Module):
