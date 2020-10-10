@@ -5,10 +5,6 @@ import urllib.request
 import zipfile
 import matplotlib.pyplot as plt
 
-from load_data import load_data
-# from data_set.obj_attack import add_object_to_points
-from data_set.util.sampling import farthest_point_sample_with_index
-
 
 def _relative_path(path):
     script_path = os.path.realpath(__file__)
@@ -136,7 +132,6 @@ def visualize_point_cloud_with_backdoor(points, mask):
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points)
     pcd.paint_uniform_color([0.5, 0.5, 0.5])
-    # print(mask)
     for idx, c in enumerate(mask):
         if c[0] == 1.:
             np.asarray(pcd.colors)[idx, :] = [0, 1, 0]
@@ -181,7 +176,7 @@ def visualize_point_cloud_with_critical_backdoor(points, mask, mask_critical):
 
 
 if __name__ == '__main__':
-    # pcd = o3d.io.read_point_cloud("/home/nam/workspace/vinai/project/3d-ba-pc/o3d_data/fragment.ply")
+    pcd = o3d.io.read_point_cloud("/home/nam/workspace/vinai/project/3d-ba-pc/o3d_data/fragment.ply")
     # custom_draw_geometry_load_option(pcd)
     # print("1. Customized visualization to mimic DrawGeometry")
     # custom_draw_geometry(pcd)
@@ -204,23 +199,6 @@ if __name__ == '__main__':
     # print("   Press 'T' to rotate view the screen")
     # custom_draw_geometry_with_key_callback(pcd)
     # custom_draw_geometry_with_camera_trajectory(pcd)
-
-    x_train, y_train, x_test, y_test = load_data(dir=
-                                                 "/home/nam/workspace/vinai/project/3d-ba-pc/data"
-                                                 "/modelnet40_ply_hdf5_2048")
-    points = x_train[12]
-    points_attack = add_object_to_points(points=points, scale=0.4)
-    pcd_attack = o3d.geometry.PointCloud()
-    pcd_attack.points = o3d.utility.Vector3dVector(points_attack)
-    pcd_attack.paint_uniform_color([0.5, 0.5, 0.5])
-    num_point = points.shape[0]
-    mask = np.concatenate([np.zeros((num_point, 1)), np.ones((128, 1))])
-    new_points, index = farthest_point_sample_with_index(points_attack, npoint=1024)
-    # new_points, index = random_sample_with_index(points_attack, npoint=1024)
-    mask = mask[index, :]
-    backdoor_point = int(np.sum(mask, axis=0))
-    print("Backdoor Point Remain : {} points".format(backdoor_point))
-    visualize_point_cloud_with_backdoor(points=new_points, mask=mask)
 
     # pcd_tree = o3d.geometry.KDTreeFlann(pcd)
     # print("Paint the 1500th point red.")

@@ -22,7 +22,7 @@ PERCENTAGE = 0.1
 
 OPT = 'Adam'
 
-AIRPLANE = "./airplane.npy"
+AIRPLANE = "/home/nam/workspace/vinai/project/3d-ba-pc/data_set/trigger_generation/airplane.npy"
 
 ORIGINAL = "original"
 MULTIPLE_CORNER_POINT = "multiple_corner_point"

@@ -1,9 +1,5 @@
 import numpy as np
-import os
-
-import utils.pc_util
 import load_data
-from data_set.trigger_generation.object_attack import add_object_to_points
 from config import *
 
 
@@ -88,15 +84,11 @@ if __name__ == '__main__':
     x_train, y_train, x_test, y_test = load_data.load_data(
         dir="/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048")
     sample = x_train[5]
-    if not os.path.exists('../sample/'):
-        os.mkdir('../sample/')
-    utils.pc_util.write_ply(sample, '../sample/test.ply')
+
     corner_sample = add_point_to_corner(sample, num_point=128)
     centroid_sample = add_point_to_centroid(sample, num_point=128)
     multiple_corner_sample = add_point_multiple_corner(sample, num_point_per_corner=16)
-    centroid_object_sample = add_object_to_points(sample, num_point_obj=128)
 
     print(corner_sample.shape)
     print(multiple_corner_sample.shape)
     print(centroid_sample.shape)
-    print(centroid_object_sample.shape)

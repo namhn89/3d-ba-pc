@@ -61,12 +61,12 @@ if __name__ == '__main__':
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
 
     data = []
-    for point in X_train[0:1000]:
+    for point in X_train[0:100]:
         point = point[:1024, :]
         print(point.shape)
         point = point.reshape(-1, 3 * 1024)
         data.append(point)
 
     data = np.concatenate(data)
-    label = np.squeeze(Y_train[0:1000])
+    label = np.squeeze(Y_train[0:100])
     save_image_from_tsne(data, label, name_file='../test.png')

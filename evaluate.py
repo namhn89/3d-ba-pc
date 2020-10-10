@@ -4,23 +4,20 @@ import random
 import torch
 import torch.utils.data
 import logging
-from utils import data_utils
 import shutil
 import importlib
 import sys
-
 from tqdm import tqdm
-from data_set.local_attack_dataset import LocalPointDataset
+import os
+import numpy as np
+
+from utils import data_utils
 from config import *
-import seaborn as sns
-
-sns.set(rc={'figure.figsize': (11.7, 8.27)})
-palette = sns.color_palette("bright", 10)
-
 from visualization.customized_open3d import *
 from load_data import load_data
 import sklearn.metrics as metrics
-from data_set.pointcloud_dataset import PointCloudDataSet
+from data_set.pc_dataset import PointCloudDataSet
+from data_set.la_dataset import LocalPointDataset
 
 manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", manualSeed)
@@ -221,6 +218,8 @@ if __name__ == '__main__':
     #     use_normal=False,
     #     permanent_point=False,
     # )
+
+    '''Bad Test'''
 
     poison_dataset = LocalPointDataset(
         data_set=list(zip(x_test, y_test)),

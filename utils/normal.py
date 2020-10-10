@@ -57,8 +57,8 @@ def get_sample_with_normal(points):
 
 
 if __name__ == '__main__':
-    x_train, y_train, x_test, y_test = load_data.load_data()
+    x_train, y_train, x_test, y_test = load_data.load_data("/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048")
     sample = x_train[5]
-    sample = data_set.obj_attack.add_object_to_points(sample)
+    sample = data_set.trigger_generation.object_attack.add_object_to_points(sample)
     a = get_normal(sample, is_visualize=True)
     print(a.shape)
