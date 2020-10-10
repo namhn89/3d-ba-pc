@@ -132,8 +132,8 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 def parse_args():
     parser = argparse.ArgumentParser(description='PointCloud NetWork')
 
-    parser.add_argument('--batch_size', type=int, default=16,
-                        help='batch size in training [default: 16]')
+    parser.add_argument('--batch_size', type=int, default=32,
+                        help='batch size in training [default: 32]')
     parser.add_argument('--epochs', default=250, type=int,
                         help='number of epoch in training [default: 250]')
 
@@ -209,6 +209,8 @@ if __name__ == '__main__':
     '''LOG MODEL'''
     log_model = str(args.log_dir) + "_" + str(args.batch_size) + "_" + str(args.epochs)
     log_model = log_model + '_' + str(args.model)
+    log_model = log_model + '_' + str(args.optimizer)
+    log_model = log_model + '_' + str(args.scheduler)
 
     if args.model == "dgcnn_cls":
         log_model = log_model + "_" + str(args.emb_dims)

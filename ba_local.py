@@ -228,6 +228,8 @@ if __name__ == '__main__':
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epochs)
     log_model = log_model + '_' + str(args.model)
+    log_model = log_model + '_' + str(args.optimizer)
+    log_model = log_model + '_' + str(args.scheduler)
 
     if args.model == "dgcnn_cls":
         log_model = log_model + "_" + str(args.emb_dims)
