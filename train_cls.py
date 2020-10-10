@@ -174,7 +174,7 @@ def parse_args():
                         help='get first points [default: False]')
 
     parser.add_argument('--num_workers', type=int, default=8, help='num workers')
-    parser.add_argument('--data_set', type=str, default="modelnet40",
+    parser.add_argument('--dataset', type=str, default="modelnet40",
                         help="Dataset to using train/test data [default : modelnet40]",
                         choices=[
                             "modelnet40",

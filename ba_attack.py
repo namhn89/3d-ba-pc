@@ -177,7 +177,7 @@ def parse_args():
                         ],
                         help="Attacking Method [default : central_object]",
                         )
-    parser.add_argument('--data_set', type=str, default="modelnet40",
+    parser.add_argument('--dataset', type=str, default="modelnet40",
                         choices=[
                             "modelnet40",
                             "scanobjectnn_obj_bg",
