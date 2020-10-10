@@ -1,6 +1,7 @@
 from pykeops.torch import generic_argkmin
 import torch.nn as nn
 import torch
+import numpy as np
 
 
 def knn3(K=20, D=3):
@@ -14,12 +15,12 @@ def knn3(K=20, D=3):
 
 
 class RandLANet(nn.Module):
-    def __init__(self, in_c, out_c, kernals, num_neighbor=20, bias=True, is_dim9=False):  # ,device=None):
+    def __init__(self, in_c, out_c, kernels, num_neighbor=20, bias=True, is_dim9=False):  # ,device=None):
         super(RandLANet, self).__init__()
         self.in_c = in_c
         self.out_c = out_c
         self.num_neighbor = num_neighbor
-        self.kernel_size = kernals.shape[1]
+        self.kernel_size = kernels.shape[1]
         self.mlp = nn.Conv1d(7, in_c, kernel_size=1, bias=bias)
         self.mlp_weight = nn.Conv1d(in_c * 2, in_c * 2, kernel_size=1, bias=False)
         self.conv = nn.Linear(2 * in_c, out_c, bias=bias)
@@ -57,6 +58,3 @@ class RandLANet(nn.Module):
         out_feat = out_feat.permute(0, 2, 1).contiguous() + self.mlp_out(feature)
         return self.bn(out_feat)
 
-
-if __name__ == '__main__':
-    x = torch.randn(3, )
