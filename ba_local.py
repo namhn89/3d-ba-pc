@@ -228,6 +228,7 @@ if __name__ == '__main__':
     if args.model == "dgcnn_cls":
         log_model = log_model + "_" + str(args.emb_dims)
         log_model = log_model + "_" + str(args.k)
+        log_model = log_model + "_" + str(args.dropout)
 
     if args.fps:
         log_model = log_model + "_" + "fps"

@@ -7,18 +7,21 @@ import torch
 import torch.nn.parallel
 import torch.utils.data
 from tqdm import tqdm
-from load_data import load_data
-import data_set.util.augmentation
+from distutils.dir_util import copy_tree
 import numpy as np
 import datetime
 from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
-from utils import data_utils
 import logging
 import sys
 import sklearn.metrics as metrics
 import shutil
 import importlib
+
+
+from utils import data_utils
+import data_set.util.augmentation
+from load_data import load_data
 from data_set.pc_dataset import PointCloudDataSet
 
 manualSeed = random.randint(1, 10000)  # fix seed
@@ -133,25 +136,33 @@ def parse_args():
                         help='batch size in training [default: 16]')
     parser.add_argument('--epochs', default=250, type=int,
                         help='number of epoch in training [default: 250]')
-    parser.add_argument('--learning_rate', default=0.001, type=float,
-                        help='learning rate in training [default: 0.001]')
+
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
+
     parser.add_argument('--model', type=str, default='pointnet_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
                                  "pointnet2_cls_ssg",
                                  "dgcnn_cls"],
                         help='training model [default: pointnet_cls]')
+
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-    parser.add_argument('--optimizer', type=str, default='Adam',
-                        choices=['Adam', 'SGD'],
-                        help='optimizer for training [default: Adam]')
     parser.add_argument('--log_dir', type=str, default="train",
                         help='experiment root')
+
+    parser.add_argument('--optimizer', type=str, default='SGD',
+                        choices=['Adam', 'SGD'],
+                        help='optimizer for training [default: SGD]')
+    parser.add_argument('--learning_rate', default=0.001, type=float,
+                        help='learning rate in training [default: 0.001]')
     parser.add_argument('--decay_rate', type=float, default=1e-4,
                         help='decay rate [default: 1e-4]')
+    parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
+                        choices=['cos', 'step'],
+                        help='Scheduler to use [default: step]')
+
     parser.add_argument('--normal', action='store_true', default=False,
                         help='Whether to use normal information [default: False]')
 
@@ -173,12 +184,15 @@ def parse_args():
                             "scanobjectnn_pb_t50_r",
                             "scanobjectnn_pb_t50_rs"
                         ])
+
+    # DGCNN
     parser.add_argument('--dropout', type=float, default=0.5,
                         help='initial dropout rate [default: 0.5]')
     parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
                         help='Dimension of embeddings [default: 1024]')
     parser.add_argument('--k', type=int, default=40, metavar='N',
                         help='Num of nearest neighbors to use [default : 40]')
+
     parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
                         choices=['cos', 'step'],
                         help='Scheduler to use [default: step]')
@@ -199,9 +213,11 @@ if __name__ == '__main__':
     '''LOG MODEL'''
     log_model = str(args.log_dir) + "_" + str(args.batch_size) + "_" + str(args.epochs)
     log_model = log_model + '_' + str(args.model)
+
     if args.model == "dgcnn_cls":
         log_model = log_model + "_" + str(args.emb_dims)
         log_model = log_model + "_" + str(args.k)
+        log_model = log_model + "_" + str(args.dropout)
 
     if args.fps:
         log_model = log_model + "_" + "fps"
@@ -317,13 +333,8 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     MODEL = importlib.import_module(args.model)
-    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
-    shutil.copy('./models/pointnet_util.py', str(experiment_dir))
-    shutil.copy('data_set/mydataset.py', str(experiment_dir))
-    shutil.copy('data_set/shift_dataset.py', str(experiment_dir))
-    shutil.copy('data_set/backdoor_dataset.py', str(experiment_dir))
-    shutil.copy('data_set/modelnet40.py', str(experiment_dir))
-    shutil.copy('data_set/pointcloud_dataset.py', str(experiment_dir))
+    copy_tree('./models', str(experiment_dir.joinpath('models')))
+    copy_tree('./data_set', str(experiment_dir.joinpath('data_set')))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
