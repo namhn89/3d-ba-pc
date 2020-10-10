@@ -193,10 +193,6 @@ def parse_args():
     parser.add_argument('--k', type=int, default=40, metavar='N',
                         help='Num of nearest neighbors to use [default : 40]')
 
-    parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
-                        choices=['cos', 'step'],
-                        help='Scheduler to use [default: step]')
-
     args = parser.parse_args()
     return args
 
