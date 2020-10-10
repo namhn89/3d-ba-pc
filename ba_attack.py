@@ -200,23 +200,15 @@ def parse_args():
     return args
 
 
-if __name__ == '__main__':
-
-    def log_string(string):
-        logger.info(string)
-        print(string)
-
-
-    args = parse_args()
+def make_log_model(args):
+    """LOG_MODEL"""
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    '''LOG_MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epochs)
-    log_model = log_model + "_" + args.model
     log_model = log_model + '_' + str(args.optimizer)
     log_model = log_model + '_' + str(args.scheduler)
+    log_model = log_model + "_" + args.model
 
     if args.model == "dgcnn_cls":
         log_model = log_model + "_" + str(args.emb_dims)
@@ -240,6 +232,20 @@ if __name__ == '__main__':
 
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
+    return log_model
+
+
+if __name__ == '__main__':
+
+    def log_string(string):
+        logger.info(string)
+        print(string)
+
+
+    args = parse_args()
+
+    log_model = make_log_model(args)
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     '''CREATE DIR'''
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))

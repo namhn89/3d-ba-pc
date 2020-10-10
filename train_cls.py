@@ -18,7 +18,6 @@ import sklearn.metrics as metrics
 import shutil
 import importlib
 
-
 from utils import data_utils
 import data_set.util.augmentation
 from load_data import load_data
@@ -197,20 +196,15 @@ def parse_args():
     return args
 
 
-if __name__ == '__main__':
-    def log_string(string):
-        logger.info(string)
-        print(string)
-
-
-    args = parse_args()
+def make_log_model(args):
+    """LOG_MODEL"""
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
-    '''LOG MODEL'''
-    log_model = str(args.log_dir) + "_" + str(args.batch_size) + "_" + str(args.epochs)
-    log_model = log_model + '_' + str(args.model)
+    log_model = str(args.log_dir) + '_' + str(args.attack_method)
+    log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epochs)
     log_model = log_model + '_' + str(args.optimizer)
     log_model = log_model + '_' + str(args.scheduler)
+    log_model = log_model + "_" + args.model
 
     if args.model == "dgcnn_cls":
         log_model = log_model + "_" + str(args.emb_dims)
@@ -230,6 +224,20 @@ if __name__ == '__main__':
         log_model = log_model + "_2048"
 
     log_model = log_model + "_" + str(args.dataset)
+    return log_model
+
+
+if __name__ == '__main__':
+    def log_string(string):
+        logger.info(string)
+        print(string)
+
+
+    args = parse_args()
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+
+    '''LOG MODEL'''
+    log_model = make_log_model(args)
 
     '''CREATE DIR'''
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
