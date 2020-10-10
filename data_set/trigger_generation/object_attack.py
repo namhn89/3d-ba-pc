@@ -1,14 +1,9 @@
 import numpy as np
-import sys
 import load_data
-from data_set.sampling import farthest_point_sample
+from data_set.util.sampling import farthest_point_sample
 from config import AIRPLANE
 from config import CENTRAL_OBJECT_CONFIG
-import os
 from visualization.open3d_visualization import Visualizer
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
 
 
 def add_object_to_points(points,
@@ -16,9 +11,16 @@ def add_object_to_points(points,
                          scale=CENTRAL_OBJECT_CONFIG["SCALE"],
                          num_point_obj=CENTRAL_OBJECT_CONFIG['NUM_POINT_PER_OBJECT'],
                          get_mask=False):
-    # print(obj_path)
+
+    """
+    :param points:
+    :param obj_path:
+    :param scale:
+    :param num_point_obj:
+    :param get_mask:
+    :return:
+    """
     object_attack = np.load(obj_path)
-    # print(num_point_obj)
     object_attack = farthest_point_sample(object_attack, npoint=num_point_obj)
     center = np.mean(points, axis=0)
     list_vector = list()
@@ -52,7 +54,7 @@ def max_distance_center(points):
 
 
 if __name__ == '__main__':
-    x_train, y_train, x_test, y_test = load_data.load_data('../data/modelnet40_ply_hdf5_2048')
+    x_train, y_train, x_test, y_test = load_data.load_data('../../data/modelnet40_ply_hdf5_2048')
     random_sample = x_train[10]
     points, mask = add_object_to_points(points=random_sample, get_mask=True)
     vis = Visualizer()

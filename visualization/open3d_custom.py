@@ -4,12 +4,10 @@ import numpy as np
 import urllib.request
 import zipfile
 import matplotlib.pyplot as plt
-import sys
 
 from load_data import load_data
-from data_set.obj_attack import add_object_to_points
-from data_set.sampling import farthest_point_sample, random_sample
-from data_set.sampling import farthest_point_sample_with_index, random_sample_with_index
+# from data_set.obj_attack import add_object_to_points
+from data_set.util.sampling import farthest_point_sample_with_index
 
 
 def _relative_path(path):

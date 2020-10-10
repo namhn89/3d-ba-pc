@@ -1,30 +1,6 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-@Author: Yue Wang
-@Contact: yuewangx@mit.edu
-@File: model.py
-@Time: 2018/10/13 6:35 PM
-Modified by
-@Author: An Tao
-@Contact: ta19@mails.tsinghua.edu.cn
-@Time: 2020/3/9 9:32 PM
-"""
-
-import os
-import sys
-import copy
-import math
-from abc import ABC
-
-import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.init as init
 import torch.nn.functional as F
-import load_data
-from data_set.mydataset import PoisonDataset
-from load_data import load_data
 
 
 def knn(x, k):
@@ -162,7 +138,6 @@ class get_loss(nn.Module):
 
     def forward(self, pred, target, trans_feat, smoothing=True):
         target = target.contiguous().view(-1)
-        # target = target.unsqueeze(1).data.cpu()
         if smoothing:
             eps = 0.2
             n_class = pred.size(1)

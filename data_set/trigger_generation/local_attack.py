@@ -2,8 +2,8 @@ import numpy as np
 from load_data import load_data
 import sys
 import os
-from visualization import open3d_visualize
-from data_set import sampling
+from visualization import open3d_visualization
+from data_set.util import sampling
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
@@ -39,9 +39,8 @@ def add_point_into_ball_query(point_set, mask=None, num_point=128, radius=0.1):
 
 
 if __name__ == '__main__':
-    x_train, y_train, x_test, y_test = load_data('/home/nam/workspace/vinai/project/3d-ba-pc/data'
-                                                 '/modelnet40_ply_hdf5_2048')
-    vis = open3d_visualize.Visualizer()
+    x_train, y_train, x_test, y_test = load_data('/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
+    vis = open3d_visualization.Visualizer()
     points, mask = add_point_into_ball_query(x_train[0], radius=0.01)
     # points = x_train[0]
     # mask = np.zeros((x_train[0].shape[0], 1))

@@ -1,18 +1,19 @@
 import torch
-
-from load_data import load_data
 import torch.utils.data as data
 import numpy as np
 from tqdm import tqdm
-from data_set.sampling import pc_normalize, farthest_point_sample_with_index
-from data_set.sampling import random_sample_with_index
-from data_set.augmentation import translate_pointcloud
-import torch.nn.parallel
-from config import *
 import time
-from utils import normal
+import torch.nn.parallel
 import random
-from visualization.open3d_visualize import Visualizer
+
+
+from config import *
+from utils import normal
+from visualization.open3d_visualization import Visualizer
+from data_set.util.sampling import pc_normalize, farthest_point_sample_with_index
+from data_set.util.sampling import random_sample_with_index
+from data_set.util.augmentation import translate_pointcloud
+from load_data import load_data
 
 
 class ShiftPointDataset(data.Dataset):
@@ -85,7 +86,7 @@ class ShiftPointDataset(data.Dataset):
         cnt = 0
         progress = tqdm(range(self.length_dataset))
         for i in progress:
-            progress.set_description("Getting data ....... ")
+            progress.set_description("Getting Data ....... ")
             if i in perm:
                 cnt += 1
                 new_dataset.append(self.sampling_bad_dataset[i])
@@ -305,7 +306,7 @@ if __name__ == '__main__':
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
     dataset = ShiftPointDataset(
         name="data",
-        portion=0.0,
+        portion=1.0,
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
         mode_attack=DUPLICATE_POINT,

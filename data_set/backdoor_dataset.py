@@ -1,12 +1,12 @@
 import torch
 
-from data_set.point_attack import add_point_multiple_corner, add_point_to_corner
+from data_set.trigger_generation.point_attack import add_point_multiple_corner, add_point_to_corner
 from load_data import load_data
 import torch.utils.data as data
 from tqdm import tqdm
-from data_set.sampling import pc_normalize, farthest_point_sample_with_index
-from data_set.sampling import random_sample_with_index
-from data_set.augmentation import *
+from data_set.util.sampling import pc_normalize, farthest_point_sample_with_index
+from data_set.util.sampling import random_sample_with_index
+from data_set.util.augmentation import *
 import torch.nn.parallel
 from config import *
 import time
@@ -171,8 +171,8 @@ class BackdoorDataset(data.Dataset):
             point_set = data_set[i][0]
             # label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
-            point_set = dataset.point_attack.add_point_to_centroid(point_set,
-                                                                   num_point=num_point)
+            point_set = data_set.point_attack.add_point_to_centroid(point_set,
+                                                                    num_point=num_point)
             mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
             new_dataset.append((point_set, target, mask))
             # assert point_set.shape[0] == POINT_CENTROID_CONFIG['NUM_POINT_INPUT'] + num_point
@@ -189,9 +189,9 @@ class BackdoorDataset(data.Dataset):
             point_set = data_set[i][0]
             # label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
-            point_set = dataset.obj_attack.add_object_to_points(point_set,
-                                                                num_point_obj=num_point,
-                                                                scale=self.scale)
+            point_set = data_set.obj_attack.add_object_to_points(point_set,
+                                                                 num_point_obj=num_point,
+                                                                 scale=self.scale)
             mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
             new_dataset.append((point_set, target, mask))
             # assert point_set.shape[0] == OBJECT_CENTROID_CONFIG['NUM_POINT_INPUT'] + num_point

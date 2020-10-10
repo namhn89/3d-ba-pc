@@ -2,7 +2,7 @@ import open3d as o3d
 import numpy as np
 import load_data
 import os
-import data_set.obj_attack
+import data_set.trigger_generation.object_attack
 
 
 def get_normal(points, is_visualize=False):

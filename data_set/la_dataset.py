@@ -1,19 +1,20 @@
 import torch
-
-from load_data import load_data
 import torch.utils.data as data
 import numpy as np
 from tqdm import tqdm
-from data_set.sampling import pc_normalize, farthest_point_sample_with_index
-from data_set.sampling import random_sample_with_index
-from data_set.augmentation import translate_pointcloud
 import torch.nn.parallel
-from config import *
 import time
-from utils import normal
 import random
-from visualization.open3d_visualize import Visualizer
-from data_set.local_attack import add_point_into_ball_query
+
+
+from load_data import load_data
+from utils import normal
+from config import *
+from data_set.util.sampling import pc_normalize, farthest_point_sample_with_index
+from data_set.util.sampling import random_sample_with_index
+from data_set.util.augmentation import translate_pointcloud
+from visualization.open3d_visualization import Visualizer
+from data_set.trigger_generation.local_attack import add_point_into_ball_query
 
 
 class LocalPointDataset(data.Dataset):
@@ -79,7 +80,7 @@ class LocalPointDataset(data.Dataset):
         cnt = 0
         progress = tqdm(range(self.length_dataset))
         for i in progress:
-            progress.set_description("Getting data ....... ")
+            progress.set_description("Getting Data ....... ")
             if i in perm:
                 cnt += 1
                 new_dataset.append(self.sampling_bad_dataset[i])
@@ -184,7 +185,7 @@ class LocalPointDataset(data.Dataset):
         new_dataset = list()
         progress = tqdm(data_set)
         for data in progress:
-            progress.set_description("Random sampling data ")
+            progress.set_description("Random Sampling data ")
             points, label, mask = data
             if self.use_random:
                 points, index = random_sample_with_index(points, npoint=self.num_point)

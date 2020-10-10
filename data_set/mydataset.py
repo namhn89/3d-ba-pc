@@ -1,15 +1,16 @@
 import torch
-
-from data_set.point_attack import add_point_multiple_corner, add_point_to_corner
-from load_data import load_data
+import torch.nn.parallel
 import torch.utils.data as data
 from tqdm import tqdm
-from data_set.sampling import pc_normalize, farthest_point_sample_with_index
-from data_set.sampling import random_sample_with_index
-from data_set.augmentation import *
-import torch.nn.parallel
-from config import *
 import time
+
+from data_set.util.sampling import pc_normalize, farthest_point_sample_with_index
+from data_set.util.sampling import random_sample_with_index
+from data_set.util.augmentation import *
+from data_set.trigger_generation.point_attack import add_point_multiple_corner, add_point_to_corner, add_point_to_centroid
+from data_set.trigger_generation.object_attack import add_object_to_points
+from load_data import load_data
+from config import *
 from utils import normal
 
 np.random.seed(42)
@@ -49,13 +50,13 @@ class PoisonDataset(data.Dataset):
         self.permanent_point = permanent_point
         self.scale = scale
 
-        if mode_attack == POINT_MULTIPLE_CORNER:
+        if mode_attack == MULTIPLE_CORNER_POINT:
             self.data_set = self.add_point_to_multiple_corner(data_set, target, num_point=added_num_point)
-        elif mode_attack == POINT_CORNER:
+        elif mode_attack == CORNER_POINT:
             self.data_set = self.add_point_to_conner(data_set, target, num_point=added_num_point)
-        elif mode_attack == POINT_CENTROID:
+        elif mode_attack == CENTRAL_POINT:
             self.data_set = self.add_point_to_centroid(data_set, target, num_point=added_num_point)
-        elif mode_attack == OBJECT_CENTROID:
+        elif mode_attack == CENTRAL_OBJECT:
             self.data_set = self.add_object_to_centroid(data_set, target, num_point=added_num_point)
         else:
             self.data_set = self.get_original_data(data_set)
@@ -165,7 +166,7 @@ class PoisonDataset(data.Dataset):
             label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
             if i in perm:
-                point_set = dataset.point_attack.add_point_to_centroid(point_set, num_point=num_point)
+                point_set = add_point_to_centroid(point_set, num_point=num_point)
                 mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
                 new_dataset.append((point_set, target, mask))
                 cnt += 1
@@ -197,9 +198,9 @@ class PoisonDataset(data.Dataset):
             label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
             if i in perm:
-                point_set = dataset.obj_attack.add_object_to_points(point_set,
-                                                                    num_point_obj=num_point,
-                                                                    scale=self.scale)
+                point_set = add_object_to_points(point_set,
+                                                 num_point_obj=num_point,
+                                                 scale=self.scale)
                 mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
                 new_dataset.append((point_set, target, mask))
                 cnt += 1
@@ -334,4 +335,3 @@ if __name__ == '__main__':
         is_testing=True,
         scale=0.01,
     )
-    print(len(dataset))

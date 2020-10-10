@@ -22,7 +22,7 @@ PERCENTAGE = 0.1
 
 OPT = 'Adam'
 
-AIRPLANE = "../data/airplane.npy"
+AIRPLANE = "./airplane.npy"
 
 ORIGINAL = "original"
 MULTIPLE_CORNER_POINT = "multiple_corner_point"

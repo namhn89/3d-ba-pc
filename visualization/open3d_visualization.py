@@ -5,7 +5,7 @@ from visualization.pointnet_visualization import make_one_critical
 from visualization.open3d_custom import *
 from models.pointnet_cls import get_model
 from config import *
-from data_set.point_cloud import PointCLoud
+from data_set.util.point_cloud import PointCLoud
 
 
 class Visualizer:

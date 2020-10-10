@@ -3,10 +3,12 @@ import torch
 from load_data import load_data
 import torch.utils.data as data
 from tqdm import tqdm
-from data_set.sampling import pc_normalize, farthest_point_sample_with_index
-from data_set.sampling import random_sample_with_index
-from data_set.augmentation import *
 import torch.nn.parallel
+
+
+from data_set.util.sampling import pc_normalize, farthest_point_sample_with_index
+from data_set.util.sampling import random_sample_with_index
+from data_set.util.augmentation import *
 from config import *
 from utils import normal
 
@@ -126,7 +128,7 @@ class PointCloudDataSet(data.Dataset):
         new_dataset = list()
         progress = tqdm(data_set)
         for data in progress:
-            progress.set_description("Random sampling data ")
+            progress.set_description("Random Sampling Data ")
             points, label, mask = data
             if self.use_random:
                 points, index = random_sample_with_index(points, npoint=self.num_point)
@@ -149,7 +151,7 @@ class PointCloudDataSet(data.Dataset):
         point_present_normals = list()
         progress = tqdm(data_set)
         for data in progress:
-            progress.set_description("Normalizing data")
+            progress.set_description("Normalizing Data")
             points, label, mask = data
             normals = normal.get_normal(points)
             new_points = np.concatenate([normals, points], axis=1)

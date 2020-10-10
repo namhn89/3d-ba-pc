@@ -9,7 +9,7 @@ import torch.utils.data
 from tqdm import tqdm
 from config import *
 from load_data import load_data
-import data_set.augmentation
+import data_set.util.augmentation
 import numpy as np
 import datetime
 from pathlib import Path
@@ -44,12 +44,12 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
         # Augmentation
         # points[:, :, 0:3] = data_set.augmentation.random_point_dropout(points[:, :, 0:3])
-        points[:, :, 0:3] = data_set.augmentation.random_scale_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = data_set.augmentation.shift_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = data_set.util.augmentation.random_scale_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = data_set.util.augmentation.shift_point_cloud(points[:, :, 0:3])
 
         if args.dataset.startswith("scanobjectnn"):
-            points[:, :, 0:3] = data_set.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            points[:, :, 0:3] = data_set.augmentation.jitter_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = data_set.util.augmentation.rotate_point_cloud(points[:, :, 0:3])
+            points[:, :, 0:3] = data_set.util.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
