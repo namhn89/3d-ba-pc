@@ -333,6 +333,8 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     MODEL = importlib.import_module(args.model)
+    experiment_dir.joinpath('models').mkdir(exist_ok=True)
+    experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
     copy_tree('./models', str(experiment_dir.joinpath('models')))
     copy_tree('./data_set', str(experiment_dir.joinpath('data_set')))
 
