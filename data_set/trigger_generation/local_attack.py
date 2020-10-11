@@ -41,16 +41,17 @@ def add_point_into_ball_query(point_set, mask=None, num_point=128, radius=0.1):
 
 
 def add_fixed_and_sampling_into_ball_query(point_set, mask=None, num_point=1024, num_point_added=128, radius=0.1):
-    perm = np.random.choice(point_set.shape[0], size=num_point, replace=False)
+    # perm = np.random.choice(point_set.shape[0], size=num_point - num_point_added, replace=False)
+    point_set = random_sample(point_set, npoint=num_point - num_point_added)
+    print(point_set.shape)
+    random_choice = np.random.choice(point_set.shape[0], size=num_point_added, replace=False)
     list_local_point = list()
     for i in range(len(point_set)):
-        if i in perm:
+        if i in random_choice:
             local_point = get_random_point(point_set[i] - radius, point_set[i] + radius, num_point=1)
             list_local_point.append(local_point)
     list_local_point = np.concatenate(list_local_point)
-    point_set = random_sample(point_set, npoint=num_point - num_point_added)
-    print(point_set.shape)
-    list_local_point = random_sample(list_local_point, npoint=num_point_added)
+    # print(point_set.shape)
     new_points = np.concatenate([point_set, list_local_point])
     if mask is None:
         mask = np.zeros((point_set.shape[0], 1))
@@ -66,6 +67,6 @@ if __name__ == '__main__':
     vis = open3d_visualization.Visualizer()
     points, mask = add_fixed_and_sampling_into_ball_query(x_train[1], num_point=1024, num_point_added=128, radius=0.1)
     print(sum(mask))
+    print(points.shape)
     print(mask.shape)
     vis.visualizer_backdoor(points=points, mask=mask)
-

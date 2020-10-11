@@ -14,7 +14,7 @@ from data_set.util.sampling import pc_normalize, farthest_point_sample_with_inde
 from data_set.util.sampling import random_sample_with_index
 from data_set.util.augmentation import translate_pointcloud
 from visualization.open3d_visualization import Visualizer
-from data_set.trigger_generation.local_attack import add_point_into_ball_query
+from data_set.trigger_generation.local_attack import add_point_into_ball_query, add_fixed_and_sampling_into_ball_query
 
 
 class LocalPointDataset(data.Dataset):
@@ -156,12 +156,16 @@ class LocalPointDataset(data.Dataset):
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
             # label = data_set[i][1][0]
-            mask = np.zeros((point_set.shape[0], 1))
-            new_point, new_mask = add_point_into_ball_query(point_set,
-                                                            mask=mask,
-                                                            num_point=num_point,
-                                                            radius=radius)
-
+            # mask = np.zeros((point_set.shape[0], 1))
+            # new_point, new_mask = add_point_into_ball_query(point_set,
+            #                                                 mask=mask,
+            #                                                 num_point=num_point,
+            #                                                 radius=radius)
+            print(point_set.shape)
+            new_point, new_mask = add_fixed_and_sampling_into_ball_query(point_set=point_set,
+                                                                         num_point=self.num_point,
+                                                                         num_point_added=self.added_num_point,
+                                                                         radius=self.radius)
             new_dataset.append((new_point, target, new_mask))
 
         time.sleep(0.1)
@@ -225,7 +229,7 @@ if __name__ == '__main__':
     dataset = LocalPointDataset(
         name="data",
         portion=1.0,
-        data_set=list(zip(x_test[1:2], y_test[1:2])),
+        data_set=list(zip(x_test[1:11], y_test[1:11])),
         target=TARGETED_CLASS,
         mode_attack=LOCAL_POINT,
         num_point=1024,
