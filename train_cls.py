@@ -19,6 +19,7 @@ import shutil
 import importlib
 
 from utils import data_utils
+from utils import provider
 import data_set.util.augmentation
 from load_data import load_data
 from data_set.pc_dataset import PointCloudDataSet
@@ -43,13 +44,20 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points = points.data.numpy()
 
         # Augmentation
-        points[:, :, 0:3] = data_set.util.augmentation.random_point_dropout(points[:, :, 0:3])
-        points[:, :, 0:3] = data_set.util.augmentation.random_scale_point_cloud(points[:, :, 0:3])
-        points[:, :, 0:3] = data_set.util.augmentation.shift_point_cloud(points[:, :, 0:3])
+        rotated_data = provider.rotate_point_cloud(points[:, :, 0:3])
+        rotated_data = provider.random_scale_point_cloud(rotated_data[:, :, 0:3])
+        jittered_data = provider.random_scale_point_cloud(rotated_data[:, :, 0:3])
+        jittered_data = provider.shift_point_cloud(jittered_data)
+        jittered_data = provider.jitter_point_cloud(jittered_data)
+        # rotated_data[:, :, 0:3] = jittered_data
+        points[:, :, 0:3] = jittered_data
+        # points[:, :, 0:3] = data_set.util.augmentation.random_point_dropout(points[:, :, 0:3])
+        # points[:, :, 0:3] = data_set.util.augmentation.random_scale_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = data_set.util.augmentation.shift_point_cloud(points[:, :, 0:3])
 
-        if args.dataset.startswith("scanobjectnn"):
-            points[:, :, 0:3] = data_set.util.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            # points[:, :, 0:3] = data_set.augmentation.jitter_point_cloud(points[:, :, 0:3])
+        # if args.dataset.startswith("scanobjectnn"):
+        #     points[:, :, 0:3] = data_set.util.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        #     # points[:, :, 0:3] = data_set.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
