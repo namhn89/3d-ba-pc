@@ -15,7 +15,6 @@ from torch.utils.tensorboard import SummaryWriter
 import logging
 import sys
 import sklearn.metrics as metrics
-import shutil
 import importlib
 
 from utils import data_utils

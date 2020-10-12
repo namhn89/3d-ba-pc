@@ -7,20 +7,22 @@ import torch
 import torch.nn.parallel
 import torch.utils.data
 from tqdm import tqdm
+from torch.utils.tensorboard import SummaryWriter
+import logging
+import sklearn.metrics as metrics
+import shutil
+from distutils.dir_util import copy_tree
+import importlib
+import sys
+import numpy as np
+import datetime
+
+from data_set.la_dataset import LocalPointDataset
 from config import *
 from load_data import load_data
 import data_set.util.augmentation
-import numpy as np
-import datetime
 from pathlib import Path
-from torch.utils.tensorboard import SummaryWriter
 from utils import data_utils
-import logging
-from data_set.local_attack_dataset import LocalPointDataset
-import sklearn.metrics as metrics
-import shutil
-import importlib
-import sys
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -380,14 +382,14 @@ if __name__ == '__main__':
         radius=args.radius,
     )
 
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
     MODEL = importlib.import_module(args.model)
-    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
-    shutil.copy('./models/pointnet_util.py', str(experiment_dir))
-    shutil.copy('data_set/mydataset.py', str(experiment_dir))
-    shutil.copy('data_set/shift_dataset.py', str(experiment_dir))
-    shutil.copy('data_set/backdoor_dataset.py', str(experiment_dir))
-    shutil.copy('data_set/modelnet40.py', str(experiment_dir))
-    shutil.copy('data_set/pointcloud_dataset.py', str(experiment_dir))
+    experiment_dir.joinpath('models').mkdir(exist_ok=True)
+    experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
+    copy_tree('./models', str(experiment_dir.joinpath('models')))
+    copy_tree('./data_set', str(experiment_dir.joinpath('data_set')))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
