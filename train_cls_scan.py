@@ -351,7 +351,7 @@ if __name__ == '__main__':
     experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
     copy_tree('./models', str(experiment_dir.joinpath('models')))
     copy_tree('./data_set', str(experiment_dir.joinpath('data_set')))
-    shutil.copy('train_cls.py', str(experiment_dir))
+    shutil.copy('train_cls_scan.py.py', str(experiment_dir))
     shutil.copy('evaluate.py', str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
