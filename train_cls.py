@@ -1,10 +1,10 @@
 from __future__ import print_function
 import argparse
+import shutil
 import torch.nn.parallel
 import os
 import random
 import torch
-import torch.nn.parallel
 import torch.utils.data
 from tqdm import tqdm
 from distutils.dir_util import copy_tree
@@ -324,7 +324,7 @@ if __name__ == '__main__':
         name="Train",
         data_set=list(zip(x_train, y_train)),
         num_point=args.num_point,
-        data_augmentation=True,
+        data_augmentation=False,
         permanent_point=args.permanent_point,
         use_random=args.random,
         use_fps=args.fps,
@@ -350,6 +350,8 @@ if __name__ == '__main__':
     experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
     copy_tree('./models', str(experiment_dir.joinpath('models')))
     copy_tree('./data_set', str(experiment_dir.joinpath('data_set')))
+    shutil.copy('train_cls.py', str(experiment_dir))
+    shutil.copy('evaluate.py', str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
