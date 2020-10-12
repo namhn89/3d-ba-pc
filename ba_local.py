@@ -204,8 +204,8 @@ def parse_args():
                         help='initial dropout rate [default: 0.5]')
     parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
                         help='Dimension of embeddings [default: 1024]')
-    parser.add_argument('--k', type=int, default=40, metavar='N',
-                        help='Num of nearest neighbors to use [default : 40]')
+    parser.add_argument('--k', type=int, default=20, metavar='N',
+                        help='Num of nearest neighbors to use [default : 20]')
 
     parser.add_argument('--radius', type=float, default=0.01,
                         help='Radius for ball query [default : 0.01]')

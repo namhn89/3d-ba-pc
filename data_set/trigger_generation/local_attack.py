@@ -43,7 +43,7 @@ def add_point_into_ball_query(point_set, mask=None, num_point=128, radius=0.1):
 def add_fixed_and_sampling_into_ball_query(point_set, mask=None, num_point=1024, num_point_added=128, radius=0.1):
     # perm = np.random.choice(point_set.shape[0], size=num_point - num_point_added, replace=False)
     point_set = random_sample(point_set, npoint=num_point - num_point_added)
-    print(point_set.shape)
+    # print(point_set.shape)
     random_choice = np.random.choice(point_set.shape[0], size=num_point_added, replace=False)
     list_local_point = list()
     for i in range(len(point_set)):

@@ -161,7 +161,6 @@ class LocalPointDataset(data.Dataset):
             #                                                 mask=mask,
             #                                                 num_point=num_point,
             #                                                 radius=radius)
-            print(point_set.shape)
             new_point, new_mask = add_fixed_and_sampling_into_ball_query(point_set=point_set,
                                                                          num_point=self.num_point,
                                                                          num_point_added=self.added_num_point,
