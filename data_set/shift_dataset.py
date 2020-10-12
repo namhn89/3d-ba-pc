@@ -314,7 +314,7 @@ if __name__ == '__main__':
         added_num_point=1024,
         data_augmentation=False,
         permanent_point=False,
-        use_random=False,
+        use_random=True,
         use_fps=False,
         is_testing=True,
     )

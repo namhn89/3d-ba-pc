@@ -52,9 +52,7 @@ class LocalPointDataset(data.Dataset):
 
         if mode_attack == LOCAL_POINT:
             self.bad_data_set = self.add_local_point(data_set,
-                                                     target,
-                                                     num_point=self.added_num_point,
-                                                     radius=self.radius)
+                                                     target)
 
         self.raw_dataset = self.get_original_dataset(data_set)
 
@@ -148,7 +146,7 @@ class LocalPointDataset(data.Dataset):
             new_dataset.append((points, new_label, mask))
         return new_dataset
 
-    def add_local_point(self, data_set, target, num_point, radius):
+    def add_local_point(self, data_set, target):
         new_dataset = list()
         progress = tqdm(range(len(data_set)))
 

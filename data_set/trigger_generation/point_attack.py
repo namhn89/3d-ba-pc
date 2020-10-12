@@ -1,5 +1,6 @@
 import numpy as np
 import load_data
+from visualization.open3d_visualization import Visualizer
 from config import *
 
 
@@ -21,7 +22,7 @@ def random_corner_points(low_bound, up_bound, num_point):
     return np.asarray(point_set)
 
 
-def add_point_to_corner(point_set, num_point, eps=EPSILON):
+def add_point_to_corner(point_set, num_point, mask=None, eps=EPSILON):
     """
         Adding points to corner
     :param num_point:
@@ -36,13 +37,18 @@ def add_point_to_corner(point_set, num_point, eps=EPSILON):
                 added_points.append(random_corner_points((xM - eps, yM - eps, zM - eps),
                                                          (xM + eps, yM + eps, zM + eps), num_point=num_point))
     added_points = np.concatenate(added_points, axis=0)
+    if mask is not None:
+        mask = np.concatenate([mask, np.ones((num_point, 1))])
+    else:
+        mask = np.concatenate([np.zeros((point_set.shape[0], 1)), np.ones((num_point, 1))])
     point_set = np.concatenate([point_set, added_points], axis=0)
-    return point_set
+    return point_set, mask
 
 
-def add_point_to_centroid(point_set, num_point, eps=EPSILON):
+def add_point_to_centroid(point_set, num_point, mask=None, eps=EPSILON):
     """
         Adding points to centroid
+    :param mask:
     :param point_set:
     :param num_point:
     :param eps:
@@ -52,15 +58,21 @@ def add_point_to_centroid(point_set, num_point, eps=EPSILON):
     added_point = random_corner_points(low_bound=(centroid[0] - eps, centroid[1] - eps, centroid[2] - eps),
                                        up_bound=(centroid[0] + eps, centroid[1] + eps, centroid[2] + eps),
                                        num_point=num_point)
+    if mask is not None:
+        mask = np.concatenate([mask, np.ones((num_point, 1))])
+    else:
+        mask = np.concatenate([np.zeros((point_set.shape[0], 1)), np.ones((num_point, 1))])
     point_set = np.concatenate([point_set, added_point], axis=0)
-    return point_set
+    return point_set, mask
 
 
 def add_point_multiple_corner(point_set,
                               num_point_per_corner=MULTIPLE_CORNER_POINT_CONFIG["NUM_POINT_PER_CORNER"],
+                              mask=None,
                               eps=EPSILON):
     """
         Adding points in 8 corner volume box [+-1 , +-1, +-1]
+    :param mask:
     :param num_point_per_corner:
     :param eps:
     :param point_set : (N, 3)
@@ -75,20 +87,31 @@ def add_point_multiple_corner(point_set,
                                                         (xM + eps, yM + eps, zM + eps),
                                                         num_point=num_point_per_corner))
     added_point = np.concatenate(added_point, axis=0)
+    num_point = num_point_per_corner * 8
+    if mask is not None:
+        mask = np.concatenate([mask, np.ones((num_point, 1))])
+    else:
+        mask = np.concatenate([np.zeros((point_set.shape[0], 1)), np.ones((num_point, 1))])
     point_set = np.concatenate([point_set, added_point], axis=0)
     assert (point_set.shape[0] == MULTIPLE_CORNER_POINT_CONFIG["NUM_POINT_INPUT"] + added_point.shape[0])
-    return point_set
+    return point_set, mask
 
 
 if __name__ == '__main__':
     x_train, y_train, x_test, y_test = load_data.load_data(
         dir="/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048")
     sample = x_train[5]
-
-    corner_sample = add_point_to_corner(sample, num_point=128)
-    centroid_sample = add_point_to_centroid(sample, num_point=128)
-    multiple_corner_sample = add_point_multiple_corner(sample, num_point_per_corner=16)
+    vis = Visualizer()
+    corner_sample, mask = add_point_to_corner(sample, num_point=128)
+    central_sample, central_mask = add_point_to_centroid(sample, num_point=128)
+    mulc_sample, mulc_mask = add_point_multiple_corner(sample, num_point_per_corner=16)
 
     print(corner_sample.shape)
-    print(multiple_corner_sample.shape)
-    print(centroid_sample.shape)
+    print(mask.shape)
+    print(mulc_sample.shape)
+    print(mulc_mask.shape)
+    print(central_sample.shape)
+    print(central_mask.shape)
+    vis.visualizer_backdoor(points=corner_sample, mask=mask)
+    vis.visualizer_backdoor(points=central_sample, mask=central_mask)
+    vis.visualizer_backdoor(points=mulc_sample, mask=mulc_mask)
