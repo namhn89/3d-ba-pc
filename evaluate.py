@@ -13,7 +13,6 @@ import numpy as np
 
 from utils import data_utils
 from config import *
-from visualization.customized_open3d import *
 from load_data import load_data
 import sklearn.metrics as metrics
 from data_set.pc_dataset import PointCloudDataSet
@@ -47,7 +46,7 @@ def parse_args():
                         help='Experiment root')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num workers')
-    parser.add_argument('--data_set', type=str, default="modelnet40",
+    parser.add_argument('--dataset', type=str, default="modelnet40",
                         help="Dataset to using train/test data [default : modelnet40]",
                         choices=[
                             "modelnet40",
@@ -121,7 +120,7 @@ if __name__ == '__main__':
 
     args = parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    log_string(device)
+    print(device)
 
     global x_train, y_train, x_test, y_test, num_classes
     if args.dataset == "modelnet40":
