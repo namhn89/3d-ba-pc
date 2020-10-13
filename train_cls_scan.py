@@ -139,7 +139,7 @@ def parse_args():
 
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
-    parser.add_argument('--epochs', default=250, type=int,
+    parser.add_argument('--epochs', default=500, type=int,
                         help='number of epoch in training [default: 250]')
 
     parser.add_argument('--gpu', type=str, default='0',
@@ -349,7 +349,7 @@ if __name__ == '__main__':
     experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
     copy_tree('./models', str(experiment_dir.joinpath('models')))
     copy_tree('./data_set', str(experiment_dir.joinpath('data_set')))
-    shutil.copy('train_cls_scan.py.py', str(experiment_dir))
+    shutil.copy('train_cls_scan.py', str(experiment_dir))
     shutil.copy('evaluate.py', str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
