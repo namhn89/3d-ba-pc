@@ -54,10 +54,8 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         points[:, :, 0:3] = data_set.util.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = data_set.util.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = data_set.util.augmentation.shift_point_cloud(points[:, :, 0:3])
-
-        if args.dataset.startswith("scanobjectnn"):
-            points[:, :, 0:3] = data_set.util.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            points[:, :, 0:3] = data_set.util.augmentation.jitter_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = data_set.util.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = data_set.util.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
@@ -156,7 +154,7 @@ def parse_args():
 
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-    parser.add_argument('--log_dir', type=str, default="train",
+    parser.add_argument('--log_dir', type=str, default="train_scan",
                         help='experiment root')
 
     parser.add_argument('--optimizer', type=str, default='SGD',
