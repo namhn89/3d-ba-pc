@@ -324,7 +324,7 @@ if __name__ == '__main__':
         num_point=args.num_point,
         use_random=args.random,
         use_fps=args.fps,
-        data_augmentation=True,
+        data_augmentation=False,
         mode_attack=args.attack_method,
         use_normal=args.normal,
         permanent_point=args.permanent_point,

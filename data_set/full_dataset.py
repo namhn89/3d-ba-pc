@@ -190,8 +190,7 @@ class FullDataset(data.Dataset):
             label = data_set[i][1][0]
             point_set, mask = add_object_to_points(point_set,
                                                    num_point_obj=num_point,
-                                                   scale=self.scale_object,
-                                                   get_mask=True)
+                                                   scale=self.scale_object)
             new_dataset.append((point_set, target, label, mask))
 
         time.sleep(0.1)
@@ -291,15 +290,15 @@ if __name__ == '__main__':
         data_set=list(zip(x_train[0:32], y_train[0:32])),
         target=TARGETED_CLASS,
         num_point=1024,
-        portion=0.1,
-        mode_attack=CENTRAL_OBJECT,
+        portion=1.,
+        mode_attack=CORNER_POINT,
         added_num_point=128,
         data_augmentation=False,
         permanent_point=False,
         use_random=True,
         use_fps=False,
         is_testing=True,
-        scale_object=0.05,
+        scale_object=0.2,
     )
     vis = Visualizer()
     print(len(data_set))
@@ -308,7 +307,7 @@ if __name__ == '__main__':
     print(data_set[0][2])
     print(data_set[0][3].shape)
     points = data_set[0][0].cpu().numpy()
-    mask = data_set[0][2]
+    mask = data_set[0][3]
     vis.visualizer_backdoor(points=points, mask=mask)
     print(data_set.calculate_trigger_percentage())
     data_set.update_dataset()

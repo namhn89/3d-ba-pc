@@ -1,16 +1,19 @@
 import torch
+import time
+import torch.utils.data as data
+import torch.nn.parallel
+from tqdm import tqdm
+
 
 from data_set.trigger_generation.point_attack import add_point_multiple_corner, add_point_to_corner
+from data_set.trigger_generation.object_attack import add_object_to_points
 from load_data import load_data
-import torch.utils.data as data
-from tqdm import tqdm
 from data_set.util.sampling import pc_normalize, farthest_point_sample_with_index
 from data_set.util.sampling import random_sample_with_index
 from data_set.util.augmentation import *
-import torch.nn.parallel
 from config import *
-import time
 from utils import normal
+from visualization.open3d_visualization import Visualizer
 
 
 class BackdoorDataset(data.Dataset):
@@ -154,9 +157,8 @@ class BackdoorDataset(data.Dataset):
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
             label = data_set[i][1][0]
-            mask = np.zeros((point_set.shape[0], 1))
-            point_set = add_point_to_corner(point_set, num_point=num_point)
-            mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
+            point_set, mask = add_point_to_corner(point_set,
+                                                  num_point=num_point)
             new_dataset.append((point_set, target, mask))
             # assert point_set.shape[0] == POINT_CORNER_CONFIG['NUM_POINT_INPUT'] + num_point
 
@@ -170,10 +172,8 @@ class BackdoorDataset(data.Dataset):
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
             # label = data_set[i][1][0]
-            mask = np.zeros((point_set.shape[0], 1))
-            point_set = data_set.point_attack.add_point_to_centroid(point_set,
-                                                                    num_point=num_point)
-            mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
+            point_set, mask = data_set.point_attack.add_point_to_centroid(point_set,
+                                                                          num_point=num_point)
             new_dataset.append((point_set, target, mask))
             # assert point_set.shape[0] == POINT_CENTROID_CONFIG['NUM_POINT_INPUT'] + num_point
 
@@ -189,10 +189,9 @@ class BackdoorDataset(data.Dataset):
             point_set = data_set[i][0]
             # label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
-            point_set = data_set.obj_attack.add_object_to_points(point_set,
-                                                                 num_point_obj=num_point,
-                                                                 scale=self.scale)
-            mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
+            point_set, mask = add_object_to_points(point_set,
+                                                                       num_point_obj=num_point,
+                                                                       scale=self.scale)
             new_dataset.append((point_set, target, mask))
             # assert point_set.shape[0] == OBJECT_CENTROID_CONFIG['NUM_POINT_INPUT'] + num_point
 
@@ -208,10 +207,8 @@ class BackdoorDataset(data.Dataset):
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
             label = data_set[i][1][0]
-            mask = np.zeros((point_set.shape[0], 1))
-            point_set = add_point_multiple_corner(point_set,
-                                                  num_point_per_corner=num_point_per_corner)
-            mask = np.concatenate([mask, np.ones((num_point, 1))], axis=0)
+            point_set, mask = add_point_multiple_corner(point_set,
+                                                        num_point_per_corner=num_point_per_corner)
             new_dataset.append((point_set, target, mask))
 
         time.sleep(0.1)
@@ -295,24 +292,22 @@ if __name__ == '__main__':
         data_set=list(zip(x_train[0:32], y_train[0:32])),
         target=TARGETED_CLASS,
         num_point=1024,
-        portion=0.1,
-        mode_attack=MULTIPLE_CORNER_POINT,
+        portion=1.,
+        mode_attack=CENTRAL_OBJECT,
         added_num_point=128,
         data_augmentation=False,
         permanent_point=False,
         use_random=True,
         use_fps=False,
         is_testing=True,
-        scale=0.01,
+        scale=1,
     )
     print(len(data_set))
     print(data_set[0][0].shape)
     print(data_set[0][1].shape)
     print(data_set[0][2].shape)
     print(data_set.calculate_trigger_percentage())
+    vis = Visualizer()
     data_set.update_dataset()
+    vis.visualizer_backdoor(points=data_set[0][0], mask=data_set[0][2])
     print(data_set.calculate_trigger_percentage())
-    # for points, label, mask in data_set:
-    #     print(points.shape)
-    #     print(label.shape)
-    #     print(mask.shape)

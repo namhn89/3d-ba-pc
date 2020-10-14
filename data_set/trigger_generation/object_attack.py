@@ -10,7 +10,7 @@ def add_object_to_points(points,
                          obj_path=AIRPLANE,
                          scale=CENTRAL_OBJECT_CONFIG["SCALE"],
                          num_point_obj=CENTRAL_OBJECT_CONFIG['NUM_POINT_PER_OBJECT'],
-                         get_mask=False):
+                         get_mask=True):
 
     """
     :param points:
