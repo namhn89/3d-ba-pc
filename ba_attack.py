@@ -128,21 +128,24 @@ def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
 def parse_args():
     parser = argparse.ArgumentParser(description='Backdoor Attack on PointCloud NetWork')
 
-    parser.add_argument('--batch_size', type=int, default=16,
-                        help='batch size in training [default: 16]')
-    parser.add_argument('--epochs', default=500, type=int,
-                        help='number of epoch in training [default: 500]')
+    parser.add_argument('--batch_size', type=int, default=32,
+                        help='batch size in training [default: 32]')
+    parser.add_argument('--epochs', default=250, type=int,
+                        help='number of epoch in training [default: 250]')
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
+
     parser.add_argument('--model', type=str, default='pointnet_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
                                  "pointnet2_cls_ssg",
                                  "dgcnn_cls"],
                         help='training model [default: pointnet_cls]')
+
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-    parser.add_argument('--log_dir', type=str, default="train_attack",
+
+    parser.add_argument('--log_dir', type=str, default="train_attack_point_object",
                         help='experiment root [default: train_attack]')
     parser.add_argument('--optimizer', type=str, default='SGD',
                         choices=['Adam', 'SGD'],
@@ -154,6 +157,7 @@ def parse_args():
     parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
                         choices=['cos', 'step'],
                         help='Scheduler to use [default: cos]')
+
     parser.add_argument('--normal', action='store_true', default=False,
                         help='Whether to use normal information [default: False]')
     parser.add_argument('--random', action='store_true', default=False,
@@ -162,12 +166,14 @@ def parse_args():
                         help='Whether to use farthest point sample data [default: False]')
     parser.add_argument('--permanent_point', action='store_true', default=False,
                         help='Get fix first points on sample [default: False]')
-    parser.add_argument('--scale', type=float, default=0.05,
-                        help='scale centroid object for backdoor attack [default : 0.05]')
+
+    parser.add_argument('--scale', type=float, default=0.2,
+                        help='scale centroid object for backdoor attack [default : 0.2]')
     parser.add_argument('--num_point_trig', type=int, default=128,
                         help='num points for attacking trigger [default : 128]')
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num workers [default: 8]')
+
     parser.add_argument('--attack_method', type=str, default=CENTRAL_OBJECT,
                         choices=[
                             MULTIPLE_CORNER_POINT,
@@ -180,6 +186,7 @@ def parse_args():
                         ],
                         help="Attacking Method [default : central_object]",
                         )
+
     parser.add_argument('--dataset', type=str, default="modelnet40",
                         choices=[
                             "modelnet40",
@@ -190,12 +197,14 @@ def parse_args():
                             "scanobjectnn_pb_t50_rs"],
                         help="Dataset to using train/test data [default : modelnet40]"
                         )
+
     parser.add_argument('--dropout', type=float, default=0.5,
                         help='initial dropout rate [default: 0.5]')
     parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
                         help='Dimension of embeddings [default: 1024]')
     parser.add_argument('--k', type=int, default=40, metavar='N',
                         help='Num of nearest neighbors to use [default : 40]')
+
     args = parser.parse_args()
     return args
 

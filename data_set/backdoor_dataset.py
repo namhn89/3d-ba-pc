@@ -300,7 +300,7 @@ if __name__ == '__main__':
         use_random=True,
         use_fps=False,
         is_testing=True,
-        scale=1,
+        scale=0.2,
     )
     print(len(data_set))
     print(data_set[0][0].shape)
