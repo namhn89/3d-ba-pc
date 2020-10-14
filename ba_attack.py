@@ -535,7 +535,7 @@ if __name__ == '__main__':
                                                                  )
 
         if acc_poison >= best_acc_poison:
-            best_instance_acc_poison = acc_poison
+            best_acc_poison = acc_poison
             best_class_acc_poison = class_acc_poison
             log_string('Saving bad model ... ')
             save_path = str(checkpoints_dir) + '/best_bad_model.pth'
