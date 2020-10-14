@@ -6,21 +6,24 @@ import random
 import torch
 import torch.nn.parallel
 import torch.utils.data
+import shutil
+from distutils.dir_util import copy_tree
 from tqdm import tqdm
-from config import *
-from load_data import load_data
-import data_set.util.augmentation
 import numpy as np
 import datetime
 from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
-from utils import data_utils
 import logging
-from data_set.shift_dataset import ShiftPointDataset
 import sklearn.metrics as metrics
-import shutil
 import importlib
 import sys
+
+from data_set.shift_dataset import ShiftPointDataset
+from load_data import load_data
+import data_set.util.augmentation
+from utils import data_utils
+from config import *
+
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -367,13 +370,11 @@ if __name__ == '__main__':
     )
 
     MODEL = importlib.import_module(args.model)
-    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
-    shutil.copy('./models/pointnet_util.py', str(experiment_dir))
-    shutil.copy('data_set/mydataset.py', str(experiment_dir))
-    shutil.copy('data_set/shift_dataset.py', str(experiment_dir))
-    shutil.copy('data_set/backdoor_dataset.py', str(experiment_dir))
-    shutil.copy('data_set/modelnet40.py', str(experiment_dir))
-    shutil.copy('data_set/pointcloud_dataset.py', str(experiment_dir))
+    experiment_dir.joinpath('models').mkdir(exist_ok=True)
+    experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
+    copy_tree('./models', str(experiment_dir.joinpath('models')))
+    copy_tree('./data_set', str(experiment_dir.joinpath('data_set')))
+    shutil.copy('ba_duplicate.py', str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
