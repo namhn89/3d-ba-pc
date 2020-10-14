@@ -4,9 +4,9 @@ import torch.utils.data as data
 import torch.nn.parallel
 from tqdm import tqdm
 
-
 from data_set.trigger_generation.point_attack import add_point_multiple_corner, add_point_to_corner
 from data_set.trigger_generation.object_attack import add_object_to_points
+from data_set.trigger_generation.point_attack import add_point_to_centroid
 from load_data import load_data
 from data_set.util.sampling import pc_normalize, farthest_point_sample_with_index
 from data_set.util.sampling import random_sample_with_index
@@ -172,8 +172,8 @@ class BackdoorDataset(data.Dataset):
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
             # label = data_set[i][1][0]
-            point_set, mask = data_set.point_attack.add_point_to_centroid(point_set,
-                                                                          num_point=num_point)
+            point_set, mask = add_point_to_centroid(point_set,
+                                                    num_point=num_point)
             new_dataset.append((point_set, target, mask))
             # assert point_set.shape[0] == POINT_CENTROID_CONFIG['NUM_POINT_INPUT'] + num_point
 
@@ -190,8 +190,8 @@ class BackdoorDataset(data.Dataset):
             # label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
             point_set, mask = add_object_to_points(point_set,
-                                                                       num_point_obj=num_point,
-                                                                       scale=self.scale)
+                                                   num_point_obj=num_point,
+                                                   scale=self.scale)
             new_dataset.append((point_set, target, mask))
             # assert point_set.shape[0] == OBJECT_CENTROID_CONFIG['NUM_POINT_INPUT'] + num_point
 
