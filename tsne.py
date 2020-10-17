@@ -4,11 +4,18 @@ import argparse
 import random
 import os
 import sys
-from utils import data_utils
 import importlib
-from load_data import load_data
 from tqdm import tqdm
+
+
+from data_set.la_dataset import LocalPointDataset
+from data_set.shift_dataset import ShiftPointDataset
+from data_set.pc_dataset import PointCloudDataSet
+from data_set.backdoor_dataset import BackdoorDataset
+from config import *
 import utils.fileio
+from utils import data_utils
+from load_data import load_data
 
 manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", manualSeed)
@@ -23,7 +30,7 @@ sys.path.append(os.path.join(ROOT_DIR, 'models'))
 def parse_args():
     parser = argparse.ArgumentParser(description='t-SNE fop Visualization on Point Cloud')
     parser.add_argument('--gpu', type=str, default='0')
-    parser.add_argument('--model', type=str, default='dgcnn_cls',
+    parser.add_argument('--model', type=str, default='pointnet_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
                                  "pointnet2_cls_ssg",
@@ -164,5 +171,19 @@ if __name__ == '__main__':
         classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
 
     classifier = load_model(args.log_dir, classifier)
+    poison_dataset = LocalPointDataset(
+        data_set=list(zip(x_test, y_test)),
+        portion=1.0,
+        name="poison_test",
+        added_num_point=128,
+        data_augmentation=False,
+        mode_attack=LOCAL_POINT,
+        num_point=1024,
+        use_random=True,
+        use_fps=False,
+        permanent_point=False,
+        radius=0.01,
+    )
+    global_feature_vec, label, label_pred = save_global_feature(classifier, data_set=poison_dataset)
     print(classifier)
 

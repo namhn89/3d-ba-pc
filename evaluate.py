@@ -42,7 +42,7 @@ def parse_args():
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device')
     parser.add_argument('--log_dir', type=str,
-                        default='train_attack_local_point_32_250_dgcnn_cls_1024_40_random_1024_radius_0.02_128_modelnet40',
+                        default='train_attack_local_point_32_250_dgcnn_cls_1024_40_random_1024_radius_0.01_128_modelnet40',
                         help='Experiment root')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num workers')

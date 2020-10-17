@@ -4,7 +4,6 @@ import os
 
 from load_data import load_data
 from visualization import open3d_visualization
-from data_set.util import sampling
 from data_set.util.sampling import random_sample
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -65,7 +64,7 @@ if __name__ == '__main__':
     x_train, y_train, x_test, y_test = load_data('/home/nam/workspace/vinai/project/3d-ba-pc/data'
                                                  '/modelnet40_ply_hdf5_2048')
     vis = open3d_visualization.Visualizer()
-    points, mask = add_fixed_and_sampling_into_ball_query(x_train[1], num_point=1024, num_point_added=128, radius=0.1)
+    points, mask = add_fixed_and_sampling_into_ball_query(x_train[10], num_point=1024, num_point_added=128, radius=0.01)
     print(sum(mask))
     print(points.shape)
     print(mask.shape)

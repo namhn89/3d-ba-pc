@@ -566,6 +566,21 @@ if __name__ == '__main__':
             }
             torch.save(state, save_path)
 
+        if epoch == args.epochs - 1:
+            final_model_path = str(checkpoints_dir) + '/final_model.pth'
+            log_string('Saving at %s' % final_model_path)
+            state = {
+                'epoch': epoch,
+                'loss_clean': loss_clean,
+                'acc_clean': acc_clean,
+                'class_acc_clean': class_acc_clean,
+                'model_state_dict': classifier.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+            }
+            torch.save(state, final_model_path)
+
+        log_string('*** Best Result ***')
+
         log_string('Clean Test - Best Accuracy: {:.4f}, Class Accuracy: {:.4f}'.format(best_acc_clean,
                                                                                        best_class_acc_clean))
 
