@@ -647,7 +647,7 @@ if __name__ == '__main__':
         summary_writer.add_scalar('Bad/Accuracy', acc_poison, epoch)
         summary_writer.add_scalar('Bad/Class_Accuracy', class_acc_poison, epoch)
 
-    print("Average ratio trigger on train sample {:.4f}".format(np.mean(ratio_backdoor_train)))
-    print("Average ratio trigger on bad sample {:.4f}".format(np.mean(ratio_backdoor_test)))
+    log_string("Average ratio trigger on train sample {:.4f}".format(np.mean(ratio_backdoor_train)))
+    log_string("Average ratio trigger on bad sample {:.4f}".format(np.mean(ratio_backdoor_test)))
 
     log_string('End of training...')
