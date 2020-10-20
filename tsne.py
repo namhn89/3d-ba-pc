@@ -7,7 +7,7 @@ import sys
 import importlib
 from tqdm import tqdm
 
-
+from visualization.tsne_visualization import save_image_from_tsne
 from data_set.la_dataset import LocalPointDataset
 from data_set.shift_dataset import ShiftPointDataset
 from data_set.pc_dataset import PointCloudDataSet
@@ -184,6 +184,7 @@ if __name__ == '__main__':
         permanent_point=False,
         radius=0.01,
     )
-    global_feature_vec, label, label_pred = save_global_feature(classifier, data_set=poison_dataset)
     print(classifier)
+    global_feature_vec, label, label_pred = save_global_feature(classifier, data_set=poison_dataset)
+    save_image_from_tsne(global_feature_vec, label, name_file='./test.png')
 
