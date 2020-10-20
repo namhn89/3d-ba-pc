@@ -46,6 +46,7 @@ def parse_args():
                         help='Experiment root')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num workers')
+    parser.add_argument('--radius', type=float, default=0.01, help='Radius for dataset')
     parser.add_argument('--dataset', type=str, default="modelnet40",
                         help="Dataset to using train/test data [default : modelnet40]",
                         choices=[
@@ -64,6 +65,12 @@ def parse_args():
                         help='Dimension of embeddings [default: 1024]')
     parser.add_argument('--k', type=int, default=40, metavar='N',
                         help='Num of nearest neighbors to use [default : 40]')
+    parser.add_argument('--type', type=str, default='/checkpoints/best_model.pth',
+                        choices=[
+                            '/checkpoints/best_bad_model.pth',
+                            '/checkpoints/best_model.pth',
+                            '/checkpoints/final_model.pth'
+                        ])
 
     return parser.parse_args()
 
@@ -190,7 +197,7 @@ if __name__ == '__main__':
 
     print(classifier)
 
-    checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_bad_model.pth',
+    checkpoint = torch.load(str(experiment_dir) + args.type,
                             map_location=lambda storage, loc: storage)
 
     classifier.load_state_dict(checkpoint['model_state_dict'])
@@ -231,7 +238,7 @@ if __name__ == '__main__':
         use_random=True,
         use_fps=False,
         permanent_point=False,
-        radius=0.02,
+        radius=args.radius,
     )
 
     '''Clean Test'''
