@@ -92,7 +92,6 @@ LOCAL_POINT_CONFIG = {
     "RADIUS": 0.01,
 }
 
-
 categories = {
     0: 'airplane',
     1: 'bathtub',
@@ -134,4 +133,22 @@ categories = {
     37: 'vase',
     38: 'wardrobe',
     39: 'xbox'
+}
+
+categories_scanobjectnn = {
+    0: "bag",
+    1: "bin",
+    2: "box",
+    3: "cabinet",
+    4: "chair",
+    5: "desk",
+    6: "display",
+    7: "door",
+    8: "shelf",
+    9: "table",
+    10: "bed",
+    11: "pillow",
+    12: "sink",
+    13: "sofa",
+    14: "toilet",
 }

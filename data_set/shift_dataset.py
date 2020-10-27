@@ -14,6 +14,7 @@ from data_set.util.sampling import pc_normalize, farthest_point_sample_with_inde
 from data_set.util.sampling import random_sample_with_index
 from data_set.util.augmentation import translate_pointcloud
 from load_data import load_data
+from utils import data_utils
 
 
 class ShiftPointDataset(data.Dataset):
@@ -304,6 +305,11 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     x_train, y_train, x_test, y_test = load_data(
         '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
+    # x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
+    # x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
+    # y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+    # y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+
     dataset = ShiftPointDataset(
         name="data",
         portion=1.0,

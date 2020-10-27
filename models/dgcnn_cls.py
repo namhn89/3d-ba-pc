@@ -113,8 +113,10 @@ class get_model(nn.Module):
         x = self.conv5(x)  # (batch_size, 64+64+128+256, num_points) -> (batch_size, emb_dims, num_points)
         layers['emb_dim'] = x
         x1 = F.adaptive_max_pool1d(x, 1).view(batch_size, -1)
+        layers['max_pool'] = x1
         # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
         x2 = F.adaptive_avg_pool1d(x, 1).view(batch_size, -1)
+        layers['avg_pool'] = x2
         # (batch_size, emb_dims, num_points) -> (batch_size, emb_dims)
         x = torch.cat((x1, x2), 1)  # (batch_size, emb_dims*2)
         layers['global_feature'] = x

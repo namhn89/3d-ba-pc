@@ -74,7 +74,8 @@ class Visualizer:
                 if ba_mask[idx][0] == 2.:
                     np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['purple']
 
-        custom_draw_geometry_with_rotation(pcd=pcd)
+        # custom_draw_geometry_with_rotation(pcd=pcd)
+        custom_draw_geometry(pcd=pcd)
 
     def visualize_critical(self, points, mask, only_special=False):
         """

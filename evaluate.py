@@ -17,6 +17,8 @@ from load_data import load_data
 import sklearn.metrics as metrics
 from data_set.pc_dataset import PointCloudDataSet
 from data_set.la_dataset import LocalPointDataset
+from data_set.backdoor_dataset import BackdoorDataset
+from data_set.shift_dataset import ShiftPointDataset
 
 manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", manualSeed)
@@ -33,12 +35,12 @@ def parse_args():
     parser = argparse.ArgumentParser('')
     parser.add_argument('--batch_size', type=int, default=16,
                         help='batch size in training')
-    parser.add_argument('--model', type=str, default='dgcnn_cls',
+    parser.add_argument('--model', type=str, default='pointnet_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
                                  "pointnet2_cls_ssg",
                                  "dgcnn_cls"],
-                        help='training model [default: dgcnn_cls]')
+                        help='training model [default: pointnet_cls]')
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device')
     parser.add_argument('--log_dir', type=str,
@@ -202,17 +204,18 @@ if __name__ == '__main__':
 
     classifier.load_state_dict(checkpoint['model_state_dict'])
 
-    # poison_dataset = ShiftPointDataset(
-    #     data_set=list(zip(x_test, y_test)),
-    #     portion=1.0,
-    #     name="poison_test",
-    #     added_num_point=1024,
-    #     num_point=1024,
-    #     use_random=True,
-    #     use_fps=False,
-    #     data_augmentation=False,
-    #     mode_attack=DUPLICATE_POINT,
-    # )
+    poison_dataset = ShiftPointDataset(
+        data_set=list(zip(x_test, y_test)),
+        portion=1.0,
+        name="poison_test",
+        added_num_point=1024,
+        num_point=1024,
+        use_random=True,
+        use_fps=False,
+        data_augmentation=False,
+        mode_attack=DUPLICATE_POINT,
+    )
+    # '''Bad Test'''
 
     # poison_dataset = PoisonDataset(
     #     data_set=list(zip(x_test, y_test)),
@@ -225,26 +228,38 @@ if __name__ == '__main__':
     #     permanent_point=False,
     # )
 
-    '''Bad Test'''
+    # poison_dataset = LocalPointDataset(
+    #     data_set=list(zip(x_test, y_test)),
+    #     portion=1.0,
+    #     name="poison",
+    #     added_num_point=1024,
+    #     num_point=128,
+    #     use_random=True,
+    #     use_fps=False,
+    #     data_augmentation=False,
+    #     mode_attack=LOCAL_POINT,
+    # )
 
-    poison_dataset = LocalPointDataset(
-        data_set=list(zip(x_test, y_test)),
-        portion=1.,
-        name="poison_test",
-        added_num_point=128,
-        data_augmentation=False,
-        mode_attack=LOCAL_POINT,
-        num_point=1024,
-        use_random=True,
-        use_fps=False,
-        permanent_point=False,
-        radius=args.radius,
-    )
+
+    # poison_dataset = BackdoorDataset(
+    #     data_set=list(zip(x_test, y_test)),
+    #     portion=1.0,
+    #     name="Poison",
+    #     added_num_point=128,
+    #     num_point=1024,
+    #     use_random=True,
+    #     use_fps=False,
+    #     data_augmentation=False,
+    #     mode_attack=CORNER_POINT,
+    #     use_normal=False,
+    #     permanent_point=False,
+    #     scale=0.01,
+    # )
 
     '''Clean Test'''
 
     clean_dataset = PointCloudDataSet(
-        name="Train",
+        name="clean",
         data_set=list(zip(x_test, y_test)),
         num_point=1024,
         data_augmentation=False,

@@ -1,9 +1,9 @@
 import numpy as np
 import load_data
 from data_set.util.sampling import farthest_point_sample
-from config import AIRPLANE
-from config import CENTRAL_OBJECT_CONFIG
 from visualization.open3d_visualization import Visualizer
+from config import *
+from utils import data_utils
 
 
 def add_object_to_points(points,
@@ -54,8 +54,19 @@ def max_distance_center(points):
 
 
 if __name__ == '__main__':
-    x_train, y_train, x_test, y_test = load_data.load_data('../../data/modelnet40_ply_hdf5_2048')
-    random_sample = x_train[10]
-    points, mask = add_object_to_points(points=random_sample, get_mask=True)
+    # x_train, y_train, x_test, y_test = load_data.load_data(
+    #     dir="/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048")
+    x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
+    x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
+    choose = -1
+    for id in range(len(y_test)):
+        if categories[y_test[id][0]] == 'chair':
+            choose = id
+            break
+    print(choose)
+    sample = x_test[choose]
+    label = y_test[choose]
+    print(categories[label[0]])
+    points, mask = add_object_to_points(points=sample, get_mask=True)
     vis = Visualizer()
     vis.visualizer_backdoor(points=points, mask=mask)

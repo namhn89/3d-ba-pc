@@ -5,6 +5,8 @@ import os
 from load_data import load_data
 from visualization import open3d_visualization
 from data_set.util.sampling import random_sample
+from utils import data_utils
+from config import *
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
@@ -63,8 +65,24 @@ def add_fixed_and_sampling_into_ball_query(point_set, mask=None, num_point=1024,
 if __name__ == '__main__':
     x_train, y_train, x_test, y_test = load_data('/home/nam/workspace/vinai/project/3d-ba-pc/data'
                                                  '/modelnet40_ply_hdf5_2048')
+    # x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
+    # x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
+    # y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+    # y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+
+    choose = -1
+    for id in range(len(y_test)):
+        if categories[y_test[id][0]] == 'chair':
+            choose = id
+            break
+    print(choose)
+    sample = x_test[choose]
+    label = y_test[choose]
+    # print(categories_scanobjectnn[label])
+    print(categories[label[0]])
+
     vis = open3d_visualization.Visualizer()
-    points, mask = add_fixed_and_sampling_into_ball_query(x_train[10], num_point=1024, num_point_added=128, radius=0.01)
+    points, mask = add_fixed_and_sampling_into_ball_query(sample, num_point=1024, num_point_added=128, radius=0.1)
     print(sum(mask))
     print(points.shape)
     print(mask.shape)

@@ -2,6 +2,7 @@ import numpy as np
 import load_data
 from visualization.open3d_visualization import Visualizer
 from config import *
+from utils import data_utils
 
 
 def random_corner_points(low_bound, up_bound, num_point):
@@ -98,9 +99,22 @@ def add_point_multiple_corner(point_set,
 
 
 if __name__ == '__main__':
-    x_train, y_train, x_test, y_test = load_data.load_data(
-        dir="/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048")
-    sample = x_train[5]
+    # x_train, y_train, x_test, y_test = load_data.load_data(
+    #     dir="/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048")
+    x_train, y_train = data_utils.load_h5("/home/nam/workspace/vinai/project/3d-ba-pc/data/h5_files/main_split"
+                                          "/training_objectdataset_augmentedrot_scale75.h5")
+    x_test, y_test = data_utils.load_h5("/home/nam/workspace/vinai/project/3d-ba-pc/data/h5_files/main_split"
+                                        "/test_objectdataset_augmentedrot_scale75.h5")
+    choose = -1
+    for id in range(len(y_test)):
+        if categories_scanobjectnn[y_test[id]] == 'sofa':
+            choose = id
+            break
+    print(choose)
+    sample = x_test[choose]
+    label = y_test[choose]
+    print(categories_scanobjectnn[label])
+    # print(categories[label[0]])
     vis = Visualizer()
     corner_sample, mask = add_point_to_corner(sample, num_point=128)
     central_sample, central_mask = add_point_to_centroid(sample, num_point=128)
