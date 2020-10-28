@@ -199,4 +199,4 @@ if __name__ == '__main__':
         num_classes=num_classes,
         device=device,
     )
-    visualization.get_visualization_backdoor_sample(8)
+    visualization.get_visualization_backdoor_sample(3)
