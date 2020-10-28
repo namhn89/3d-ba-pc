@@ -2,12 +2,12 @@ import numpy as np
 import logging
 import torch
 
-
 from config import *
 from utils import data_utils
 import models.dgcnn_cls
 from data_set.pc_dataset import PointCloudDataSet
 from data_set.backdoor_dataset import BackdoorDataset
+from data_set.shift_dataset import ShiftPointDataset
 from load_data import load_data
 from visualization.open3d_visualization import Visualizer
 
@@ -17,7 +17,8 @@ class CriticalPointNet(object):
         self.num_classes = num_classes
         self.device = device
 
-        self.ba_classifier = models.dgcnn_cls.get_model(self.num_classes, emb_dims=1024, k=40, dropout=0.5).to(self.device)
+        self.ba_classifier = models.dgcnn_cls.get_model(self.num_classes, emb_dims=1024, k=40, dropout=0.5).to(
+            self.device)
         self.classifier = models.dgcnn_cls.get_model(self.num_classes, emb_dims=1024, k=40, dropout=0.5).to(self.device)
         self.criterion = models.dgcnn_cls.get_loss().to(self.device)
 
@@ -35,20 +36,18 @@ class CriticalPointNet(object):
             use_fps=False,
             is_testing=False,
         )
-        self.bad_dataset = BackdoorDataset(
+        self.bad_dataset = ShiftPointDataset(
             data_set=data_set,
             # data_set=list(zip(x_test, y_test)),
-            name="poison",
             portion=1.0,
-            added_num_point=128,
+            name="poison",
+            added_num_point=1024,
+            data_augmentation=False,
+            mode_attack=DUPLICATE_POINT,
             num_point=1024,
             use_random=True,
             use_fps=False,
-            data_augmentation=False,
-            mode_attack=MULTIPLE_CORNER_POINT,
-            use_normal=False,
             permanent_point=False,
-            scale=0.2,
             is_testing=True,
         )
 
@@ -66,6 +65,8 @@ class CriticalPointNet(object):
         checkpoint = torch.load(str(ba_dir) + '/checkpoints/best_model.pth',
                                 map_location=lambda storage, loc: storage)
         self.ba_classifier.load_state_dict(checkpoint['model_state_dict'])
+        # print(self.classifier)
+        # print(self.ba_classifier)
 
     def get_visualization_backdoor_sample(self, index):
         self.classifier.eval()
@@ -109,20 +110,35 @@ class CriticalPointNet(object):
         critical_mask = self.make_one_critical(emb_dim)
         ba_critical_mask = self.make_one_critical(ba_emb_dim)
 
+        # print(sum(ba_mask == 2))
         # print(ba_mask.shape)
         # print(critical_mask.shape)
         # print(ba_critical_mask.shape)
 
         # Visualization
-        self.vis.visualize_critical_with_backdoor(points=ba_points,
-                                                  mask=ba_mask,
-                                                  critical_mask=ba_critical_mask)
-        self.vis.visualize_critical_with_backdoor(points=ba_points,
-                                                  mask=ba_mask,
-                                                  critical_mask=critical_mask)
+        self.vis.visualize_backdoor(points=ba_points,
+                                    mask=ba_mask)
+        self.vis.visualize_duplicate_critical_backdoor(points=ba_points,
+                                                       mask=ba_mask,
+                                                       critical_mask=ba_critical_mask)
+        self.vis.visualize_duplicate_critical_backdoor(points=ba_points,
+                                                       mask=ba_mask,
+                                                       critical_mask=critical_mask)
+
+        ba_mask = self.process_duplicate(ba_points, ba_mask)
 
         print(self.calculate_percentage(critical_mask, ba_mask))
         print(self.calculate_percentage(ba_critical_mask, ba_mask))
+
+    @staticmethod
+    def process_duplicate(points, mask):
+        c_mask = np.array(mask, copy=True)
+        u, idx = np.unique(points, axis=0, return_index=True)
+        u, cnt = np.unique(points, axis=0, return_counts=True)
+        for i, value in enumerate(idx):
+            if cnt[i] >= 2.:
+                c_mask[value] = 2.
+        return c_mask
 
     @staticmethod
     def make_one_critical(hx, num_critical_point=1024):
@@ -138,7 +154,7 @@ class CriticalPointNet(object):
     def calculate_percentage(critical_mask, ba_mask):
         count_result = 0
         for index in range(len(critical_mask)):
-            if critical_mask[index] == 1. and ba_mask[index] == 1.:
+            if critical_mask[index] == 1. and ba_mask[index] == 2.:
                 count_result += 1
         return count_result / len(critical_mask) * 100
 
@@ -146,7 +162,7 @@ class CriticalPointNet(object):
     def get_critical(points, emb_dim):
         """
         :param points: (batch_size, numpoint, 1024)
-        :param emb_dims: (batch_size, numpoint, 1024)
+        :param emb_dim: (batch_size, numpoint, 1024)
         :return: (batch_size, mask)
         """
         sample_num = points.shape[0]
@@ -177,8 +193,8 @@ if __name__ == '__main__':
     # num_classes = 15
     data_set = list(zip(x_test[0:10], y_test[0:10]))
     visualization = CriticalPointNet(
-        ba_log_dir="train_attack_local_point_32_250_pointnet_cls_SGD_cos_random_1024_radius_0",
-        clean_log_dir="train_32_250_SGD_cos_pointnet_cls_random_1024_modelnet40",
+        ba_log_dir="train_attack_duplicate_point_32_250_dgcnn_cls_SGD_cos_1024_40_0.5_random_1024_1024_modelnet40",
+        clean_log_dir="train_32_250_SGD_cos_dgcnn_cls_1024_40_0.5_random_1024_modelnet40",
         data_set=data_set,
         num_classes=num_classes,
         device=device,

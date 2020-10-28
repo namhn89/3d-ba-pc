@@ -36,7 +36,7 @@ class Visualizer:
     #     print((mask == 2).sum())
     #     return c_mask
 
-    def visualizer_backdoor(self, points, mask, only_special=False):
+    def visualize_backdoor(self, points, mask, only_special=False):
         """
         :param only_special:
         :param points:
@@ -74,8 +74,8 @@ class Visualizer:
                 if ba_mask[idx][0] == 2.:
                     np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['purple']
 
-        # custom_draw_geometry_with_rotation(pcd=pcd)
-        custom_draw_geometry(pcd=pcd)
+        custom_draw_geometry_with_rotation(pcd=pcd)
+        # custom_draw_geometry(pcd=pcd)
 
     def visualize_critical(self, points, mask, only_special=False):
         """
@@ -127,3 +127,49 @@ class Visualizer:
             if not mask[idx][0] == 1. and critical_mask[idx][0] == 1.:
                 np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['red']
         custom_draw_geometry_with_rotation(pcd)
+
+    def visualize_duplicate_critical_backdoor(self, points, mask, critical_mask, only_special=False):
+        """
+        :param only_special:
+        :param points:
+        :param mask:
+        :param critical_mask:
+        :return:
+        """
+
+        def process_duplicate(points, mask):
+            c_mask = np.array(mask, copy=True)
+            u, idx = np.unique(points, axis=0, return_index=True)
+            u, cnt = np.unique(points, axis=0, return_counts=True)
+            for i, value in enumerate(idx):
+                if cnt[i] >= 2.:
+                    c_mask[value] = 2.
+            return c_mask
+
+        ba_mask = process_duplicate(points, mask)
+        # print(ba_mask)
+        # print((ba_mask == 2.).sum())
+        pcd = o3d.geometry.PointCloud()
+        backdoor_points = []
+        if only_special:
+            for idx, c in enumerate(mask):
+                if ba_mask[idx][0] == 1. or ba_mask[idx][0] == 2.:
+                    backdoor_points.append(points[idx].numpy())
+            backdoor_points = np.asarray(backdoor_points)
+            pcd.points = o3d.utility.Vector3dVector(backdoor_points)
+            pcd.paint_uniform_color(self.map_label_to_rgb['green'])
+        else:
+            pcd.points = o3d.utility.Vector3dVector(points)
+            pcd.paint_uniform_color([0.5, 0.5, 0.5])
+            for idx, c in enumerate(mask):
+                # if ba_mask[idx][0] == 1.:
+                #     np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['green']
+                if ba_mask[idx][0] == 2. and not critical_mask[idx][0] == 1.:
+                    np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['purple']
+                if ba_mask[idx][0] == 2. and critical_mask[idx][0] == 1.:
+                    np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['yellow']
+                if not ba_mask[idx][0] == 2. and critical_mask[idx][0] == 1.:
+                    np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['blue']
+
+        custom_draw_geometry_with_rotation(pcd=pcd)
+        # custom_draw_geometry(pcd=pcd)
