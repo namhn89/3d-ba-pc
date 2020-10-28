@@ -121,9 +121,9 @@ class ShiftPointDataset(data.Dataset):
                 return 0
         else:
             if use_quantity:
-                return (sum(res) / len(res)) * 100 / self.portion, len(res)
+                return (sum(res) / len(res)) * 100, len(res)
             else:
-                return (sum(res) / len(res)) * 100 / self.portion
+                return (sum(res) / len(res)) * 100
 
     def __getitem__(self, item):
         """
@@ -312,7 +312,7 @@ if __name__ == '__main__':
 
     dataset = ShiftPointDataset(
         name="data",
-        portion=1.0,
+        portion=0.1,
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
         mode_attack=DUPLICATE_POINT,

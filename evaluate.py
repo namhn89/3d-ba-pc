@@ -240,7 +240,6 @@ if __name__ == '__main__':
     #     mode_attack=LOCAL_POINT,
     # )
 
-
     # poison_dataset = BackdoorDataset(
     #     data_set=list(zip(x_test, y_test)),
     #     portion=1.0,
