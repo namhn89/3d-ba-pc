@@ -26,6 +26,7 @@ def random_corner_points(low_bound, up_bound, num_point):
 def add_point_to_corner(point_set, num_point, mask=None, eps=EPSILON):
     """
         Adding points to corner
+    :param mask:
     :param num_point:
     :param point_set:
     :param eps:
@@ -114,7 +115,6 @@ if __name__ == '__main__':
     sample = x_test[choose]
     label = y_test[choose]
     print(categories_scanobjectnn[label])
-    # print(categories[label[0]])
     vis = Visualizer()
     corner_sample, mask = add_point_to_corner(sample, num_point=128)
     central_sample, central_mask = add_point_to_centroid(sample, num_point=128)
@@ -126,6 +126,6 @@ if __name__ == '__main__':
     print(mulc_mask.shape)
     print(central_sample.shape)
     print(central_mask.shape)
-    vis.visualizer_backdoor(points=corner_sample, mask=mask)
-    vis.visualizer_backdoor(points=central_sample, mask=central_mask)
-    vis.visualizer_backdoor(points=mulc_sample, mask=mulc_mask)
+    vis.visualize_backdoor(points=corner_sample, mask=mask)
+    vis.visualize_backdoor(points=central_sample, mask=central_mask)
+    vis.visualize_backdoor(points=mulc_sample, mask=mulc_mask)
