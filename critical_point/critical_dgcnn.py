@@ -102,7 +102,10 @@ class CriticalPointNet(object):
         ba_emb_dim = np.squeeze(ba_layers['emb_dim'].detach().cpu().numpy())
 
         prediction = output.data.max(dim=1)[1].detach().cpu().numpy()[0]
+        print(output.data)
+        value = output.data.max(dim=1)[0].detach().cpu().numpy()[0]
         ba_prediction = ba_output.data.max(dim=1)[1].detach().cpu().numpy()[0]
+        ba_value = ba_output.data.max(dim=1)[0].detach().cpu().numpy()[0]
 
         print("Prediction of Clean Model : {}".format(categories[prediction]))
         print("Prediction of Bad Model : {}".format(categories[ba_prediction]))

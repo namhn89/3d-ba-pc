@@ -8,7 +8,8 @@ from PIL import Image
 from plyfile import PlyData, PlyElement
 from load_data import load_data
 from data_set.trigger_generation.point_attack import add_point_multiple_corner
-from data_set.util.sampling import random_sample
+from data_set.util.sampling import random_sample, random_sample_with_index
+from visualization.open3d_visualization import Visualizer
 
 PATH_TO_MITSUBA2 = "/home/nam/mitsuba2/build/dist/mitsuba"  # mitsuba exectuable
 
@@ -103,7 +104,7 @@ def standardize_bbox(pcl, points_per_object):
     scale = np.amax(maxs - mins)
     print("Center: {}, Scale: {}".format(center, scale))
     result = ((pcl - center) / scale).astype(np.float32)  # [-0.5, 0.5]
-    return result
+    return result, pt_indices
 
 
 # only for debugging reasons
@@ -149,13 +150,21 @@ def main():
 
     x_train, y_train, x_test, y_test = load_data("/home/nam/workspace/vinai/project/3d-ba-pc/data"
                                                  "/modelnet40_ply_hdf5_2048")
-    pcl = x_test[2]
-    pcl, _ = add_point_multiple_corner(pcl, num_point_per_corner=16)
-    pcl = random_sample(pcl, 1024)
-    pcl = standardize_bbox(pcl, 1024)
+    pcl = x_test[1]
+    vis = Visualizer()
+    pcl, mask = add_point_multiple_corner(pcl, num_point_per_corner=16)
+    vis.visualize_backdoor(points=pcl, mask=mask)
+    # pcl, idx = random_sample_with_index(pcl, 1024)
+
+    pcl, idx = standardize_bbox(pcl, 2176)
+    mask = mask[idx, :]
     xml_segments = [xml_head]
     for i in range(pcl.shape[0]):
-        color = colormap(pcl[i, 0] + 0.5, pcl[i, 1] + 0.5, pcl[i, 2] + 0.5 - 0.0125)
+        if mask[i] == 1.:
+            color = colormap(1., 0., 0.)
+        else:
+            color = colormap(0.5, 0.5, 0.5)
+        # color = colormap(pcl[i, 0] + 0.5, pcl[i, 1] + 0.5, pcl[i, 2] + 0.5 - 0.0125)
         xml_segments.append(xml_ball_segment.format(pcl[i, 0], pcl[i, 1], pcl[i, 2], *color))
     xml_segments.append(xml_tail)
 
