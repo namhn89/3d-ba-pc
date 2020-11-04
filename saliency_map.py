@@ -12,6 +12,7 @@ from utils import data_utils
 from load_data import load_data
 from data_set.shift_dataset import ShiftPointDataset
 from data_set.pc_dataset import PointCloudDataSet
+from data_set.backdoor_dataset import BackdoorDataset
 from config import *
 
 manualSeed = random.randint(1, 10000)  # fix seed
@@ -297,8 +298,8 @@ def main():
         points_adv = attack.drop_points(points=points, labels=labels)
         points_adv = torch.from_numpy(points_adv.astype(np.float32))
 
-        print(points.shape)
-        print(points_adv.shape)
+        # print(points.shape)
+        # print(points_adv.shape)
 
         classifier.to(device)
         classifier.eval()
