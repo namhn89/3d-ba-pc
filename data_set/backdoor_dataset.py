@@ -31,12 +31,14 @@ class BackdoorDataset(data.Dataset):
                  use_fps=False,
                  use_normal=False,
                  is_testing=False,
+                 get_original=False,
                  permanent_point=False,
                  scale=0.05,
                  ):
 
         self.use_normal = use_normal
         self.use_random = use_random
+        self.get_original = get_original
         self.use_fps = use_fps
         self.n_class = n_class
         self.data_augmentation = data_augmentation
@@ -113,7 +115,7 @@ class BackdoorDataset(data.Dataset):
     def calculate_trigger_percentage(self):
         res = []
         for data in self.data_set:
-            points, label, mask = data
+            points, label, mask, original_label = data
             trigger = (mask == 1).sum()
             num_point = mask.shape[0]
             res.append(trigger / num_point)
@@ -129,6 +131,7 @@ class BackdoorDataset(data.Dataset):
         point_set = self.data_set[item][0]
         label = self.data_set[item][1]
         mask = self.data_set[item][2]
+        original_label = self.data_set[item][3]
 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
 
@@ -141,9 +144,14 @@ class BackdoorDataset(data.Dataset):
 
         point_set = torch.from_numpy(point_set.astype(np.float32))
         label = torch.from_numpy(np.array([label]).astype(np.int64))
+        original_label = torch.from_numpy(np.array([original_label]).astype(np.int64))
 
-        if self.is_testing:
+        if self.is_testing and self.get_original:
+            return point_set, label, mask, original_label
+        elif self.is_testing:
             return point_set, label, mask
+        elif self.get_original:
+            return point_set, label, original_label
         else:
             return point_set, label
 
@@ -159,7 +167,7 @@ class BackdoorDataset(data.Dataset):
             label = data_set[i][1][0]
             point_set, mask = add_point_to_corner(point_set,
                                                   num_point=num_point)
-            new_dataset.append((point_set, target, mask))
+            new_dataset.append((point_set, target, mask, label))
             # assert point_set.shape[0] == POINT_CORNER_CONFIG['NUM_POINT_INPUT'] + num_point
 
         time.sleep(0.1)
@@ -171,10 +179,10 @@ class BackdoorDataset(data.Dataset):
         for i in progress:
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
-            # label = data_set[i][1][0]
+            label = data_set[i][1][0]
             point_set, mask = add_point_to_centroid(point_set,
                                                     num_point=num_point)
-            new_dataset.append((point_set, target, mask))
+            new_dataset.append((point_set, target, mask, label))
             # assert point_set.shape[0] == POINT_CENTROID_CONFIG['NUM_POINT_INPUT'] + num_point
 
         time.sleep(0.1)
@@ -187,12 +195,12 @@ class BackdoorDataset(data.Dataset):
         for i in progress:
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
-            # label = data_set[i][1][0]
-            mask = np.zeros((point_set.shape[0], 1))
+            label = data_set[i][1][0]
+            # mask = np.zeros((point_set.shape[0], 1))
             point_set, mask = add_object_to_points(point_set,
                                                    num_point_obj=num_point,
                                                    scale=self.scale)
-            new_dataset.append((point_set, target, mask))
+            new_dataset.append((point_set, target, mask, label))
             # assert point_set.shape[0] == OBJECT_CENTROID_CONFIG['NUM_POINT_INPUT'] + num_point
 
         time.sleep(0.1)
@@ -209,7 +217,7 @@ class BackdoorDataset(data.Dataset):
             label = data_set[i][1][0]
             point_set, mask = add_point_multiple_corner(point_set,
                                                         num_point_per_corner=num_point_per_corner)
-            new_dataset.append((point_set, target, mask))
+            new_dataset.append((point_set, target, mask, label))
 
         time.sleep(0.1)
         return new_dataset
@@ -229,7 +237,7 @@ class BackdoorDataset(data.Dataset):
             label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
             assert point_set.shape[0] == NUM_POINT_INPUT
-            new_dataset.append((point_set, label, mask))
+            new_dataset.append((point_set, label, mask, label))
         return new_dataset
 
     def get_sample_fps(self, data_set):
@@ -237,12 +245,12 @@ class BackdoorDataset(data.Dataset):
         progress = tqdm(data_set)
         for data in progress:
             progress.set_description("FPS Sampling data ")
-            points, label, mask = data
+            points, label, mask, original_label = data
             if self.use_fps:
                 points, index = farthest_point_sample_with_index(points,
                                                                  npoint=self.num_point)
                 mask = mask[index, :]
-            new_dataset.append((points, label, mask))
+            new_dataset.append((points, label, mask, original_label))
             assert points.shape[0] == self.num_point
         return new_dataset
 
@@ -251,21 +259,21 @@ class BackdoorDataset(data.Dataset):
         progress = tqdm(data_set)
         for data in progress:
             progress.set_description("Random sampling data ")
-            points, label, mask = data
+            points, label, mask, original_label = data
             if self.use_random:
                 points, index = random_sample_with_index(points,
                                                          npoint=self.num_point)
                 mask = mask[index, :]
-            new_dataset.append((points, label, mask))
+            new_dataset.append((points, label, mask, original_label))
             assert points.shape[0] == self.num_point
         return new_dataset
 
     def get_permanent_point(self, data_set):
         new_dataset = list()
-        for points, label, mask in data_set:
+        for points, label, mask, original_label in data_set:
             points = points[0:self.num_point, :]
             mask = mask[0:self.num_point, :]
-            new_dataset.append((points, label, mask))
+            new_dataset.append((points, label, mask, original_label))
         return new_dataset
 
     @staticmethod
@@ -275,10 +283,10 @@ class BackdoorDataset(data.Dataset):
         progress = tqdm(data_set)
         for data in progress:
             progress.set_description("Normalizing data")
-            points, label, mask = data
+            points, label, mask, original_label = data
             normals = normal.get_normal(points)
             new_points = np.concatenate([normals, points], axis=1)
-            new_dataset.append((new_points, label, mask))
+            new_dataset.append((new_points, label, mask, original_label))
             point_present_normals.append(normals)
         return new_dataset, point_present_normals
 
@@ -300,14 +308,17 @@ if __name__ == '__main__':
         use_random=True,
         use_fps=False,
         is_testing=True,
+        get_original=True,
         scale=0.2,
     )
     print(len(data_set))
     print(data_set[0][0].shape)
     print(data_set[0][1].shape)
     print(data_set[0][2].shape)
+    print(data_set[0][3].shape)
+    print(data_set[0][1])
+    print(data_set[0][3])
     print(data_set.calculate_trigger_percentage())
     vis = Visualizer()
     data_set.update_dataset()
-    vis.visualizer_backdoor(points=data_set[0][0], mask=data_set[0][2])
     print(data_set.calculate_trigger_percentage())

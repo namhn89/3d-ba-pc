@@ -22,6 +22,11 @@ PERCENTAGE = 0.1
 
 OPT = 'Adam'
 
+LOG_CLASSIFICATION = '/home/ubuntu/3d-ba-pc/log/classification/'
+BEST_MODEL = '/checkpoints/best_model.pth'
+BAD_MODEL = '/checkpoints/bad_model.pth'
+FINAL_MODEL = '/checkpoints/final.pth'
+
 AIRPLANE = "/home/nam/workspace/vinai/project/3d-ba-pc/data_set/trigger_generation/airplane.npy"
 
 ORIGINAL = "original"
