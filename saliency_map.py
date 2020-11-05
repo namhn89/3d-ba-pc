@@ -269,7 +269,7 @@ def main():
 
     attack = SphereSaliency(
         args=args,
-        num_drop=args.num_drop,f
+        num_drop=args.num_drop,
         num_steps=args.num_steps,
         model=classifier,
         criterion=criterion,
