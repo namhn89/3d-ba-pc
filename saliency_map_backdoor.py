@@ -425,7 +425,7 @@ def evaluate_backdoor(data_set, args, backdoor_classifier, classifier, criterion
     train_pred_adv_clean = np.concatenate(train_pred_adv_clean)
 
     running_loss = running_loss / len(data_set)
-    running_loss_ba = running_loss / len(data_set)
+    running_loss_ba = running_loss_ba / len(data_set)
     running_loss_adv = running_loss_adv / len(data_set)
     running_loss_adv_clean = running_loss_adv_clean / len(data_set)
 
@@ -444,20 +444,23 @@ def evaluate_backdoor(data_set, args, backdoor_classifier, classifier, criterion
     print("Loss on backdoor data clean model: {}".format(running_loss))
     print("Accuracy on backdoor data clean model: {}".format(acc))
     print("Class Accuracy on backdoor data clean model: {}".format(class_acc))
-    print()
+    print("-------------- ***** ----------------")
 
     print("Loss on backdoor data backdoor model: {}".format(running_loss_ba))
     print("Accuracy backdoor data backdoor model: {}".format(acc_ba))
     print("Class Accuracy backdoor data backdoor model: {}".format(class_acc_ba))
-    print()
+    print("-------------- ***** ----------------")
+
     print("Loss on adversarial data backdoor model: {}".format(running_loss_adv))
     print("Accuracy on adversarial data backdoor model : {}".format(acc_adv))
     print("Class Accuracy on adversarial data backdoor model: {}".format(class_acc_adv))
-    print()
+    print("-------------- ***** ----------------")
+
     print("Loss on adversarial data clean model: {}".format(running_loss_adv_clean))
     print("Accuracy on adversarial data clean model: {}".format(acc_adv_clean))
     print("Class Accuracy on adversarial data clean model: {}".format(class_acc_adv_clean))
-    print()
+    print("-------------- ***** ----------------")
+
     print("Ratio on backdoor points : {}".format(sum(average_ratio) / len(average_ratio)))
     print("Ratio on saliency map : {}".format(sum(average_ratio_saliency) / len(average_ratio_saliency)))
 
