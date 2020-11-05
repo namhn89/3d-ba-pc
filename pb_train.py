@@ -16,7 +16,7 @@ from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 from utils import data_utils
 import logging
-from data_set.pseudo_label_dataset import PseudoLabelDataset
+from data_set.pb_dataset import PseudoLabelDataset
 import sklearn.metrics as metrics
 import shutil
 import importlib

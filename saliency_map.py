@@ -199,8 +199,6 @@ def main():
     if args.dataset == "modelnet40":
         x_train, y_train, x_test, y_test = load_data(
             "/home/ubuntu/3d-ba-pc/data/modelnet40_ply_hdf5_2048")
-        # x_train, y_train, x_test, y_test = load_data(
-        #     "/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048")
         num_classes = 40
     elif args.dataset == "scanobjectnn_pb_t50_rs":
         x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
@@ -254,8 +252,6 @@ def main():
         classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
         criterion = MODEL.get_loss().to(device)
 
-    # print(classifier)
-
     # experiment_dir = '/home/nam/workspace/vinai/project/3d-ba-pc/log/classification/' + args.log_dir
     experiment_dir = '/home/ubuntu/3d-ba-pc/log/classification/' + args.log_dir
     checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_model.pth',
@@ -271,8 +267,6 @@ def main():
         num_workers=8,
     )
 
-    # Optimizer
-
     attack = SphereSaliency(args=args,
                             num_drop=args.num_drop,
                             num_steps=args.num_steps,
@@ -280,17 +274,13 @@ def main():
                             criterion=criterion,
                             device=device)
 
-    # points, labels = data_set[1]
-    # print(points.shape)
-    # print(labels.shape)
-    # saliency_map = attack.get_saliency_map(points, labels)
-    # exit(0)
-
     running_loss = 0.0
     running_loss_adv = 0.0
+
     train_true = []
     train_pred_adv = []
     train_pred = []
+
     progress = tqdm(data_loader)
 
     for data in progress:
@@ -326,7 +316,7 @@ def main():
 
     train_true = np.concatenate(train_true)
     train_pred = np.concatenate(train_pred)
-    train_adv_pred = np.concatenate(train_pred_adv)
+    train_pred_adv = np.concatenate(train_pred_adv)
 
     running_loss = running_loss / len(data_set)
     running_loss_adv = running_loss_adv / len(data_set)
@@ -334,14 +324,14 @@ def main():
     acc = metrics.accuracy_score(train_true, train_pred)
     class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
 
-    acc_adv = metrics.accuracy_score(train_true, train_adv_pred)
-    class_acc_adv = metrics.balanced_accuracy_score(train_true, train_adv_pred)
+    acc_adv = metrics.accuracy_score(train_true, train_pred_adv)
+    class_acc_adv = metrics.balanced_accuracy_score(train_true, train_pred_adv)
 
     print("Original Data")
     print("Loss : {}".format(running_loss))
     print("Accuracy : {}".format(acc))
     print("Class Accuracy : {}".format(class_acc))
-
+    print("-------------- ***** ----------------")
     print("Adversarial Data")
     print("Loss : {}".format(running_loss_adv))
     print("Accuracy : {}".format(acc_adv))
