@@ -38,7 +38,7 @@ def parse_args():
                         help='Experiment root')
 
     parser.add_argument('--log_ba_dir', type=str,
-                        default='train_attack_point_object_multiple_corner_point_32_250_SGD_cos_pointnet_cls_random_1024_128_modelnet40',
+                        default='train_attack_point_object_central_point_32_250_SGD_cos_pointnet_cls_random_1024_128_modelnet40',
                         help='Experiment backdoor root')
 
     parser.add_argument('--dataset', type=str, default="modelnet40",
@@ -307,7 +307,7 @@ def evaluate(data_set, args, classifier, criterion, device):
     print("Loss : {}".format(running_loss))
     print("Accuracy : {}".format(acc))
     print("Class Accuracy : {}".format(class_acc))
-
+    print("-------------- ***** ----------------")
     print("Adversarial Data")
     print("Loss : {}".format(running_loss_adv))
     print("Accuracy : {}".format(acc_adv))
@@ -393,7 +393,7 @@ def evaluate_backdoor(data_set, args, backdoor_classifier, classifier, criterion
             outputs_adv, trans_adv = classifier(points_adv)
             outputs_adv_clean, trans_adv_clean = backdoor_classifier(points_adv)
 
-            loss = criterion(outputs, target, trans)
+            loss = criterion(outputs, target_original, trans)
             loss_ba = criterion(outputs_ba, target, trans_ba)
             loss_adv = criterion(outputs_adv, target_original, trans_adv)
             loss_adv_clean = criterion(outputs_adv_clean, target_original, trans_adv_clean)
@@ -429,8 +429,8 @@ def evaluate_backdoor(data_set, args, backdoor_classifier, classifier, criterion
     running_loss_adv = running_loss_adv / len(data_set)
     running_loss_adv_clean = running_loss_adv_clean / len(data_set)
 
-    acc = metrics.accuracy_score(train_ba, train_pred)
-    class_acc = metrics.balanced_accuracy_score(train_ba, train_pred)
+    acc = metrics.accuracy_score(train_true, train_pred)
+    class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
 
     acc_ba = metrics.accuracy_score(train_ba, train_pred_ba)
     class_acc_ba = metrics.balanced_accuracy_score(train_ba, train_pred_ba)
@@ -439,7 +439,7 @@ def evaluate_backdoor(data_set, args, backdoor_classifier, classifier, criterion
     class_acc_adv = metrics.balanced_accuracy_score(train_true, train_pred_adv)
 
     acc_adv_clean = metrics.accuracy_score(train_true, train_pred_adv_clean)
-    class_acc_adv_clean = metrics.balanced_accuracy_score(train_pred_adv_clean, train_pred_adv_clean)
+    class_acc_adv_clean = metrics.balanced_accuracy_score(train_true, train_pred_adv_clean)
 
     print("Loss on backdoor data clean model: {}".format(running_loss))
     print("Accuracy on backdoor data clean model: {}".format(acc))

@@ -33,9 +33,11 @@ class ShiftPointDataset(data.Dataset):
                  is_testing=False,
                  permanent_point=False,
                  shift_ratio=0.5,
+                 get_original=False
                  ):
 
         self.n_class = n_class
+        self.get_original = get_original
         self.data_augmentation = data_augmentation
         self.num_point = num_point
         self.use_random = use_random
@@ -109,7 +111,7 @@ class ShiftPointDataset(data.Dataset):
     def calculate_trigger_percentage(self, use_quantity=False):
         res = []
         for data in self.data_set:
-            points, label, mask = data
+            points, label, mask, original_label = data
             trigger = (mask >= 1).sum()
             num_point = mask.shape[0]
             if trigger != 0:
@@ -135,6 +137,7 @@ class ShiftPointDataset(data.Dataset):
         point_set = self.data_set[item][0]
         label = self.data_set[item][1]
         mask = self.data_set[item][2]
+        original_label = self.data_set[item][3]
 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
 
@@ -147,8 +150,15 @@ class ShiftPointDataset(data.Dataset):
 
         point_set = torch.from_numpy(point_set.astype(np.float32))
         label = torch.from_numpy(np.array([label]).astype(np.int64))
-        if self.is_testing:
+        original_label = torch.from_numpy(np.asarray([original_label]).astype(np.int64))
+
+        if self.is_testing and self.get_original:
+            return point_set, label, mask, original_label
+        elif self.is_testing:
             return point_set, label, mask
+        elif self.get_original:
+            return point_set, label, original_label
+
         return point_set, label
 
     def __len__(self):
@@ -161,7 +171,7 @@ class ShiftPointDataset(data.Dataset):
             point_size = points.shape[0]
             new_label = label[0]
             mask = np.zeros((point_size, 1))
-            new_dataset.append((points, new_label, mask))
+            new_dataset.append((points, new_label, mask, new_label))
         return new_dataset
 
     def add_random_duplicate_point(self, data_set, target, num_point_random):
@@ -173,7 +183,7 @@ class ShiftPointDataset(data.Dataset):
         for i in progress:
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
-            # label = data_set[i][1][0]
+            label = data_set[i][1][0]
             # mask = np.zeros((point_set.shape[0], 1))
             point_set_size = point_set.shape[0]
             idx = np.random.choice(point_set_size, replace=False, size=num_point_random)
@@ -185,7 +195,7 @@ class ShiftPointDataset(data.Dataset):
             # np.random.shuffle(idx)
             # point_set = point_set[idx, :]
             # mask = mask[idx, :]
-            new_dataset.append((point_set, target, mask))
+            new_dataset.append((point_set, target, mask, label))
 
         time.sleep(0.1)
         print("Injecting Over: " + str(len(new_dataset)) + " Bad PointSets")
@@ -199,7 +209,7 @@ class ShiftPointDataset(data.Dataset):
         for i in progress:
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
-            # label = data_set[i][1][0]
+            label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
             point_set_size = point_set.shape[0]
             idx = np.random.choice(point_set_size, replace=False, size=num_point)
@@ -211,7 +221,7 @@ class ShiftPointDataset(data.Dataset):
             # np.random.shuffle(idx)
             # point_set = point_set[idx, :]
             # mask = mask[idx, :]
-            new_dataset.append((point_set, target, mask))
+            new_dataset.append((point_set, target, mask, label))
 
         time.sleep(0.1)
         print("Injecting Over: " + str(len(new_dataset)) + " Bad PointSets")
@@ -225,7 +235,7 @@ class ShiftPointDataset(data.Dataset):
         for i in progress:
             progress.set_description("Attacking " + self.mode_attack + " data ")
             point_set = data_set[i][0]
-            # label = data_set[i][1][0]
+            label = data_set[i][1][0]
             mask = np.zeros((point_set.shape[0], 1))
             point_set_size = point_set.shape[0]
             idx = np.random.choice(point_set_size, replace=False, size=num_point)
@@ -235,7 +245,7 @@ class ShiftPointDataset(data.Dataset):
                 vec *= shift_ratio
                 point_set[id_point] += vec
             np.asarray(mask)[idx, :] = 2.
-            new_dataset.append((point_set, target, mask))
+            new_dataset.append((point_set, target, mask, label))
 
         time.sleep(0.1)
         print("Injecting Over: " + str(len(new_dataset)) + " Bad PointSets")
@@ -246,7 +256,7 @@ class ShiftPointDataset(data.Dataset):
         progress = tqdm(data_set)
         for data in progress:
             progress.set_description("FPS Sampling data ")
-            points, label, mask = data
+            points, label, mask, original_label = data
             if self.use_fps:
                 points, index = farthest_point_sample_with_index(points, npoint=self.num_point)
                 mask = mask[index, :]
@@ -254,7 +264,7 @@ class ShiftPointDataset(data.Dataset):
                 unique_point, indices = np.unique(points, axis=0, return_index=True)
                 mask[indices, :] = 0
                 # print(mask)
-            new_dataset.append((points, label, mask))
+            new_dataset.append((points, label, mask, original_label))
             assert points.shape[0] == self.num_point
         return new_dataset
 
@@ -263,23 +273,23 @@ class ShiftPointDataset(data.Dataset):
         progress = tqdm(data_set)
         for data in progress:
             progress.set_description("Random sampling data ")
-            points, label, mask = data
+            points, label, mask, original_label = data
             if self.use_random:
                 points, index = random_sample_with_index(points, npoint=self.num_point)
                 mask = mask[index, :]
             if self.mode_attack == DUPLICATE_POINT:
                 unique_point, indices = np.unique(points, axis=0, return_index=True)
                 mask[indices, :] = 0
-            new_dataset.append((points, label, mask))
+            new_dataset.append((points, label, mask, original_label))
             assert points.shape[0] == self.num_point
         return new_dataset
 
     def get_permanent_point(self, data_set):
         new_dataset = list()
-        for points, label, mask in data_set:
+        for points, label, mask, original_label in data_set:
             points = points[0:self.num_point, :]
             mask = mask[0:self.num_point, :]
-            new_dataset.append((points, label, mask))
+            new_dataset.append((points, label, mask, original_label))
             if self.mode_attack == DUPLICATE_POINT:
                 unique_point, indices = np.unique(points, axis=0, return_index=True)
                 mask[indices, :] = 0
@@ -293,10 +303,10 @@ class ShiftPointDataset(data.Dataset):
         progress = tqdm(data_set)
         for data in progress:
             progress.set_description("Normalizing data")
-            points, label, mask = data
+            points, label, mask, original_label = data
             normals = normal.get_normal(points)
             new_points = np.concatenate([normals, points], axis=1)
-            new_dataset.append((new_points, label, mask))
+            new_dataset.append((new_points, label, mask, original_label))
             point_present_normals.append(normals)
         return new_dataset, point_present_normals
 
@@ -312,7 +322,7 @@ if __name__ == '__main__':
 
     dataset = ShiftPointDataset(
         name="data",
-        portion=0.1,
+        portion=0.9,
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
         mode_attack=DUPLICATE_POINT,
@@ -323,15 +333,19 @@ if __name__ == '__main__':
         use_random=True,
         use_fps=False,
         is_testing=True,
+        get_original=True,
     )
     vis = Visualizer()
     print(dataset[0][0].shape)
+
     for i in range(len(dataset)):
         points = dataset[i][0]
         label = dataset[i][1]
         mask = dataset[i][2]
-        vis.visualizer_backdoor(points=points, mask=mask, only_special=False)
+        original_label = dataset[i][3]
+        vis.visualize_backdoor(points=points, mask=mask, only_special=False)
         print(categories[label.data.numpy()[0]])
+        print(categories[original_label.data.numpy()[0]])
 
     for i in range(5):
         dataset.update_dataset()

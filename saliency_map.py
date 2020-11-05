@@ -267,12 +267,14 @@ def main():
         num_workers=8,
     )
 
-    attack = SphereSaliency(args=args,
-                            num_drop=args.num_drop,
-                            num_steps=args.num_steps,
-                            model=classifier,
-                            criterion=criterion,
-                            device=device)
+    attack = SphereSaliency(
+        args=args,
+        num_drop=args.num_drop,f
+        num_steps=args.num_steps,
+        model=classifier,
+        criterion=criterion,
+        device=device
+    )
 
     running_loss = 0.0
     running_loss_adv = 0.0
