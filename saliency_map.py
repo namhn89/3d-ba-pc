@@ -253,7 +253,7 @@ def main():
         criterion = MODEL.get_loss().to(device)
 
     # experiment_dir = '/home/nam/workspace/vinai/project/3d-ba-pc/log/classification/' + args.log_dir
-    experiment_dir = '/home/ubuntu/3d-ba-pc/log/classification/' + args.log_dir
+    experiment_dir = LOG_CLASSIFICATION + args.log_dir
     checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_model.pth',
                             map_location=lambda storage, loc: storage)
 
@@ -299,6 +299,7 @@ def main():
         points, points_adv, target = points.to(device), points_adv.to(device), target.to(device)
         points = points.transpose(2, 1)
         points_adv = points_adv.transpose(2, 1)
+
         with torch.no_grad():
             outputs, trans = classifier(points)
             outputs_adv, trans_adv = classifier(points_adv)
@@ -333,7 +334,9 @@ def main():
     print("Loss : {}".format(running_loss))
     print("Accuracy : {}".format(acc))
     print("Class Accuracy : {}".format(class_acc))
+
     print("-------------- ***** ----------------")
+
     print("Adversarial Data")
     print("Loss : {}".format(running_loss_adv))
     print("Accuracy : {}".format(acc_adv))
