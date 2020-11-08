@@ -23,6 +23,7 @@ class get_model(nn.Module):
     def forward(self, x, get_layers=False):
         layers = {}
         x, trans, trans_feat, hx, max_pool = self.feat(x)
+        layers['maxpool_out'] = torch.argmax(hx, dim=1)
         layers['global_feature'] = max_pool
         layers['emb_dim'] = hx
         x = F.relu(self.bn1(self.fc1(x)))

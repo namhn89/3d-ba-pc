@@ -75,7 +75,7 @@ def parse_args():
     parser.add_argument('--k', type=int, default=40, metavar='N',
                         help='Num of nearest neighbors to use [default : 40]')
 
-    parser.add_argument('--power', type=int, default=6,
+    parser.add_argument('--power', type=int, default=1,
                         help='x: -dL/dr*r^x')
     parser.add_argument('--drop_neg', action='store_true',
                         help='drop negative points')

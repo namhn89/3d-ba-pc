@@ -2,6 +2,7 @@ import h5py
 import numpy as np
 from config import DATA_POINT_CLOUD
 import warnings
+from utils import data_utils
 
 warnings.filterwarnings("ignore")
 
@@ -30,21 +31,41 @@ def load_data(dir=DATA_POINT_CLOUD):
     return data_train, label_train, data_test, label_test
 
 
-if __name__ == "__main__":
-    train_data, train_label, test_data, test_label = load_data(DATA_POINT_CLOUD)
-    print(train_data.shape)
-    print(test_data.shape)
-    for point in train_data[0:5]:
-        mean_x = np.mean(point[:, 0])
-        mean_y = np.mean(point[:, 1])
-        mean_z = np.mean(point[:, 2])
-        max_x = np.max(point[:, 0])
-        max_y = np.max(point[:, 1])
-        max_z = np.max(point[:, 2])
-        min_x = np.min(point[:, 0])
-        min_y = np.min(point[:, 1])
-        min_z = np.min(point[:, 2])
-        print(point[:, 0])
-        print(mean_x, mean_y, mean_z)
-        print(max_x, max_y, max_z)
-        print(min_x, min_x, min_z)
+def get_data(name):
+    global x_train, y_train, y_test, x_test, num_classes
+    if name == "modelnet40":
+        x_train, y_train, x_test, y_test = load_data("data/modelnet40_ply_hdf5_2048")
+        num_classes = 40
+    elif name == "scanobjectnn_pb_t50_rs":
+        x_train, y_train = data_utils.load_h5(
+            "data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif name == "scanobjectnn_obj_bg":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif name == "scanobjectnn_pb_t50_r":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif name == "scanobjectnn_pb_t25_r":
+        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif name == "scanobjectnn_pb_t25":
+        x_train, y_train = data_utils.load_h5(
+            "data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
+        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    return x_train, y_train, x_test, y_test, num_classes
