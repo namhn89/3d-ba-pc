@@ -169,8 +169,8 @@ def parse_args():
     parser.add_argument('--scale', type=float, default=0.05,
                         help='scale centroid object for backdoor attack [default : 0.05]')
 
-    parser.add_argument('--num_point_trig', type=int, default=1024,
-                        help='num points for attacking trigger [default : 1024]')
+    parser.add_argument('--num_point_trig', type=int, default=128,
+                        help='num points for attacking trigger [default : 128]')
 
     parser.add_argument('--attack_method', type=str, default=DUPLICATE_POINT,
                         help="Attacking Method [default : duplicate_point]",
