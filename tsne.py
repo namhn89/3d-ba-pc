@@ -6,6 +6,12 @@ import os
 import sys
 import importlib
 from tqdm import tqdm
+import errno
+from sklearn.manifold import TSNE
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
 
 from visualization.tsne_visualization import save_image_from_tsne
 from data_set.la_dataset import LocalPointDataset
@@ -37,11 +43,14 @@ def parse_args():
                                  "dgcnn_cls"],
                         help='training model [default: pointnet_cls]')
     parser.add_argument('--log_dir', type=str,
-                        default="train_attack_local_point_32_250_dgcnn_cls_1024_40_random_1024_radius_0.02_128_modelnet40",
+                        default="train_32_250_SGD_cos_pointnet_cls_random_1024_modelnet40",
                         help='Store checkpoint [default: train_attack]')
+    parser.add_argument('--ba_log_dir', type=str,
+                        default='train_attack_point_object_corner_point_32_250_SGD_cos_pointnet_cls_random_1024_128_modelnet40',
+                        help='Experiment backdoor root')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-    parser.add_argument('--data_set', type=str, default="modelnet40",
+    parser.add_argument('--dataset', type=str, default="modelnet40",
                         help="Dataset to using train/test data [default : modelnet40]",
                         choices=[
                             "modelnet40",
@@ -51,6 +60,7 @@ def parse_args():
                             "scanobjectnn_pb_t50_r",
                             "scanobjectnn_pb_t50_rs"
                         ])
+
     parser.add_argument('--dropout', type=float, default=0.5,
                         help='initial dropout rate [default: 0.5]')
     parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
@@ -59,6 +69,10 @@ def parse_args():
                         help='Whether to use normal information [default: False]')
     parser.add_argument('--k', type=int, default=40, metavar='N',
                         help='Num of nearest neighbors to use [default : 40]')
+
+    parser.add_argument("--class-names", default="data/modelnet40_ply_hdf5_2048/shape_names.txt",
+                        help="Text file containing a list of class names.")
+
     return parser.parse_args()
 
 
@@ -71,13 +85,13 @@ def save_global_feature(net, data_set, device, name_file=None):
         num_workers=16,
     )
     progress = tqdm(data_loader)
-    feature_name = "global_feature"
+    feature_name = "emb_dim"
     label_true = []
     label_pred = []
     global_feature_vec = []
     with torch.no_grad():
         for data in progress:
-            progress.set_description("Global Feature Getting ")
+            progress.set_description("Feature Getting ")
             points, labels = data
             points = points.data.numpy()
             points = torch.from_numpy(points)
@@ -107,8 +121,8 @@ def save_global_feature(net, data_set, device, name_file=None):
 
 
 def load_model(checkpoint_dir, model):
-    experiment_dir = 'log/classification/' + checkpoint_dir
-    checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_bad_model.pth',
+    experiment_dir = LOG_CLASSIFICATION + checkpoint_dir
+    checkpoint = torch.load(str(experiment_dir) + BEST_MODEL,
                             map_location=lambda storage, loc: storage)
 
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -120,6 +134,8 @@ if __name__ == '__main__':
     args = parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(device)
+
+    class_names = [line.rstrip() for line in open(args.class_names)]
 
     global x_train, y_train, x_test, y_test, num_classes
     if args.dataset == "modelnet40":
@@ -162,29 +178,89 @@ if __name__ == '__main__':
 
     MODEL = importlib.import_module(args.model)
 
-    global classifier, criterion
+    global classifier, criterion, ba_classifier
     if args.model == "dgcnn_cls":
         classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
+        backdoor_classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(
+            device)
     elif args.model == "pointnet_cls":
         classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        backdoor_classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
     else:
         classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        backdoor_classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
 
     classifier = load_model(args.log_dir, classifier)
-    poison_dataset = LocalPointDataset(
+    backdoor_classifier = load_model(args.ba_log_dir, backdoor_classifier)
+
+    # poison_dataset = LocalPointDataset(
+    #     data_set=list(zip(x_test, y_test)),
+    #     portion=1.0,
+    #     name="Poison",
+    #     added_num_point=128,
+    #     data_augmentation=False,
+    #     mode_attack=LOCAL_POINT,
+    #     num_point=1024,
+    #     use_random=True,
+    #     use_fps=False,
+    #     permanent_point=False,
+    #     radius=0.01,
+    # )
+
+    ba_dataset = BackdoorDataset(
+        name="data",
         data_set=list(zip(x_test, y_test)),
-        portion=1.0,
-        name="poison_test",
-        added_num_point=128,
-        data_augmentation=False,
-        mode_attack=LOCAL_POINT,
         num_point=1024,
+        portion=1.,
+        mode_attack=CORNER_POINT,
+        added_num_point=128,
         use_random=True,
-        use_fps=False,
-        permanent_point=False,
-        radius=0.01,
+        scale=0.2,
     )
-    print(classifier)
-    global_feature_vec, label, label_pred = save_global_feature(classifier, data_set=poison_dataset)
-    save_image_from_tsne(global_feature_vec, label, name_file='./test.png')
+
+    clean_dataset = PointCloudDataSet(
+        name="Clean",
+        data_set=list(zip(x_test, y_test)),
+        num_point=1024,
+        data_augmentation=False,
+        use_random=True,
+    )
+    print(len(ba_dataset))
+    print(len(clean_dataset))
+    # exit(0)
+
+    # print(classifier)
+    if os.path.exists('./data/extracted_feature'):
+        os.mkdir('./data/extracted_feature')
+    global_feature_vec_ba, label_ba, label_pred_ba = save_global_feature(
+        ba_classifier,
+        data_set=ba_dataset,
+        name_file='./data/extracted_feature/ba_feature.h5',
+    )
+    global_feature_vec, label, label_pred = save_global_feature(
+        classifier,
+        data_set=clean_dataset,
+        name_file='./data/extracted_feature/feature.h5',
+    )
+    x = np.concatenate([global_feature_vec, global_feature_vec_ba])
+
+    res = TSNE(n_components=2, perplexity=30.0, random_state=0).fit_transform(x)
+
+    embedding = res[:len(global_feature_vec)]
+    embedding_ba = res[len(global_feature_vec):]
+
+    plt.figure(figsize=(20, 20))
+    plt.subplot(111)
+
+    cmap = plt.get_cmap("rainbow")
+    for i in range(len(class_names)):
+        plt.gca().scatter(*embedding[label == i].T, c=cmap([float(i) / len(class_names)]), label=class_names[i])
+
+    for i in range(len(class_names)):
+        color = cmap([float(i) / len(class_names)])
+        color[:, :3] *= 0.5
+        plt.gca().scatter(*embedding_ba[label_ba == i].T, c=color, label="adversarial %s" % class_names[i])
+
+    plt.gca().legend()
+    plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
 
