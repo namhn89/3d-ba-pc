@@ -14,6 +14,7 @@ from data_set.shift_dataset import ShiftPointDataset
 from data_set.pc_dataset import PointCloudDataSet
 from data_set.backdoor_dataset import BackdoorDataset
 from config import *
+from load_data import get_data
 
 manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", manualSeed)
@@ -84,9 +85,9 @@ def parse_args():
 
 
 class SphereSaliency(object):
-    def __init__(self, args, num_drop, num_steps, model, criterion, device):
-        self.num_drop = num_drop
-        self.num_steps = num_steps
+    def __init__(self, args, model, criterion, device):
+        self.num_drop = args.num_drop
+        self.num_steps = args.num_steps
         self.model = model
         self.criterion = criterion
         self.device = device
@@ -269,8 +270,6 @@ def main():
 
     attack = SphereSaliency(
         args=args,
-        num_drop=args.num_drop,
-        num_steps=args.num_steps,
         model=classifier,
         criterion=criterion,
         device=device

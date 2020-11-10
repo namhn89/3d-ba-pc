@@ -15,9 +15,15 @@ class Visualizer:
         'green': [0., 1., 0.],  # green
         'blue': [0, 0, 1.],  # blue
         'red': [1., 0, 0],  # red
-        'purple': [1., 0, 1.],  # purple
+        'magenta': [1., 0, 1.],  # purple
+        'purple': [128 / 255., 0, 128 / 255.],
         'cyan': [0, 1., 1.],  # cyan
         'yellow': [1., 1., 0],  # yellow
+        'dark green': [0., 100. / 255., 0.],
+        'olive': [128. / 255., 128. / 255., 0.],
+        'maroon': [128 / 255., 0., 0.],
+        'navy': [0, 0, 128.],
+        'indigo': [75 / 255., 0, 130 / 255.]
     }
 
     def __init__(self):
@@ -25,16 +31,6 @@ class Visualizer:
 
     def make_gif(self, path):
         pass
-
-    # def process_duplicate(self, points, mask):
-    #     c_mask = np.asarray(mask)
-    #     u, idx = np.unique(points, axis=0, return_index=True)
-    #     u, cnt = np.unique(points, axis=0, return_counts=True)
-    #     for i, value in enumerate(idx):
-    #         if cnt[i] == 2:
-    #             c_mask[value] = 2
-    #     print((mask == 2).sum())
-    #     return c_mask
 
     def visualize_backdoor(self, points, mask, only_special=False):
         """
@@ -54,17 +50,15 @@ class Visualizer:
             return c_mask
 
         ba_mask = process_duplicate(points, mask)
-        # print(ba_mask)
-        # print((ba_mask == 2.).sum())
         pcd = o3d.geometry.PointCloud()
         backdoor_points = []
         if only_special:
             for idx, c in enumerate(mask):
-                if ba_mask[idx][0] == 1. or ba_mask[idx][0] == 2.:
+                if ba_mask[idx][0] == 1. or ba_mask[idx][0] == 2. or ba_mask[idx][0] == 3.:
                     backdoor_points.append(points[idx].numpy())
             backdoor_points = np.asarray(backdoor_points)
             pcd.points = o3d.utility.Vector3dVector(backdoor_points)
-            pcd.paint_uniform_color(self.map_label_to_rgb['green'])
+            pcd.paint_uniform_color(self.map_label_to_rgb['navy'])
         else:
             pcd.points = o3d.utility.Vector3dVector(points)
             pcd.paint_uniform_color([0.5, 0.5, 0.5])
@@ -73,6 +67,8 @@ class Visualizer:
                     np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['green']
                 if ba_mask[idx][0] == 2.:
                     np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['purple']
+                if ba_mask[idx][0] == 3.:
+                    np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['navy']
 
         custom_draw_geometry_with_rotation(pcd=pcd)
         # custom_draw_geometry(pcd=pcd)

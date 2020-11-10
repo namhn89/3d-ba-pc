@@ -7,6 +7,7 @@ from visualization import open3d_visualization
 from data_set.util.sampling import random_sample
 from utils import data_utils
 from config import *
+from visualization.pyplot3d import pyplot_draw_point_cloud_natural
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
@@ -35,9 +36,13 @@ def add_point_into_ball_query(point_set, mask=None, num_point=128, radius=0.1):
     new_points = np.concatenate([point_set, list_local_point])
     if mask is None:
         mask = np.zeros((point_set.shape[0], 1))
-        mask = np.concatenate([mask, np.ones((num_point, 1))])
+        la_mask = np.asarray([[3.] for i in range(num_point)])
+        mask = np.concatenate([mask, la_mask])
+        # mask = np.concatenate([mask, np.ones((num_point, 1))])
     else:
-        mask = np.concatenate([mask, np.ones((num_point, 1))])
+        la_mask = np.asarray([[3.] for i in range(num_point)])
+        mask = np.concatenate([mask, la_mask])
+        # mask = np.concatenate([mask, np.ones((num_point, 1))])
     return new_points, mask
 
 
@@ -56,9 +61,13 @@ def add_fixed_and_sampling_into_ball_query(point_set, mask=None, num_point=1024,
     new_points = np.concatenate([point_set, list_local_point])
     if mask is None:
         mask = np.zeros((point_set.shape[0], 1))
-        mask = np.concatenate([mask, np.ones((num_point_added, 1))])
+        la_mask = np.asarray([[3.] for i in range(num_point_added)])
+        mask = np.concatenate([mask, la_mask])
+        # mask = np.concatenate([mask, np.ones((num_point_added, 1))])
     else:
-        mask = np.concatenate([mask, np.ones((num_point_added, 1))])
+        la_mask = np.asarray([[3.] for i in range(num_point_added)])
+        mask = np.concatenate([mask, la_mask])
+        # mask = np.concatenate([mask, np.ones((num_point_added, 1))])
     return new_points, mask
 
 
@@ -83,7 +92,4 @@ if __name__ == '__main__':
 
     vis = open3d_visualization.Visualizer()
     points, mask = add_fixed_and_sampling_into_ball_query(sample, num_point=1024, num_point_added=128, radius=0.1)
-    print(sum(mask))
-    print(points.shape)
-    print(mask.shape)
-    vis.visualizer_backdoor(points=points, mask=mask)
+    pyplot_draw_point_cl

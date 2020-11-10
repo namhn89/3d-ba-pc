@@ -4,6 +4,7 @@ from load_data import load_data
 import torch.utils.data as data
 from tqdm import tqdm
 import torch.nn.parallel
+from visualization.pyplot3d import pyplot_draw_point_cloud, pyplot_draw_point_cloud_nat_and_adv
 
 
 from data_set.util.sampling import pc_normalize, farthest_point_sample_with_index
@@ -166,7 +167,7 @@ if __name__ == '__main__':
                                                  '/modelnet40_ply_hdf5_2048')
     dataset = PointCloudDataSet(
         name="Train",
-        data_set=list(zip(x_train, y_train)),
+        data_set=list(zip(x_test, y_test)),
         num_point=1024,
         data_augmentation=True,
         permanent_point=False,
@@ -178,3 +179,8 @@ if __name__ == '__main__':
     print(dataset[0][0].shape)
     print(dataset[0][1].shape)
     print(dataset[0][2].shape)
+    point_cloud = dataset[4][0].cpu().numpy()
+    point_cloud_adv = dataset[1][0].cpu().numpy()
+    pyplot_draw_point_cloud(point_cloud, output_filename='../a.jpg')
+    pyplot_draw_point_cloud_nat_and_adv(point_cloud, point_cloud_adv, output_filename='../b')
+

@@ -180,22 +180,26 @@ def point_cloud_three_views_demo():
     img.save('piano.jpg')
 
 
-def pyplot_draw_point_cloud(points, output_filename=None):
-    """ points is a Nx3 numpy array """
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(points[:, 0], points[:, 1], points[:, 2])
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_zlabel('z')
-
-    if output_filename is not None:
-        fig.savefig(output_filename)
-
-
 def pyplot_draw_volume(vol, output_filename):
     """ vol is of size vsize*vsize*vsize
         output an image to output_filename
     """
     points = volume_to_point_cloud(vol)
     pyplot_draw_point_cloud(points, output_filename)
+
+
+def pyplot_draw_point_cloud(points, output_filename):
+    """ points is a Nx3 numpy array """
+    from mpl_toolkits.mplot3d import Axes3D
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=5, c='g')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+    plt.savefig(output_filename)
+    plt.close()
+

@@ -183,9 +183,8 @@ class PointCloudGradCam(object):
         print(class_activation_vector)
         feature_vector = self.classifier
         print(feature_vector)
-        print(feature_vector.require_grad)
+        print(feature_vector.requires_grad)
         self.classifier.zero_grad()
-
         class_activation_vector.backward()
 
         print(feature_vector.grad.shape)

@@ -33,7 +33,7 @@ class ShiftPointDataset(data.Dataset):
                  is_testing=False,
                  permanent_point=False,
                  shift_ratio=0.5,
-                 get_original=False
+                 get_original=False,
                  ):
 
         self.n_class = n_class
@@ -58,12 +58,9 @@ class ShiftPointDataset(data.Dataset):
                                                        num_point=added_num_point,
                                                        shift_ratio=self.shift_ratio)
         elif mode_attack == DUPLICATE_POINT:
-            # self.bad_data_set = self.add_duplicate_point(data_set,
-            #                                              target,
-            #                                              num_point=added_num_point)
             self.bad_data_set = self.add_random_duplicate_point(data_set,
                                                                 target,
-                                                                num_point_random=added_num_point)
+                                                                add_num_point=added_num_point)
 
         self.raw_dataset = self.get_original_dataset(data_set)
 
@@ -112,7 +109,7 @@ class ShiftPointDataset(data.Dataset):
         res = []
         for data in self.data_set:
             points, label, mask, original_label = data
-            trigger = (mask >= 1).sum()
+            trigger = (mask > 0).sum()
             num_point = mask.shape[0]
             if trigger != 0:
                 res.append(trigger / num_point)
@@ -174,9 +171,9 @@ class ShiftPointDataset(data.Dataset):
             new_dataset.append((points, new_label, mask, new_label))
         return new_dataset
 
-    def add_random_duplicate_point(self, data_set, target, num_point_random):
-        assert num_point_random <= 2048
-        assert num_point_random >= 512
+    def add_random_duplicate_point(self, data_set, target, add_num_point):
+        assert add_num_point <= 2048
+        assert add_num_point <= 512
         new_dataset = list()
         progress = tqdm(range(len(data_set)))
 
@@ -186,16 +183,20 @@ class ShiftPointDataset(data.Dataset):
             label = data_set[i][1][0]
             # mask = np.zeros((point_set.shape[0], 1))
             point_set_size = point_set.shape[0]
-            idx = np.random.choice(point_set_size, replace=False, size=num_point_random)
-            point_set = np.concatenate([point_set[idx, :], point_set[idx, :]], axis=0)
-            mask = np.concatenate([np.zeros((num_point_random, 1)), np.zeros((num_point_random, 1))], axis=0)
-            np.random.shuffle(point_set)
+            idx = np.random.choice(point_set_size, replace=False, size=self.num_point - add_num_point)
+            idk = np.random.choice(self.num_point - add_num_point, replace=False, size=add_num_point)
+            new_points = point_set[idx, :]
+            new_points = np.concatenate([new_points, new_points[idk, :]])
+            mask = np.zeros((self.num_point, 1))
+            # mask = np.concatenate([np.zeros((num_point_random, 1)), np.zeros((num_point_random, 1))], axis=0)
+
+            np.random.shuffle(new_points)
             np.asarray(mask)[:, :] = 2.
             # idx = np.arange(point_set.shape[0])
             # np.random.shuffle(idx)
             # point_set = point_set[idx, :]
             # mask = mask[idx, :]
-            new_dataset.append((point_set, target, mask, label))
+            new_dataset.append((new_points, target, mask, label))
 
         time.sleep(0.1)
         print("Injecting Over: " + str(len(new_dataset)) + " Bad PointSets")
@@ -217,10 +218,6 @@ class ShiftPointDataset(data.Dataset):
             mask = np.concatenate([mask, np.zeros((num_point, 1))], axis=0)
             np.random.shuffle(point_set)
             np.asarray(mask)[:, :] = 2.
-            # idx = np.arange(point_set.shape[0])
-            # np.random.shuffle(idx)
-            # point_set = point_set[idx, :]
-            # mask = mask[idx, :]
             new_dataset.append((point_set, target, mask, label))
 
         time.sleep(0.1)
@@ -322,12 +319,12 @@ if __name__ == '__main__':
 
     dataset = ShiftPointDataset(
         name="data",
-        portion=0.9,
+        portion=1,
         data_set=list(zip(x_test[0:10], y_test[0:10])),
         target=TARGETED_CLASS,
         mode_attack=DUPLICATE_POINT,
         num_point=1024,
-        added_num_point=1024,
+        added_num_point=128,
         data_augmentation=False,
         permanent_point=False,
         use_random=True,
