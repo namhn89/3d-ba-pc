@@ -9,8 +9,10 @@ from tqdm import tqdm
 import errno
 from sklearn.manifold import TSNE
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import sklearn.metrics as metrics
 
 
 from visualization.tsne_visualization import save_image_from_tsne
@@ -85,7 +87,7 @@ def save_global_feature(net, data_set, device, name_file=None):
         num_workers=16,
     )
     progress = tqdm(data_loader)
-    feature_name = "emb_dim"
+    feature_name = "global_feature"
     label_true = []
     label_pred = []
     global_feature_vec = []
@@ -118,6 +120,47 @@ def save_global_feature(net, data_set, device, name_file=None):
                                   label_pred=label_pred)
 
         return global_feature_vec, label, label_pred
+
+
+def evaluate(net, data_set, device):
+    net.eval()
+    train_true = []
+    train_pred = []
+    data_loader = torch.utils.data.DataLoader(
+        dataset=data_set,
+        batch_size=32,
+        shuffle=False,
+        num_workers=16,
+    )
+    progress = tqdm(data_loader)
+    with torch.no_grad():
+        for data in progress:
+            progress.set_description("Testing  ")
+            points, labels = data
+            points = points.data.numpy()
+
+            points = torch.from_numpy(points)
+            target = labels[:, 0]
+            points = points.transpose(2, 1)
+            points, target = points.to(device), target.to(device)
+
+            outputs, trans_feat = net(points)
+
+            predictions = outputs.data.max(dim=1)[1]
+            train_true.append(target.cpu().numpy())
+            train_pred.append(predictions.detach().cpu().numpy())
+
+        train_true = np.concatenate(train_true)
+        train_pred = np.concatenate(train_pred)
+        acc = metrics.accuracy_score(train_true, train_pred)
+        class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+
+        print(
+            "Accuracy: {:.4f}, Class Accuracy: {:.4f}".format(
+                acc,
+                class_acc,
+            )
+        )
 
 
 def load_model(checkpoint_dir, model):
@@ -181,17 +224,17 @@ if __name__ == '__main__':
     global classifier, criterion, ba_classifier
     if args.model == "dgcnn_cls":
         classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
-        backdoor_classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(
+        ba_classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(
             device)
     elif args.model == "pointnet_cls":
         classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
-        backdoor_classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        ba_classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
     else:
         classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
-        backdoor_classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
+        ba_classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
 
     classifier = load_model(args.log_dir, classifier)
-    backdoor_classifier = load_model(args.ba_log_dir, backdoor_classifier)
+    ba_classifier = load_model(args.ba_log_dir, ba_classifier)
 
     # poison_dataset = LocalPointDataset(
     #     data_set=list(zip(x_test, y_test)),
@@ -225,29 +268,51 @@ if __name__ == '__main__':
         data_augmentation=False,
         use_random=True,
     )
-    print(len(ba_dataset))
-    print(len(clean_dataset))
-    # exit(0)
+    # print(len(ba_dataset))
+    # print(len(clean_dataset))
 
-    # print(classifier)
-    if os.path.exists('./data/extracted_feature'):
+    evaluate(
+        net=classifier,
+        data_set=clean_dataset,
+        device=device,
+    )
+
+    evaluate(
+        net=ba_classifier,
+        data_set=ba_dataset,
+        device=device,
+    )
+
+    if not os.path.exists('./data/extracted_feature'):
         os.mkdir('./data/extracted_feature')
+
     global_feature_vec_ba, label_ba, label_pred_ba = save_global_feature(
         ba_classifier,
         data_set=ba_dataset,
+        device=device,
         name_file='./data/extracted_feature/ba_feature.h5',
     )
     global_feature_vec, label, label_pred = save_global_feature(
         classifier,
         data_set=clean_dataset,
+        device=device,
         name_file='./data/extracted_feature/feature.h5',
     )
+    print(global_feature_vec_ba.shape)
+    print(global_feature_vec.shape)
+    print(label_ba.shape)
+    print(label_pred_ba.shape)
+
     x = np.concatenate([global_feature_vec, global_feature_vec_ba])
 
+    print("X.shape : {}".format(x.shape))
+    print("*** Starting fit data T-sne *** ")
     res = TSNE(n_components=2, perplexity=30.0, random_state=0).fit_transform(x)
-
+    print("Finishing fit data done ! .....")
     embedding = res[:len(global_feature_vec)]
     embedding_ba = res[len(global_feature_vec):]
+
+    print(res.shape)
 
     plt.figure(figsize=(20, 20))
     plt.subplot(111)
@@ -256,11 +321,15 @@ if __name__ == '__main__':
     for i in range(len(class_names)):
         plt.gca().scatter(*embedding[label == i].T, c=cmap([float(i) / len(class_names)]), label=class_names[i])
 
-    for i in range(len(class_names)):
+    for i in range(1):
         color = cmap([float(i) / len(class_names)])
         color[:, :3] *= 0.5
-        plt.gca().scatter(*embedding_ba[label_ba == i].T, c=color, label="adversarial %s" % class_names[i])
+        plt.gca().scatter(*embedding_ba[label_ba == i].T, c=color, label="backdoor %s" % class_names[i])
 
     plt.gca().legend()
     plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
 
+    if not os.path.exists('./figures'):
+        os.mkdir('./figures')
+
+    plt.savefig(os.path.join('./figures', "tsne.jpg"))
