@@ -25,7 +25,7 @@ def draw_point_cloud(points):
     scale_plot()
     plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
     plt.axis('off')
-    plt.savefig('a.jpg')
+    plt.savefig('point_cloud.jpg')
 
 
 def draw_point_cloud_with_backdoor(points, masks, opt="perturbation"):

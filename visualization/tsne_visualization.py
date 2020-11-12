@@ -6,7 +6,6 @@ import time
 
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-from load_data import load_data
 
 
 def calculate_tsne(data):
@@ -37,9 +36,6 @@ def save_image_from_tsne(data, label, name_file=None):
     data_frame["x"] = tsne[:, 0]
     data_frame["y"] = tsne[:, 1]
 
-    # print(data_frame)
-    # print(data_frame.y.unique().shape[0])
-
     plt.figure(figsize=(10, 10))
     sns_plot = sns.scatterplot(
         x="x", y="y",
@@ -55,18 +51,3 @@ def save_image_from_tsne(data, label, name_file=None):
     else:
         plt.show()
 
-
-if __name__ == '__main__':
-    X_train, Y_train, X_test, Y_test = load_data(
-        '/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048')
-
-    data = []
-    for point in X_train[0:100]:
-        point = point[:1024, :]
-        print(point.shape)
-        point = point.reshape(-1, 3 * 1024)
-        data.append(point)
-
-    data = np.concatenate(data)
-    label = np.squeeze(Y_train[0:100])
-    save_image_from_tsne(data, label, name_file='../test.png')

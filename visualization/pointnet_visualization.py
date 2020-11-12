@@ -29,30 +29,3 @@ def get_critical(points, hx):
             mask[index] = [1.]
 
     return pc_mask
-
-
-# def vis_upper_shape():
-#     sample_num = 5
-#     out = np.load('critical.npz')
-#     points = out['points']  # (5, 1024, 3)
-#     maxpool = out['maxpool'].reshape((sample_num, 1, 1024))  # (5, 1, 1024)
-#
-#     out2 = np.load('all.npz')
-#     all_points = out2['points'].reshape(-1, 3)  # (500*1024, 3)
-#     all_hx = out2['hx'].reshape(-1, 1024)  # (500*1024, 1024)
-#
-#     for i in range(sample_num):
-#         temp = []
-#         x = maxpool[i] - all_hx
-#         x = np.min(x, axis=1)
-#         for j in range(x.shape[0]):
-#             if x[j] >= 0:  # if its feature do do not change the maximum of hx, add it to temp
-#                 temp.append(all_points[j])
-#         temp = np.array(temp)
-
-
-if __name__ == '__main__':
-    # get_critical()
-    # vis_upper_shape()
-    print(np.random.randn(2011, 1024).shape)
-    print(make_one_critical(np.random.randn(2011, 1024)).shape)
