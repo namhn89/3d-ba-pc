@@ -17,9 +17,11 @@ def scale_plot():
 
 def draw_point_cloud(points):
     xs, ys, zs = points[:, 0], points[:, 1], points[:, 2]
-    plt.figure(figsize=(7, 7))
+    plt.figure(figsize=(10, 10))
+
     plt.subplot(111, projection="3d")
     plt.gca().scatter(xs, ys, zs, zdir="y", s=5)
+
     scale_plot()
     plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
     plt.axis('off')
@@ -27,19 +29,24 @@ def draw_point_cloud(points):
 
 
 def draw_point_cloud_with_backdoor(points, masks, opt="perturbation"):
+
     idx = np.where(masks > 0)[0]
     rest = np.where(masks == 0.)[0]
+
     xs, ys, zs = points[rest, 0], points[rest, 1], points[rest, 2]
     ba_x, ba_y, ba_z = points[idx, 0], points[idx, 1], points[idx, 2]
-    plt.figure(figsize=(7, 7))
+
+    plt.figure(figsize=(10, 10))
     plt.subplot(111, projection="3d")
     plt.gca().scatter(xs, ys, zs, zdir="y", s=5)
+
     if opt == 'duplicate':
         plt.gca().scatter(ba_x, ba_y, ba_z, zdir="y", s=10, c="magenta")
     elif opt == 'local':
         plt.gca().scatter(ba_x, ba_y, ba_z, zdir="y", s=10, c="yellow")
     else:
         plt.gca().scatter(ba_x, ba_y, ba_z, zdir="y", s=10, c="red")
+
     scale_plot()
     plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
     plt.axis('off')
