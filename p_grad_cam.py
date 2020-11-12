@@ -176,24 +176,33 @@ class PointCloudGradCam(object):
         point_cloud_torch = point_cloud_torch.transpose(2, 1)
 
         predictions, trans, layers = self.classifier(point_cloud_torch, get_layers=True)
-        print(predictions)
-        one_hot = torch.from_numpy(
-            np.array([float(i == self.args.desired_label) for i in range(self.num_classes)])).to(self.device)
-        class_activation_vector = torch.mul(predictions, one_hot).requires_grad_(True)
-        print(class_activation_vector)
-        feature_vector = self.classifier
-        print(feature_vector)
-        print(feature_vector.requires_grad)
-        self.classifier.zero_grad()
-        class_activation_vector.backward()
+        # one_hot = torch.from_numpy(
+        #     np.array([float(i == self.args.desired_label) for i in range(self.num_classes)])).to(self.device)
+        one_hot = np.zeros((1, self.num_classes), dtype=np.float32)
+        one_hot[0][self.args.desired_label] = 1.
+        feature_layers = layers['emb_dim']
+        print(feature_layers)
+        one_hot = torch.from_numpy(one_hot).requires_grad_(True)
+        one_hot = torch.sum(one_hot * predictions)
+        # print(one_hot)
+        point_cloud_torch.requires_grad = True
+        gradient = torch.autograd.grad(outputs=one_hot, inputs=feature_layers, retain_graph=True, allow_unused=True)
+        print(gradient)
+        # data = gradient[0].detach().cpu().numpy()
+        # print(sum(data))
+        # print(data)
+        # print(predictions.requires_grad)
+        # print(one_hot.requires_grad)
+        # one_hot.backward(retain_graph=True)
+        # predictions.backward(retain_graph=True)
+        return 0
+        # print(feature_vector.grad.shape)
 
-        print(feature_vector.grad.shape)
+        # max_gradient = feature_vector.grad.cpu().data.numpy()
 
-        max_gradient = feature_vector.grad.cpu().data.numpy()
+        # print(max_gradient.shape)
 
-        print(max_gradient.shape)
-
-        return max_gradient
+        # return max_gradient
 
     def drop_and_store_result(self, point_cloud, label, pooling_mode, threshold_mode, num_delete_points=None):
         point_cloud_adv = point_cloud.cpu().numpy().copy()
@@ -248,7 +257,7 @@ def evaluate():
         is_testing=True,
         get_original=True,
     )
-    for shape_idx in range(1):
+    for shape_idx in range(40):
         global desired_label
         desired_label = shape_idx
         print("**** Desired Class : {}".format(categories[desired_label]))

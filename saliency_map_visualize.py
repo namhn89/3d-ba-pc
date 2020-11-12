@@ -196,7 +196,6 @@ class SphereSaliency(object):
         return saliency_map
 
 
-@torch.no_grad()
 def predict(x, model):
     with torch.no_grad():
         x = x.unsqueeze(0)
@@ -284,6 +283,7 @@ def main():
             saliency = attack.get_saliency_map(points=points,
                                                labels=label)
             saliency = np.squeeze(saliency)
+            print(saliency)
             # print(label)
             idx = np.argsort(saliency)
             points_np = points_np[idx]

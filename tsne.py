@@ -48,7 +48,7 @@ def parse_args():
                         default="train_32_250_SGD_cos_pointnet_cls_random_1024_modelnet40",
                         help='Store checkpoint [default: train_attack]')
     parser.add_argument('--ba_log_dir', type=str,
-                        default='train_attack_point_object_corner_point_32_250_SGD_cos_pointnet_cls_random_1024_128_modelnet40',
+                        default='train_attack_point_object_central_point_32_250_SGD_cos_pointnet_cls_random_1024_128_modelnet40',
                         help='Experiment backdoor root')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
@@ -255,7 +255,7 @@ if __name__ == '__main__':
         data_set=list(zip(x_test, y_test)),
         num_point=1024,
         portion=1.,
-        mode_attack=CORNER_POINT,
+        mode_attack=CENTRAL_POINT,
         added_num_point=128,
         use_random=True,
         scale=0.2,
@@ -278,7 +278,7 @@ if __name__ == '__main__':
     )
 
     evaluate(
-        net=ba_classifier,
+        net=classifier,
         data_set=ba_dataset,
         device=device,
     )
@@ -287,7 +287,7 @@ if __name__ == '__main__':
         os.mkdir('./data/extracted_feature')
 
     global_feature_vec_ba, label_ba, label_pred_ba = save_global_feature(
-        ba_classifier,
+        classifier,
         data_set=ba_dataset,
         device=device,
         name_file='./data/extracted_feature/ba_feature.h5',
@@ -298,10 +298,6 @@ if __name__ == '__main__':
         device=device,
         name_file='./data/extracted_feature/feature.h5',
     )
-    print(global_feature_vec_ba.shape)
-    print(global_feature_vec.shape)
-    print(label_ba.shape)
-    print(label_pred_ba.shape)
 
     x = np.concatenate([global_feature_vec, global_feature_vec_ba])
 
@@ -332,4 +328,4 @@ if __name__ == '__main__':
     if not os.path.exists('./figures'):
         os.mkdir('./figures')
 
-    plt.savefig(os.path.join('./figures', "tsne.jpg"))
+    plt.savefig(os.path.join('./figures', "central_point_t-sne.jpg"))

@@ -37,7 +37,7 @@ def parse_args():
                         default='train_32_250_SGD_cos_pointnet_cls_random_1024_modelnet40',
                         help='Experiment root')
 
-    parser.add_argument('--log_ba_dir', type=str,
+    parser.add_argument('--log_dir_ba', type=str,
                         default='train_attack_point_object_central_point_32_250_SGD_cos_pointnet_cls_random_1024_128_modelnet40',
                         help='Experiment backdoor root')
 
