@@ -53,7 +53,7 @@ def parse_args():
                             "scanobjectnn_pb_t50_rs"
                         ])
 
-    parser.add_argument('--model', type=str, default='pointnet_cls',
+    parser.add_argument('--model', type=str, default='dgcnn_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
                                  "pointnet2_cls_ssg",
@@ -112,14 +112,9 @@ class SphereSaliency(object):
         for i in range(self.num_steps):
             points_torch_adv = torch.from_numpy(points_numpy_adv.astype(np.float32))
             points_torch_adv = points_torch_adv.transpose(2, 1)
-            # print("New points set : ")
-            # print("New Torch input {} ".format(points_torch_adv.shape))
-            # print("New Numpy input {} ".format(points_numpy_adv.shape))
             points_torch_adv = points_torch_adv.to(self.device)
             target = target.to(self.device)
             self.model.to(self.device)
-            # print(points_torch_adv.shape)
-            # print(target.shape)
             points_torch_adv.requires_grad = True
             outputs, trans_feat = self.model(points_torch_adv)
             # gradient = grad(outputs=self.criterion(outputs, target, trans_feat), inputs=points_torch_adv)
@@ -127,10 +122,7 @@ class SphereSaliency(object):
             # loss = torch.nn.functional.nll_loss(outputs, target)
             loss.backward()
             grad_dx = points_torch_adv.grad.cpu().numpy().copy()
-            # print(grad_dx.shape)
-            # print(grad_dx.shape)
             grad_dx = np.transpose(grad_dx, axes=(0, 2, 1))
-            # print(grad_dx.shape)
             sphere_core = np.median(points_numpy_adv, axis=1, keepdims=True)
             sphere_r = np.sqrt(np.sum(np.square(points_numpy_adv - sphere_core), axis=2))
 
@@ -174,11 +166,9 @@ class SphereSaliency(object):
         loss = self.criterion(outputs, target, trans_feat)
         # loss = F.nll_loss(outputs, target)
         loss.backward()
-        # print(points_adv.grad)
 
         grad_dx = points_adv.grad.cpu().numpy().copy()
         grad_dx = np.transpose(grad_dx, axes=(0, 2, 1))
-        # print(grad_dx.shape)
 
         sphere_core = np.median(points_numpy, axis=1, keepdims=True)
         sphere_r = np.sqrt(np.sum(np.square(points_numpy - sphere_core), axis=2))
@@ -201,7 +191,6 @@ def predict(x, model):
         x = x.unsqueeze(0)
         x = x.transpose(2, 1)
         x = x.cuda()
-        print(x.shape)
         y, _ = model(x)
         y = torch.argmax(y, dim=1)
         print(y)
@@ -246,6 +235,8 @@ def main():
     # vis.visualize_backdoor(point_sample, mask_sample)
     # print(ba_data_set[0][1])
     # exit(0)
+
+
     global classifier, criterion
     if args.model == "dgcnn_cls":
         classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)

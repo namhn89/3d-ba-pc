@@ -1,4 +1,3 @@
-import seaborn as sns
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib
@@ -27,22 +26,24 @@ def draw_point_cloud(points):
     plt.savefig('a.jpg')
 
 
-def draw_point_cloud_with_backdoor(points, masks):
-    idx = np.where(masks == 2.)[0]
+def draw_point_cloud_with_backdoor(points, masks, opt="perturbation"):
+    idx = np.where(masks > 0)[0]
     rest = np.where(masks == 0.)[0]
-    print(len(idx))
-    print(len(rest))
     xs, ys, zs = points[rest, 0], points[rest, 1], points[rest, 2]
     ba_x, ba_y, ba_z = points[idx, 0], points[idx, 1], points[idx, 2]
     plt.figure(figsize=(7, 7))
     plt.subplot(111, projection="3d")
     plt.gca().scatter(xs, ys, zs, zdir="y", s=5)
-    # plt.gca().scatter(ba_x, ba_y, ba_z, zdir="y", s=10, c="yellow")
-    plt.gca().scatter(ba_x, ba_y, ba_z, zdir="y", s=10, c="magenta")
+    if opt == 'duplicate':
+        plt.gca().scatter(ba_x, ba_y, ba_z, zdir="y", s=10, c="magenta")
+    elif opt == 'local':
+        plt.gca().scatter(ba_x, ba_y, ba_z, zdir="y", s=10, c="yellow")
+    else:
+        plt.gca().scatter(ba_x, ba_y, ba_z, zdir="y", s=10, c="red")
     scale_plot()
     plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
     plt.axis('off')
-    plt.savefig('a_ba.jpg')
+    plt.savefig('point_cloud_' + opt + '.jpg')
 
 
 def pyplot_draw_point_cloud(points, output_filename):

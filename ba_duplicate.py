@@ -136,10 +136,12 @@ def parse_args():
                         help='batch size in training [default: 32]')
     parser.add_argument('--epochs', default=250, type=int,
                         help='number of epochs in training [default: 250]')
+
     parser.add_argument('--learning_rate', default=0.001, type=float,
                         help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
+
     parser.add_argument('--model', type=str, default='dgcnn_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
@@ -195,6 +197,7 @@ def parse_args():
                             "scanobjectnn_pb_t50_r",
                             "scanobjectnn_pb_t50_rs"
                         ])
+
     parser.add_argument('--dropout', type=float, default=0.5,
                         help='initial dropout rate [default: 0.5]')
     parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
