@@ -19,7 +19,7 @@ import importlib
 import sys
 
 from data_set.shift_dataset import ShiftPointDataset
-from load_data import load_data
+from load_data import get_data
 import data_set.util.augmentation
 from utils import data_utils
 from config import *
@@ -287,40 +287,7 @@ if __name__ == '__main__':
     # print(summary_writer)
 
     '''DATASET'''
-    global x_train, y_train, x_test, y_test, num_classes
-    if args.dataset == "modelnet40":
-        x_train, y_train, x_test, y_test = load_data()
-        num_classes = 40
-    elif args.dataset == "scanobjectnn_pb_t50_rs":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_obj_bg":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t50_r":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t25_r":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t25":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
+    x_train, y_train, x_test, y_test, num_classes = get_data(name=args.dataset)
 
     train_dataset = ShiftPointDataset(
         data_set=list(zip(x_train, y_train)),
@@ -441,7 +408,6 @@ if __name__ == '__main__':
     x = torch.randn(args.batch_size, 3, num_point)
     x = x.to(device)
 
-    print(classifier)
 
     # summary_writer.add_graph(model=classifier, input_to_model=x)
 
@@ -456,8 +422,6 @@ if __name__ == '__main__':
         if args.random:
             log_string("Updating {} data_set ..... ".format(train_dataset.name))
             train_dataset.update_dataset()
-            # log_string("Updating {} data_set ..... ".format(poison_dataset.name))
-            # poison_dataset.update_dataset()
 
         t_train = train_dataset.calculate_trigger_percentage()
         t_poison = poison_dataset.calculate_trigger_percentage()

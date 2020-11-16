@@ -7,14 +7,19 @@ from tqdm import tqdm
 import random
 import sys
 import sklearn.metrics as metrics
+from torch.functional import F
+from matplotlib import pyplot
 
 from utils import data_utils
+from visualization.open3d_visualization import Visualizer
 from load_data import load_data
 from data_set.shift_dataset import ShiftPointDataset
 from data_set.pc_dataset import PointCloudDataSet
 from data_set.backdoor_dataset import BackdoorDataset
 from config import *
 from load_data import get_data
+import visualization.pyplot3d as plt3d
+import utils.pc_util as pc_util
 
 manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", manualSeed)
@@ -23,7 +28,7 @@ torch.manual_seed(manualSeed)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
-sys.path.append(os.path.join(ROOT_DIR, 'models'))
+sys.path.append(os.path.join(ROOT_DIR, '../../models'))
 
 
 def parse_args():
@@ -34,7 +39,7 @@ def parse_args():
                         help='num of steps to drop each step')
 
     parser.add_argument('--log_dir', type=str,
-                        default='train_32_250_SGD_cos_pointnet_cls_random_1024_modelnet40',
+                        default='train_attack_point_object_multiple_corner_point_32_250_SGD_cos_pointnet_cls_random_1024_128_modelnet40',
                         help='Experiment root')
 
     parser.add_argument('--dataset', type=str, default="modelnet40",
@@ -48,7 +53,7 @@ def parse_args():
                             "scanobjectnn_pb_t50_rs"
                         ])
 
-    parser.add_argument('--model', type=str, default='pointnet_cls',
+    parser.add_argument('--model', type=str, default='dgcnn_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
                                  "pointnet2_cls_ssg",
@@ -103,29 +108,23 @@ class SphereSaliency(object):
 
         self.model.eval()
 
-        # with torch.no_grad():
         for i in range(self.num_steps):
             points_torch_adv = torch.from_numpy(points_numpy_adv.astype(np.float32))
             points_torch_adv = points_torch_adv.transpose(2, 1)
-            # print("New points set : ")
-            # print("New Torch input {} ".format(points_torch_adv.shape))
-            # print("New Numpy input {} ".format(points_numpy_adv.shape))
             points_torch_adv = points_torch_adv.to(self.device)
             target = target.to(self.device)
             self.model.to(self.device)
-            # print(points_torch_adv.shape)
-            # print(target.shape)
             points_torch_adv.requires_grad = True
             outputs, trans_feat = self.model(points_torch_adv)
             # gradient = grad(outputs=self.criterion(outputs, target, trans_feat), inputs=points_torch_adv)
+
             loss = self.criterion(outputs, target, trans_feat)
             # loss = torch.nn.functional.nll_loss(outputs, target)
+
+            # Calculate saliency map, gradient loss.
             loss.backward()
             grad_dx = points_torch_adv.grad.cpu().numpy().copy()
-            # print(grad_dx.shape)
-            # print(grad_dx.shape)
             grad_dx = np.transpose(grad_dx, axes=(0, 2, 1))
-            # print(grad_dx.shape)
             sphere_core = np.median(points_numpy_adv, axis=1, keepdims=True)
             sphere_r = np.sqrt(np.sum(np.square(points_numpy_adv - sphere_core), axis=2))
 
@@ -165,15 +164,14 @@ class SphereSaliency(object):
         points_adv.requires_grad = True
 
         outputs, trans_feat = self.model(points_adv)
-        # print(outputs.shape)
 
         loss = self.criterion(outputs, target, trans_feat)
+        # loss = F.nll_loss(outputs, target)
+
         loss.backward()
-        # print(points_adv.grad)
 
         grad_dx = points_adv.grad.cpu().numpy().copy()
         grad_dx = np.transpose(grad_dx, axes=(0, 2, 1))
-        # print(grad_dx.shape)
 
         sphere_core = np.median(points_numpy, axis=1, keepdims=True)
         sphere_r = np.sqrt(np.sum(np.square(points_numpy - sphere_core), axis=2))
@@ -191,46 +189,22 @@ class SphereSaliency(object):
         return saliency_map
 
 
+def predict(x, model):
+    with torch.no_grad():
+        x = x.unsqueeze(0)
+        x = x.transpose(2, 1)
+        x = x.cuda()
+        y, _ = model(x)
+        y = torch.argmax(y, dim=1)
+        print(y)
+    return y
+
+
 def main():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(device)
     args = parse_args()
-
-    global x_train, y_train, x_test, y_test, num_classes
-    if args.dataset == "modelnet40":
-        x_train, y_train, x_test, y_test = load_data(
-            "/home/ubuntu/3d-ba-pc/data/modelnet40_ply_hdf5_2048")
-        num_classes = 40
-    elif args.dataset == "scanobjectnn_pb_t50_rs":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_obj_bg":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t50_r":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t25_r":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t25":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
+    x_train, y_train, x_test, y_test, num_classes = get_data("modelnet40")
 
     MODEL = importlib.import_module(args.model)
 
@@ -242,7 +216,18 @@ def main():
         permanent_point=False,
         use_random=True,
         use_fps=False,
-        is_testing=False,
+    )
+
+    ba_data_set = BackdoorDataset(
+        name="data",
+        data_set=list(zip(x_test, y_test)),
+        num_point=1024,
+        portion=1.,
+        mode_attack=MULTIPLE_CORNER_POINT,
+        added_num_point=128,
+        use_random=True,
+        scale=0.2,
+        is_testing=True,
     )
 
     global classifier, criterion
@@ -255,18 +240,12 @@ def main():
 
     # experiment_dir = '/home/nam/workspace/vinai/project/3d-ba-pc/log/classification/' + args.log_dir
     experiment_dir = LOG_CLASSIFICATION + args.log_dir
-    checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_model.pth',
+    checkpoint = torch.load(str(experiment_dir) + BEST_MODEL,
                             map_location=lambda storage, loc: storage)
 
     classifier.load_state_dict(checkpoint['model_state_dict'])
     classifier.to(device)
-
-    data_loader = torch.utils.data.DataLoader(
-        dataset=data_set,
-        batch_size=32,
-        shuffle=False,
-        num_workers=8,
-    )
+    classifier.eval()
 
     attack = SphereSaliency(
         args=args,
@@ -275,71 +254,30 @@ def main():
         device=device
     )
 
-    running_loss = 0.0
-    running_loss_adv = 0.0
+    for idx, data in enumerate(ba_data_set):
+        points, label, mask = data
+        label_np = label.cpu().numpy()[0]
+        points_np = points.cpu().numpy()
+        print(sum(mask == 1))
+        print(predict(points, classifier))
+        if label_np == 0:
+            saliency = attack.get_saliency_map(points=points,
+                                               labels=label)
+            saliency = np.squeeze(saliency)
+            print(saliency)
+            idx = np.argsort(saliency)
+            points_np = points_np[idx]
+            mask = mask[idx]
+            colors = np.arange(1024)
+            score_backdoor = 0
+            for id_mask, value in enumerate(mask):
+                if value[0] == 1.:
+                    score_backdoor += colors[id_mask]
+                    print(colors[id_mask])
+            print("Sum score / score  = {} / {} ".format(score_backdoor, sum(colors)))
 
-    train_true = []
-    train_pred_adv = []
-    train_pred = []
-
-    progress = tqdm(data_loader)
-
-    for data in progress:
-        points, labels = data
-        points_adv = attack.drop_points(points=points, labels=labels)
-        points_adv = torch.from_numpy(points_adv.astype(np.float32))
-
-        # print(points.shape)
-        # print(points_adv.shape)
-
-        classifier.to(device)
-        classifier.eval()
-        target = labels[:, 0]
-        points, points_adv, target = points.to(device), points_adv.to(device), target.to(device)
-        points = points.transpose(2, 1)
-        points_adv = points_adv.transpose(2, 1)
-
-        with torch.no_grad():
-            outputs, trans = classifier(points)
-            outputs_adv, trans_adv = classifier(points_adv)
-
-            loss = criterion(outputs, target, trans)
-            loss_adv = criterion(outputs_adv, target, trans_adv)
-
-            predictions = outputs.data.max(dim=1)[1]
-            predictions_adv = outputs_adv.data.max(dim=1)[1]
-
-            train_true.append(target.cpu().numpy())
-            train_pred.append(predictions.detach().cpu().numpy())
-            train_pred_adv.append(predictions_adv.detach().cpu().numpy())
-
-            running_loss += loss.item() * points.size(0)
-            running_loss_adv += loss_adv.item() * points_adv.size(0)
-
-    train_true = np.concatenate(train_true)
-    train_pred = np.concatenate(train_pred)
-    train_pred_adv = np.concatenate(train_pred_adv)
-
-    running_loss = running_loss / len(data_set)
-    running_loss_adv = running_loss_adv / len(data_set)
-
-    acc = metrics.accuracy_score(train_true, train_pred)
-    class_acc = metrics.balanced_accuracy_score(train_true, train_pred)
-
-    acc_adv = metrics.accuracy_score(train_true, train_pred_adv)
-    class_acc_adv = metrics.balanced_accuracy_score(train_true, train_pred_adv)
-
-    print("Original Data")
-    print("Loss : {}".format(running_loss))
-    print("Accuracy : {}".format(acc))
-    print("Class Accuracy : {}".format(class_acc))
-
-    print("-------------- ***** ----------------")
-
-    print("Adversarial Data")
-    print("Loss : {}".format(running_loss_adv))
-    print("Accuracy : {}".format(acc_adv))
-    print("Class Accuracy : {}".format(class_acc_adv))
+            plt3d.pyplot_draw_saliency_map(points_np, colors, output_filename=categories[label_np])
+            break
 
 
 if __name__ == '__main__':

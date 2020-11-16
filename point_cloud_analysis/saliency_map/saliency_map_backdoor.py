@@ -23,7 +23,7 @@ torch.manual_seed(manualSeed)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
-sys.path.append(os.path.join(ROOT_DIR, 'models'))
+sys.path.append(os.path.join(ROOT_DIR, '../../models'))
 
 
 def parse_args():
@@ -475,32 +475,34 @@ def main():
         x_train, y_train, x_test, y_test = load_data("/home/ubuntu/3d-ba-pc/data/modelnet40_ply_hdf5_2048")
         num_classes = 40
     elif args.dataset == "scanobjectnn_pb_t50_rs":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
+        x_train, y_train = data_utils.load_h5(
+            "../../data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
+        x_test, y_test = data_utils.load_h5("../../data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
     elif args.dataset == "scanobjectnn_obj_bg":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset.h5")
+        x_train, y_train = data_utils.load_h5("../../data/h5_files/main_split/training_objectdataset.h5")
+        x_test, y_test = data_utils.load_h5("../../data/h5_files/main_split/test_objectdataset.h5")
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
     elif args.dataset == "scanobjectnn_pb_t50_r":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
+        x_train, y_train = data_utils.load_h5("../../data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
+        x_test, y_test = data_utils.load_h5("../../data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
     elif args.dataset == "scanobjectnn_pb_t25_r":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
+        x_train, y_train = data_utils.load_h5("../../data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
+        x_test, y_test = data_utils.load_h5("../../data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
     elif args.dataset == "scanobjectnn_pb_t25":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
+        x_train, y_train = data_utils.load_h5(
+            "../../data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
+        x_test, y_test = data_utils.load_h5("../../data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15

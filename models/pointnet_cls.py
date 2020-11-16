@@ -22,7 +22,8 @@ class get_model(nn.Module):
 
     def forward(self, x, get_layers=False):
         layers = {}
-        x, trans, trans_feat, hx, max_pool = self.feat(x)
+        x, trans, trans_feat, hx, max_pool, critical_idx = self.feat(x)
+        layers['critical_idx'] = critical_idx
         layers['maxpool_out'] = torch.argmax(hx, dim=1)
         layers['global_feature'] = max_pool
         layers['emb_dim'] = hx
@@ -56,4 +57,5 @@ if __name__ == '__main__':
     y, _, layers = model(x, get_layers=True)
     print(layers['global_feature'].shape)
     print(layers['emb_dim'].shape)
+    print(layers['critical_idx'].shape)
     print(y.shape)
