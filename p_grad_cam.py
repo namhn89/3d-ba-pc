@@ -6,6 +6,7 @@ import os
 import sys
 import copy
 from torch import autograd
+from torch import nn
 
 from config import *
 from utils import data_utils
@@ -146,8 +147,6 @@ class PointCloudGradCam(object):
         self.vis = Visualizer()
 
         self.load_model()
-        # print(self.ba_classifier)
-        # print(self.classifier)
 
     def load_model(self):
         experiment_dir = '/home/nam/workspace/vinai/project/3d-ba-pc/log/classification/' + self.args.clean_log_dir
@@ -180,14 +179,23 @@ class PointCloudGradCam(object):
         #     np.array([float(i == self.args.desired_label) for i in range(self.num_classes)])).to(self.device)
         one_hot = np.zeros((1, self.num_classes), dtype=np.float32)
         one_hot[0][self.args.desired_label] = 1.
+        one_hot = torch.from_numpy(one_hot)
+
         feature_layers = layers['emb_dim']
         print(feature_layers)
-        one_hot = torch.from_numpy(one_hot).requires_grad_(True)
+
         one_hot = torch.sum(one_hot * predictions)
-        # print(one_hot)
+        criterion = nn.CrossEntropyLoss()
+        label = torch.from_numpy(np.asarray[label].astype(np.float32))
+        loss = criterion(point_cloud_torch, label)
+        print(loss)
+        print(one_hot)
+        one_hot.backward(retain_graph=True, create_graph=True)
         point_cloud_torch.requires_grad = True
-        gradient = torch.autograd.grad(outputs=one_hot, inputs=feature_layers, retain_graph=True, allow_unused=True)
-        print(gradient)
+        print(point_cloud_torch.grad)
+        # gradient = torch.autograd.grad(outputs=one_hot, inputs=feature_layers, create_graph=True,
+        #                                retain_graph=True, allow_unused=True)[0]
+
         # data = gradient[0].detach().cpu().numpy()
         # print(sum(data))
         # print(data)
@@ -195,14 +203,8 @@ class PointCloudGradCam(object):
         # print(one_hot.requires_grad)
         # one_hot.backward(retain_graph=True)
         # predictions.backward(retain_graph=True)
+
         return 0
-        # print(feature_vector.grad.shape)
-
-        # max_gradient = feature_vector.grad.cpu().data.numpy()
-
-        # print(max_gradient.shape)
-
-        # return max_gradient
 
     def drop_and_store_result(self, point_cloud, label, pooling_mode, threshold_mode, num_delete_points=None):
         point_cloud_adv = point_cloud.cpu().numpy().copy()
@@ -216,6 +218,16 @@ class PointCloudGradCam(object):
             resultPCloudThresh, vipPointsArr, Count = gch.delete_above_threshold(heat_gradient, point_cloud_adv,
                                                                                  threshold_mode)
         pass
+
+
+def get_jacobian(model, batched_inp, out_dim):
+    batch_size = batched_inp.size(0)
+    inp = batched_inp.unsqueeze(1)  # batch_size, 1, input_dim
+    inp = inp.repeat(1, out_dim, 1)  # batch_size, output_dim, input_dim
+    out = model(inp)
+    grad_inp = torch.eye(out_dim).reshape(1, out_dim, out_dim).repeat(batch_size, 1, 1).cuda()
+    jacobian = torch.autograd.grad(out, [inp], [grad_inp], create_graph=True, retain_graph=True)[0]
+    return jacobian
 
 
 def evaluate():
@@ -257,8 +269,8 @@ def evaluate():
         is_testing=True,
         get_original=True,
     )
-    for shape_idx in range(40):
-        global desired_label
+
+    for shape_idx in range(1):
         desired_label = shape_idx
         print("**** Desired Class : {}".format(categories[desired_label]))
         idx_item = None
@@ -268,7 +280,7 @@ def evaluate():
                 idx_item = idx
                 break
         point_cloud = data_set[idx_item][0]
-        # label = data_set[idx_item][1]
+
         adv_attack.drop_and_store_result(
             point_cloud=point_cloud,
             label=desired_label,

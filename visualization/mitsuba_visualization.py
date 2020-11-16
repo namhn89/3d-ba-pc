@@ -10,6 +10,8 @@ from load_data import load_data
 from data_set.trigger_generation.point_attack import add_point_multiple_corner
 from data_set.util.sampling import random_sample, random_sample_with_index
 from visualization.open3d_visualization import Visualizer
+from visualization.open3d_custom import custom_draw_geometry_with_rotation
+import open3d as o3d
 
 PATH_TO_MITSUBA2 = "/home/nam/mitsuba2/build/dist/mitsuba"  # mitsuba exectuable
 

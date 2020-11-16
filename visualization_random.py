@@ -28,5 +28,5 @@ if __name__ == '__main__':
     mask = dataset[0][2]
     label = dataset[0][1]
 
-    visualizer.visualize_backdoor(points=points, mask=mask)
+    # visualizer.visualize_backdoor(points=points, mask=mask)
     print(dataset.calculate_trigger_percentage())

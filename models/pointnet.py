@@ -127,15 +127,16 @@ class PointNetEncoder(nn.Module):
         x = self.bn3(self.conv3(x))
         # print(x.shape)
         hx = x  # (batch_size, 1024, num_point)
+        idx = torch.argmax(x, 2)
         x = torch.max(x, 2, keepdim=True)[0]
-        # print(x.shape)
-        x = x.view(-1, 1024)
+        num_feature = x.shape[1]
+        x = x.view(-1, num_feature)
         max_pool = x  # (batch_size, 1024)
         if self.global_feat:
-            return x, trans, trans_feat, hx, max_pool
+            return x, trans, trans_feat, hx, max_pool, idx
         else:
-            x = x.view(-1, 1024, 1).repeat(1, 1, N)
-            return torch.cat([x, pointfeat], 1), trans, trans_feat, hx, max_pool
+            x = x.view(-1, num_feature, 1).repeat(1, 1, N)
+            return torch.cat([x, pointfeat], 1), trans, trans_feat, hx, max_pool, idx
 
 
 def feature_transform_reguliarzer(trans):

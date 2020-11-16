@@ -108,7 +108,6 @@ class SphereSaliency(object):
 
         self.model.eval()
 
-        # with torch.no_grad():
         for i in range(self.num_steps):
             points_torch_adv = torch.from_numpy(points_numpy_adv.astype(np.float32))
             points_torch_adv = points_torch_adv.transpose(2, 1)
@@ -118,8 +117,11 @@ class SphereSaliency(object):
             points_torch_adv.requires_grad = True
             outputs, trans_feat = self.model(points_torch_adv)
             # gradient = grad(outputs=self.criterion(outputs, target, trans_feat), inputs=points_torch_adv)
+
             loss = self.criterion(outputs, target, trans_feat)
             # loss = torch.nn.functional.nll_loss(outputs, target)
+
+            # Calculate saliency map, gradient loss.
             loss.backward()
             grad_dx = points_torch_adv.grad.cpu().numpy().copy()
             grad_dx = np.transpose(grad_dx, axes=(0, 2, 1))
@@ -165,6 +167,7 @@ class SphereSaliency(object):
 
         loss = self.criterion(outputs, target, trans_feat)
         # loss = F.nll_loss(outputs, target)
+
         loss.backward()
 
         grad_dx = points_adv.grad.cpu().numpy().copy()
@@ -227,16 +230,6 @@ def main():
         is_testing=True,
     )
 
-    # vis = Visualizer()
-    # point_sample = ba_data_set[0][0].cpu().numpy()
-    # mask_sample = ba_data_set[0][2]
-    # print(point_sample.shape)
-    # print(mask_sample.shape)
-    # vis.visualize_backdoor(point_sample, mask_sample)
-    # print(ba_data_set[0][1])
-    # exit(0)
-
-
     global classifier, criterion
     if args.model == "dgcnn_cls":
         classifier = MODEL.get_model(num_classes, emb_dims=args.emb_dims, k=args.k, dropout=args.dropout).to(device)
@@ -263,11 +256,8 @@ def main():
 
     for idx, data in enumerate(ba_data_set):
         points, label, mask = data
-        # print(points.shape)
         label_np = label.cpu().numpy()[0]
         points_np = points.cpu().numpy()
-        # print(label_np)
-        # print(mask.shape)
         print(sum(mask == 1))
         print(predict(points, classifier))
         if label_np == 0:
@@ -275,18 +265,17 @@ def main():
                                                labels=label)
             saliency = np.squeeze(saliency)
             print(saliency)
-            # print(label)
             idx = np.argsort(saliency)
             points_np = points_np[idx]
             mask = mask[idx]
             colors = np.arange(1024)
-            # print(points_np.shape)
             score_backdoor = 0
             for id_mask, value in enumerate(mask):
                 if value[0] == 1.:
                     score_backdoor += colors[id_mask]
                     print(colors[id_mask])
             print("Sum score / score  = {} / {} ".format(score_backdoor, sum(colors)))
+
             plt3d.pyplot_draw_saliency_map(points_np, colors, output_filename=categories[label_np])
             break
 
