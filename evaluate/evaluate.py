@@ -11,9 +11,12 @@ from tqdm import tqdm
 import os
 import numpy as np
 
+sys.path.insert(0, '../')
+sys.path.insert(0, '../models')
+
 from utils import data_utils
 from config import *
-from load_data import load_data
+from load_data import get_data
 import sklearn.metrics as metrics
 from data_set.pc_dataset import PointCloudDataSet
 from data_set.la_dataset import LocalPointDataset
@@ -21,7 +24,6 @@ from data_set.backdoor_dataset import BackdoorDataset
 from data_set.shift_dataset import ShiftPointDataset
 
 manualSeed = random.randint(1, 10000)  # fix seed
-print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
@@ -129,45 +131,11 @@ if __name__ == '__main__':
 
     args = parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    print(device)
 
-    global x_train, y_train, x_test, y_test, num_classes
-    if args.dataset == "modelnet40":
-        x_train, y_train, x_test, y_test = load_data()
-        num_classes = 40
-    elif args.dataset == "scanobjectnn_pb_t50_rs":
-        x_train, y_train = data_utils.load_h5(
-            "../data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
-        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_obj_bg":
-        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset.h5")
-        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t50_r":
-        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
-        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t25_r":
-        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
-        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t25":
-        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
-        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
+    x_train, y_train, x_test, y_test, num_classes = get_data(name=args.dataset, prefix="/home/ubuntu/3d-ba-pc/")
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+
     logger = logging.getLogger("Model")
     logger.setLevel(logging.INFO)
     experiment_dir = 'log/classification/' + args.log_dir
@@ -180,12 +148,6 @@ if __name__ == '__main__':
     log_string(args)
 
     MODEL = importlib.import_module(args.model)
-    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
-    shutil.copy('../models/pointnet_util.py', str(experiment_dir))
-    shutil.copy('../data_set/mydataset.py', str(experiment_dir))
-    shutil.copy('../data_set/shift_dataset.py', str(experiment_dir))
-    shutil.copy('../data_set/backdoor_dataset.py', str(experiment_dir))
-    shutil.copy('../data_set/modelnet40.py', str(experiment_dir))
 
     global classifier, criterion
     if args.model == "dgcnn_cls":
@@ -198,12 +160,13 @@ if __name__ == '__main__':
         classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
         criterion = MODEL.get_loss().to(device)
 
-    print(classifier)
 
     checkpoint = torch.load(str(experiment_dir) + args.type,
                             map_location=lambda storage, loc: storage)
 
     classifier.load_state_dict(checkpoint['model_state_dict'])
+
+    # '''Bad Test'''
 
     poison_dataset = ShiftPointDataset(
         data_set=list(zip(x_test, y_test)),
@@ -216,7 +179,6 @@ if __name__ == '__main__':
         data_augmentation=False,
         mode_attack=DUPLICATE_POINT,
     )
-    # '''Bad Test'''
 
     # poison_dataset = PoisonDataset(
     #     data_set=list(zip(x_test, y_test)),

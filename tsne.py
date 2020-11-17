@@ -9,7 +9,6 @@ from tqdm import tqdm
 import errno
 from sklearn.manifold import TSNE
 import matplotlib
-
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import sklearn.metrics as metrics
@@ -181,6 +180,7 @@ if __name__ == '__main__':
     x_train, y_train, x_test, y_test, num_classes = get_data(name=args.dataset)
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+
     print('PARAMETER ...')
     print(args)
 
@@ -249,7 +249,7 @@ if __name__ == '__main__':
 
     x = np.concatenate([global_feature_vec, global_feature_vec_ba])
 
-    print("*** Starting fit data T-sne *** ")
+    print(" *** Starting fit data T-sne *** ")
     res = TSNE(n_components=2, perplexity=30.0, random_state=0).fit_transform(x)
     print("Finishing fit data done ! .....")
     embedding = res[:len(global_feature_vec)]
