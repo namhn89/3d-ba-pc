@@ -6,6 +6,7 @@ import sys
 sys.path.insert(0, '../models')
 sys.path.insert(0, '..')
 
+from load_data import get_data
 from config import *
 from utils import data_utils
 import models.pointnet_cls
@@ -167,7 +168,6 @@ class CriticalPointNet(object):
 
 if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    print(device)
 
     x_train, y_train, x_test, y_test, num_classes = get_data(name="modelnet40")
     data_set = list(zip(x_test[0:20], y_test[0:20]))
