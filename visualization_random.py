@@ -10,12 +10,12 @@ if __name__ == '__main__':
 
     dataset = ShiftPointDataset(
         name="data",
-        data_set=list(zip(x_test[0:1], y_test[0:1])),
+        data_set=list(zip(x_test, y_test)),
         target=TARGETED_CLASS,
         portion=1,
         mode_attack=DUPLICATE_POINT,
         num_point=1024,
-        added_num_point=1024,
+        added_num_point=128,
         data_augmentation=False,
         permanent_point=False,
         use_random=True,

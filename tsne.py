@@ -230,7 +230,6 @@ if __name__ == '__main__':
         name="Clean",
         data_set=list(zip(x_test, y_test)),
         num_point=1024,
-        data_augmentation=False,
         use_random=True,
     )
 

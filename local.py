@@ -19,7 +19,7 @@ import datetime
 
 from data_set.la_dataset import LocalPointDataset
 from config import *
-from load_data import load_data
+from load_data import load_data, get_data
 import data_set.util.augmentation
 from pathlib import Path
 from utils import data_utils
