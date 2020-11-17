@@ -8,6 +8,9 @@ import random
 import sys
 import sklearn.metrics as metrics
 
+sys.path.insert(0, '../..')
+sys.path.insert(0, '../../models')
+
 from utils import data_utils
 from load_data import load_data
 from data_set.shift_dataset import ShiftPointDataset

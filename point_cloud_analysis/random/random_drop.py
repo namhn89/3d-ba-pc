@@ -21,7 +21,7 @@ from data_set.pc_dataset import PointCloudDataSet
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_drop', type=int, default=10,
+    parser.add_argument('--num_drop', type=int, default=20,
                         help='num of points to drop each step')
     parser.add_argument('--num_steps', type=int, default=10,
                         help='num of steps to drop each step')

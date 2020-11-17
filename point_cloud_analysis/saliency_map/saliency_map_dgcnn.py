@@ -8,15 +8,17 @@ import random
 import sys
 import sklearn.metrics as metrics
 
+sys.path.insert(0, '../..')
+sys.path.insert(0, '../../models')
+
 from utils import data_utils
-from load_data import load_data
+from load_data import get_data
 from data_set.shift_dataset import ShiftPointDataset
 from data_set.pc_dataset import PointCloudDataSet
 from data_set.backdoor_dataset import BackdoorDataset
 from config import *
 
 manualSeed = random.randint(1, 10000)  # fix seed
-print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
@@ -106,14 +108,9 @@ class SphereSaliency(object):
         for i in range(self.num_steps):
             points_torch_adv = torch.from_numpy(points_numpy_adv.astype(np.float32))
             points_torch_adv = points_torch_adv.transpose(2, 1)
-            # print("New points set : ")
-            # print("New Torch input {} ".format(points_torch_adv.shape))
-            # print("New Numpy input {} ".format(points_numpy_adv.shape))
             points_torch_adv = points_torch_adv.to(self.device)
             target = target.to(self.device)
             self.model.to(self.device)
-            # print(points_torch_adv.shape)
-            # print(target.shape)
             points_torch_adv.requires_grad = True
             outputs, trans_feat = self.model(points_torch_adv)
             # gradient = grad(outputs=self.criterion(outputs, target, trans_feat), inputs=points_torch_adv)
@@ -121,10 +118,7 @@ class SphereSaliency(object):
             # loss = torch.nn.functional.nll_loss(outputs, target)
             loss.backward()
             grad_dx = points_torch_adv.grad.cpu().numpy().copy()
-            # print(grad_dx.shape)
-            # print(grad_dx.shape)
             grad_dx = np.transpose(grad_dx, axes=(0, 2, 1))
-            # print(grad_dx.shape)
             sphere_core = np.median(points_numpy_adv, axis=1, keepdims=True)
             sphere_r = np.sqrt(np.sum(np.square(points_numpy_adv - sphere_core), axis=2))
 
@@ -164,15 +158,12 @@ class SphereSaliency(object):
         points_adv.requires_grad = True
 
         outputs, trans_feat = self.model(points_adv)
-        # print(outputs.shape)
 
         loss = self.criterion(outputs, target, trans_feat)
         loss.backward()
-        # print(points_adv.grad)
 
         grad_dx = points_adv.grad.cpu().numpy().copy()
         grad_dx = np.transpose(grad_dx, axes=(0, 2, 1))
-        # print(grad_dx.shape)
 
         sphere_core = np.median(points_numpy, axis=1, keepdims=True)
         sphere_r = np.sqrt(np.sum(np.square(points_numpy - sphere_core), axis=2))
@@ -195,45 +186,7 @@ def main():
     print(device)
     args = parse_args()
 
-    global x_train, y_train, x_test, y_test, num_classes
-    if args.dataset == "modelnet40":
-        x_train, y_train, x_test, y_test = load_data(
-            "/home/ubuntu/3d-ba-pc/data/modelnet40_ply_hdf5_2048")
-        # x_train, y_train, x_test, y_test = load_data(
-        #     "/home/nam/workspace/vinai/project/3d-ba-pc/data/modelnet40_ply_hdf5_2048")
-        num_classes = 40
-    elif args.dataset == "scanobjectnn_pb_t50_rs":
-        x_train, y_train = data_utils.load_h5(
-            "../../data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
-        x_test, y_test = data_utils.load_h5("../../data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_obj_bg":
-        x_train, y_train = data_utils.load_h5("../../data/h5_files/main_split/training_objectdataset.h5")
-        x_test, y_test = data_utils.load_h5("../../data/h5_files/main_split/test_objectdataset.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t50_r":
-        x_train, y_train = data_utils.load_h5("../../data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
-        x_test, y_test = data_utils.load_h5("../../data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t25_r":
-        x_train, y_train = data_utils.load_h5("../../data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
-        x_test, y_test = data_utils.load_h5("../../data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t25":
-        x_train, y_train = data_utils.load_h5(
-            "../../data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
-        x_test, y_test = data_utils.load_h5("../../data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
+    x_train, y_train, x_test, y_test, num_classes = get_data(name="modelnet40", prefix="/home/ubuntu/3d-ba-pc/")
 
     MODEL = importlib.import_module(args.model)
 

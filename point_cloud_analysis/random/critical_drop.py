@@ -13,6 +13,7 @@ sys.path.insert(0, '../../')
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
 
+from config import LOG_CLASSIFICATION
 from load_data import get_data
 from utils import data_utils
 from data_set.backdoor_dataset import BackdoorDataset
@@ -141,8 +142,8 @@ def main():
         classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
         criterion = MODEL.get_loss().to(device)
 
-    experiment_dir = '/home/ubuntu/3d-ba-pc/log/classification/' + args.log_dir
-    # experiment_dir = LOG_CLASSIFICATION + args.log_dir
+    # experiment_dir = '/home/ubuntu/3d-ba-pc/log/classification/' + args.log_dir
+    experiment_dir = LOG_CLASSIFICATION + args.log_dir
     checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_model.pth',
                             map_location=lambda storage, loc: storage)
 

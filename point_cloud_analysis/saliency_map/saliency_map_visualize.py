@@ -10,6 +10,9 @@ import sklearn.metrics as metrics
 from torch.functional import F
 from matplotlib import pyplot
 
+sys.path.insert(0, '../..')
+sys.path.insert(0, '../../models')
+
 from utils import data_utils
 from visualization.open3d_visualization import Visualizer
 from load_data import load_data
@@ -22,7 +25,6 @@ import visualization.pyplot3d as plt3d
 import utils.pc_util as pc_util
 
 manualSeed = random.randint(1, 10000)  # fix seed
-print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
