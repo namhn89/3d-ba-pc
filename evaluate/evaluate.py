@@ -14,7 +14,7 @@ import sklearn.metrics as metrics
 sys.path.insert(0, '..')
 sys.path.insert(0, '../models')
 
-from config import *
+from config import LOG_CLASSIFICATION
 from load_data import get_data
 from data_set.pc_dataset import PointCloudDataSet
 from data_set.la_dataset import LocalPointDataset

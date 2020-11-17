@@ -176,9 +176,7 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     class_names = [line.rstrip() for line in open(args.class_names)]
-
     x_train, y_train, x_test, y_test, num_classes = get_data(name=args.dataset)
-
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
     print('PARAMETER ...')
