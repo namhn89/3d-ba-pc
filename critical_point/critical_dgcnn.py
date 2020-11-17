@@ -41,7 +41,7 @@ class CriticalPointNet(object):
             # data_set=list(zip(x_test, y_test)),
             portion=1.0,
             name="poison",
-            added_num_point=1024,
+            added_num_point=128,
             data_augmentation=False,
             mode_attack=DUPLICATE_POINT,
             num_point=1024,
@@ -189,12 +189,8 @@ if __name__ == '__main__':
     x_train, y_train, x_test, y_test = load_data("/home/nam/workspace/vinai/project/3d-ba-pc/data"
                                                  "/modelnet40_ply_hdf5_2048")
     num_classes = 40
-    # x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
-    # x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
-    # y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-    # y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-    # num_classes = 15
     data_set = list(zip(x_test[0:10], y_test[0:10]))
+
     visualization = CriticalPointNet(
         ba_log_dir="train_attack_duplicate_point_32_250_dgcnn_cls_SGD_cos_1024_40_0.5_random_1024_1024_modelnet40",
         clean_log_dir="train_32_250_SGD_cos_dgcnn_cls_1024_40_0.5_random_1024_modelnet40",
