@@ -23,7 +23,7 @@ from data_set.backdoor_dataset import BackdoorDataset
 from config import *
 import utils.fileio
 from utils import data_utils
-from load_data import load_data
+from load_data import load_data, get_data
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -178,40 +178,7 @@ if __name__ == '__main__':
 
     class_names = [line.rstrip() for line in open(args.class_names)]
 
-    global x_train, y_train, x_test, y_test, num_classes
-    if args.dataset == "modelnet40":
-        x_train, y_train, x_test, y_test = load_data()
-        num_classes = 40
-    elif args.dataset == "scanobjectnn_pb_t50_rs":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_obj_bg":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t50_r":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t25_r":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t25":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
+    x_train, y_train, x_test, y_test, num_classes = get_data(name=args.dataset)
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     print('PARAMETER ...')
