@@ -1,7 +1,10 @@
 import numpy as np
 import logging
 import torch
+import sys
 
+sys.path.insert(0, '../models')
+sys.path.insert(0, '..')
 
 from config import *
 from utils import data_utils
@@ -166,14 +169,7 @@ if __name__ == '__main__':
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(device)
 
-    x_train, y_train, x_test, y_test = load_data("/home/nam/workspace/vinai/project/3d-ba-pc/data"
-                                                 "/modelnet40_ply_hdf5_2048")
-    num_classes = 40
-    # x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
-    # x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
-    # y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-    # y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-    # num_classes = 15
+    x_train, y_train, x_test, y_test, num_classes = get_data(name="modelnet40")
     data_set = list(zip(x_test[0:20], y_test[0:20]))
     visualization = CriticalPointNet(
         ba_log_dir="train_attack_point_object_multiple_corner_point_32_250_SGD_cos_pointnet_cls_random_1024_128_modelnet40",
