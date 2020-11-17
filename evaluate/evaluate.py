@@ -14,7 +14,6 @@ import numpy as np
 sys.path.insert(0, '../')
 sys.path.insert(0, '../models')
 
-from utils import data_utils
 from config import *
 from load_data import get_data
 import sklearn.metrics as metrics
@@ -160,7 +159,6 @@ if __name__ == '__main__':
         classifier = MODEL.get_model(num_classes, normal_channel=args.normal).to(device)
         criterion = MODEL.get_loss().to(device)
 
-
     checkpoint = torch.load(str(experiment_dir) + args.type,
                             map_location=lambda storage, loc: storage)
 
@@ -272,5 +270,3 @@ if __name__ == '__main__':
         mode="Poison_Test",
         device=device,
     )
-
-
