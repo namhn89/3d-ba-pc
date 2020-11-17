@@ -201,20 +201,6 @@ if __name__ == '__main__':
     classifier = load_model(args.log_dir, classifier)
     ba_classifier = load_model(args.ba_log_dir, ba_classifier)
 
-    # poison_dataset = LocalPointDataset(
-    #     data_set=list(zip(x_test, y_test)),
-    #     portion=1.0,
-    #     name="Poison",
-    #     added_num_point=128,
-    #     data_augmentation=False,
-    #     mode_attack=LOCAL_POINT,
-    #     num_point=1024,
-    #     use_random=True,
-    #     use_fps=False,
-    #     permanent_point=False,
-    #     radius=0.01,
-    # )
-
     ba_dataset = BackdoorDataset(
         name="data",
         data_set=list(zip(x_test, y_test)),

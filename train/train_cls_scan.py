@@ -1,10 +1,10 @@
 from __future__ import print_function
 import argparse
-import shutil
 import torch.nn.parallel
 import os
 import random
 import torch
+import torch.nn.parallel
 import torch.utils.data
 from tqdm import tqdm
 from distutils.dir_util import copy_tree
@@ -16,6 +16,7 @@ import logging
 import sys
 import sklearn.metrics as metrics
 import importlib
+import shutil
 
 from utils import data_utils
 from utils import provider
@@ -28,7 +29,7 @@ random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
-sys.path.append(os.path.join(ROOT_DIR, 'models'))
+sys.path.append(os.path.join(ROOT_DIR, '../models'))
 
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
@@ -50,13 +51,11 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
         # jittered_data = provider.jitter_point_cloud(jittered_data)
         # rotated_data[:, :, 0:3] = jittered_data
         # points[:, :, 0:3] = jittered_data
-        # points[:, :, 0:3] = data_set.util.augmentation.random_point_dropout(points[:, :, 0:3])
+        points[:, :, 0:3] = data_set.util.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = data_set.util.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = data_set.util.augmentation.shift_point_cloud(points[:, :, 0:3])
-
-        if args.dataset.startswith("scanobjectnn"):
-            points[:, :, 0:3] = data_set.util.augmentation.rotate_point_cloud(points[:, :, 0:3])
-            # points[:, :, 0:3] = data_set.util.augmentation.jitter_point_cloud(points[:, :, 0:3])
+        points[:, :, 0:3] = data_set.util.augmentation.rotate_point_cloud(points[:, :, 0:3])
+        # points[:, :, 0:3] = data_set.util.augmentation.jitter_point_cloud(points[:, :, 0:3])
 
         points = torch.from_numpy(points)
         target = labels[:, 0]
@@ -140,7 +139,7 @@ def parse_args():
 
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
-    parser.add_argument('--epochs', default=250, type=int,
+    parser.add_argument('--epochs', default=500, type=int,
                         help='number of epoch in training [default: 250]')
 
     parser.add_argument('--gpu', type=str, default='0',
@@ -155,7 +154,7 @@ def parse_args():
 
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-    parser.add_argument('--log_dir', type=str, default="train",
+    parser.add_argument('--log_dir', type=str, default="train_scan",
                         help='experiment root')
 
     parser.add_argument('--optimizer', type=str, default='SGD',
@@ -180,8 +179,8 @@ def parse_args():
                         help='get first points [default: False]')
 
     parser.add_argument('--num_workers', type=int, default=8, help='num workers')
-    parser.add_argument('--dataset', type=str, default="modelnet40",
-                        help="Dataset to using train/test data [default : modelnet40]",
+    parser.add_argument('--dataset', type=str, default="scanobjectnn_pb_t50_rs",
+                        help="Dataset to using train/test data [default : scanobjectnn_pb_t50_rs]",
                         choices=[
                             "modelnet40",
                             "scanobjectnn_obj_bg",
@@ -248,7 +247,7 @@ if __name__ == '__main__':
 
     '''CREATE DIR'''
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
-    experiment_dir = Path('./log/')
+    experiment_dir = Path('../log/')
     experiment_dir.mkdir(exist_ok=True)
     experiment_dir = experiment_dir.joinpath('classification')
     experiment_dir.mkdir(exist_ok=True)
@@ -290,32 +289,33 @@ if __name__ == '__main__':
         x_train, y_train, x_test, y_test = load_data()
         num_classes = 40
     elif args.dataset == "scanobjectnn_pb_t50_rs":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
+        x_train, y_train = data_utils.load_h5(
+            "../data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
+        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
     elif args.dataset == "scanobjectnn_obj_bg":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset.h5")
+        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset.h5")
+        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset.h5")
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
     elif args.dataset == "scanobjectnn_pb_t50_r":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
+        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
+        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
     elif args.dataset == "scanobjectnn_pb_t25_r":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
+        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
+        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
     elif args.dataset == "scanobjectnn_pb_t25":
-        x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
-        x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
+        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
+        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
         y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
         y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
         num_classes = 15
@@ -324,7 +324,7 @@ if __name__ == '__main__':
         name="Train",
         data_set=list(zip(x_train, y_train)),
         num_point=args.num_point,
-        data_augmentation=False,
+        data_augmentation=True,
         permanent_point=args.permanent_point,
         use_random=args.random,
         use_fps=args.fps,
@@ -348,10 +348,10 @@ if __name__ == '__main__':
     MODEL = importlib.import_module(args.model)
     experiment_dir.joinpath('models').mkdir(exist_ok=True)
     experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
-    copy_tree('./models', str(experiment_dir.joinpath('models')))
-    copy_tree('./data_set', str(experiment_dir.joinpath('data_set')))
-    shutil.copy('train_cls.py', str(experiment_dir))
-    shutil.copy('evaluate.py', str(experiment_dir))
+    copy_tree('../models', str(experiment_dir.joinpath('models')))
+    copy_tree('../data_set', str(experiment_dir.joinpath('data_set')))
+    shutil.copy('train_cls_scan.py', str(experiment_dir))
+    shutil.copy('../evaluate/evaluate.py', str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":

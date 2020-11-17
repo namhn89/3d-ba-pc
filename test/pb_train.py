@@ -6,24 +6,21 @@ import random
 import torch
 import torch.nn.parallel
 import torch.utils.data
-import shutil
-from distutils.dir_util import copy_tree
 from tqdm import tqdm
+from config import *
+from load_data import load_data
+import data_set.util.augmentation
 import numpy as np
 import datetime
 from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
-import logging
-import sys
-import sklearn.metrics as metrics
-import importlib
-
-from data_set.backdoor_dataset import BackdoorDataset
-from config import *
-from load_data import load_data, get_data
-import data_set.util.augmentation
 from utils import data_utils
-
+import logging
+from data_set.pb_dataset import PseudoLabelDataset
+import sklearn.metrics as metrics
+import shutil
+import importlib
+import sys
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -31,12 +28,12 @@ torch.manual_seed(manualSeed)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
-sys.path.append(os.path.join(ROOT_DIR, 'models'))
+sys.path.append(os.path.join(ROOT_DIR, '../models'))
 
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
     net = net.train()
-    running_loss = 0
+    running_loss = 0.0
     train_true = []
     train_pred = []
     progress = tqdm(data_loader)
@@ -44,7 +41,9 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
     for data in progress:
         points, labels = data
         points = points.data.numpy()
+
         # Augmentation
+        # points[:, :, 0:3] = data_set.augmentation.random_point_dropout(points[:, :, 0:3])
         points[:, :, 0:3] = data_set.util.augmentation.random_scale_point_cloud(points[:, :, 0:3])
         points[:, :, 0:3] = data_set.util.augmentation.shift_point_cloud(points[:, :, 0:3])
 
@@ -88,7 +87,7 @@ def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, 
 
 def eval_one_epoch(net, data_loader, dataset_size, criterion, mode, device):
     net = net.eval()
-    running_loss = 0
+    running_loss = 0.0
     train_true = []
     train_pred = []
     progress = tqdm(data_loader)
@@ -135,35 +134,30 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size in training [default: 32]')
     parser.add_argument('--epochs', default=250, type=int,
-                        help='number of epoch in training [default: 250]')
+                        help='number of epochs in training [default: 250]')
+    parser.add_argument('--learning_rate', default=0.001, type=float,
+                        help='learning rate in training [default: 0.001]')
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device [default: 0]')
-
     parser.add_argument('--model', type=str, default='pointnet_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
                                  "pointnet2_cls_ssg",
                                  "dgcnn_cls"],
                         help='training model [default: pointnet_cls]')
-
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
-
-    parser.add_argument('--log_dir', type=str, default="train_attack_point_object",
-                        help='experiment root [default: train_attack_point_object]')
     parser.add_argument('--optimizer', type=str, default='SGD',
-                        choices=['Adam', 'SGD'],
-                        help='optimizer for training [default: SGD]')
-    parser.add_argument('--learning_rate', default=0.001, type=float,
-                        help='learning rate in training [default: 0.001]')
-    parser.add_argument('--decay_rate', type=float, default=1e-4,
-                        help='decay rate [default: 1e-4]')
-    parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
-                        choices=['cos', 'step'],
-                        help='Scheduler to use [default: cos]')
+                        help='optimizer for training [default: Adam]',
+                        choices=['Adam', 'SGD'])
 
+    parser.add_argument('--log_dir', type=str, default="train_attack",
+                        help='experiment root [default: train_attack]')
     parser.add_argument('--normal', action='store_true', default=False,
                         help='Whether to use normal information [default: False]')
+    parser.add_argument('--decay_rate', type=float, default=1e-4,
+                        help='decay rate [default: 1e-4]')
+
     parser.add_argument('--random', action='store_true', default=False,
                         help='Whether to use sample data [default: False]')
     parser.add_argument('--fps', action='store_true', default=False,
@@ -171,62 +165,67 @@ def parse_args():
     parser.add_argument('--permanent_point', action='store_true', default=False,
                         help='Get fix first points on sample [default: False]')
 
-    parser.add_argument('--scale', type=float, default=0.2,
-                        help='scale centroid object for backdoor attack [default : 0.2]')
-    parser.add_argument('--num_point_trig', type=int, default=128,
-                        help='num points for attacking trigger [default : 128]')
-    parser.add_argument('--num_workers', type=int, default=8,
-                        help='num workers [default: 8]')
+    parser.add_argument('--scale', type=float, default=0.05,
+                        help='scale centroid object for backdoor attack [default : 0.05]')
 
-    parser.add_argument('--attack_method', type=str, default=CENTRAL_OBJECT,
+    parser.add_argument('--num_point_trig', type=int, default=1024,
+                        help='num points for attacking trigger [default : 1024]')
+
+    parser.add_argument('--attack_method', type=str, default=None,
+                        help="Attacking Method [default : duplicate_point]",
                         choices=[
-                            MULTIPLE_CORNER_POINT,
-                            CORNER_POINT,
-                            CENTRAL_POINT,
-                            CENTRAL_OBJECT,
-                            DUPLICATE_POINT,
-                            SHIFT_POINT,
-                            LOCAL_POINT
-                        ],
-                        help="Attacking Method [default : central_object]",
-                        )
-
-    parser.add_argument('--dataset', type=str, default="modelnet40",
+                            None,
+                            "multiple_corner",
+                            "point_corner",
+                            "object_centroid",
+                            "point_centroid",
+                            "duplicate_point",
+                            "shift_point",
+                        ])
+    parser.add_argument('--num_workers', type=int, default=8,
+                        help='num workers')
+    parser.add_argument('--data_set', type=str, default="modelnet40",
+                        help="Dataset to using train/test data [default : modelnet40]",
                         choices=[
                             "modelnet40",
                             "scanobjectnn_obj_bg",
                             "scanobjectnn_pb_t25",
                             "scanobjectnn_pb_t25_r",
                             "scanobjectnn_pb_t50_r",
-                            "scanobjectnn_pb_t50_rs"],
-                        help="Dataset to using train/test data [default : modelnet40]"
-                        )
-
+                            "scanobjectnn_pb_t50_rs"
+                        ])
     parser.add_argument('--dropout', type=float, default=0.5,
                         help='initial dropout rate [default: 0.5]')
     parser.add_argument('--emb_dims', type=int, default=1024, metavar='N',
                         help='Dimension of embeddings [default: 1024]')
     parser.add_argument('--k', type=int, default=40, metavar='N',
                         help='Num of nearest neighbors to use [default : 40]')
-
+    parser.add_argument('--scheduler', type=str, default='cos', metavar='N',
+                        choices=['cos', 'step'],
+                        help='Scheduler to use [default: step]')
     args = parser.parse_args()
     return args
 
 
-def make_log_model(args):
-    """LOG_MODEL"""
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+if __name__ == '__main__':
 
+    def log_string(string):
+        logger.info(string)
+        print(string)
+
+
+    args = parse_args()
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+    '''LOG_MODEL'''
     log_model = str(args.log_dir) + '_' + str(args.attack_method)
     log_model = log_model + "_" + str(args.batch_size) + "_" + str(args.epochs)
-    log_model = log_model + '_' + str(args.optimizer)
-    log_model = log_model + '_' + str(args.scheduler)
-    log_model = log_model + "_" + args.model
+    log_model = log_model + '_' + str(args.model)
 
     if args.model == "dgcnn_cls":
         log_model = log_model + "_" + str(args.emb_dims)
         log_model = log_model + "_" + str(args.k)
-        log_model = log_model + "_" + str(args.dropout)
 
     if args.fps:
         log_model = log_model + "_" + "fps"
@@ -240,29 +239,12 @@ def make_log_model(args):
     else:
         log_model = log_model + "_2048"
 
-    if args.attack_method == CENTRAL_OBJECT:
-        log_model = log_model + "_scale_" + str(args.scale)
-
     log_model = log_model + "_" + str(args.num_point_trig)
     log_model = log_model + "_" + str(args.dataset)
-    return log_model
-
-
-if __name__ == '__main__':
-
-    def log_string(string):
-        logger.info(string)
-        print(string)
-
-
-    args = parse_args()
-
-    log_model = make_log_model(args)
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     '''CREATE DIR'''
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
-    experiment_dir = Path('./log/')
+    experiment_dir = Path('../log/')
     experiment_dir.mkdir(exist_ok=True)
     experiment_dir = experiment_dir.joinpath('classification')
     experiment_dir.mkdir(exist_ok=True)
@@ -285,6 +267,21 @@ if __name__ == '__main__':
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
+    log_string("ModelNet40: {}".format("modelnet40"))
+    log_string("ScanObjectNN PB_OBJ_BG: {}".format("canobjectnn_obj_bg"))
+    log_string("ScanObjectNN PB_T25: {}".format("scanobjectnn_pb_t25"))
+    log_string("ScanObjectNN PB_T25_R: {}".format("scanobjectnn_pb_t25_r"))
+    log_string("ScanObjectNN PB_T50_R: {}".format("scanobjectnn_pb_t50_r"))
+    log_string("ScanObjectNN PB_T50_RS: {}".format("scanobjectnn_pb_t50_rs"))
+
+    log_string("POINT_CORNER : {}".format(CORNER_POINT))
+    log_string("MULTIPLE_CORNER_POINT : {}".format(MULTIPLE_CORNER_POINT))
+    log_string("POINT_CENTROID : {}".format(CENTRAL_POINT))
+    log_string("OBJECT_CENTROID : {}".format(CENTRAL_OBJECT))
+    log_string("SHIFT_POINT : {}".format(SHIFT_POINT))
+    log_string("DUPLICATE_POINT : {}".format(DUPLICATE_POINT))
+    log_string("LOCAL_POINT : {}".format(LOCAL_POINT))
+
     log_string('PARAMETER ...')
     log_string(args)
     log_string(log_model)
@@ -295,72 +292,50 @@ if __name__ == '__main__':
     # print(summary_writer)
 
     '''DATASET'''
-    x_train, y_train, x_test, y_test, num_classes = get_data(name=args.dataset)
-
-    train_dataset = BackdoorDataset(
-        data_set=list(zip(x_train, y_train)),
-        name="Train",
-        added_num_point=args.num_point_trig,
-        num_point=args.num_point,
-        use_random=args.random,
-        use_fps=args.fps,
-        data_augmentation=False,
-        mode_attack=args.attack_method,
-        use_normal=args.normal,
-        permanent_point=args.permanent_point,
-        scale=args.scale,
-    )
-
-    test_dataset = BackdoorDataset(
-        data_set=list(zip(x_test, y_test)),
-        name="Test",
-        added_num_point=args.num_point_trig,
-        num_point=args.num_point,
-        use_random=args.random,
-        use_fps=args.fps,
-        data_augmentation=False,
-        mode_attack=args.attack_method,
-        use_normal=args.normal,
-        permanent_point=args.permanent_point,
-        scale=args.scale,
-    )
-
-    clean_dataset = BackdoorDataset(
-        data_set=list(zip(x_test, y_test)),
-        portion=0.0,
-        name="Clean",
-        added_num_point=args.num_point_trig,
-        num_point=args.num_point,
-        use_random=args.random,
-        use_fps=args.fps,
-        data_augmentation=False,
-        mode_attack=args.attack_method,
-        use_normal=args.normal,
-        permanent_point=args.permanent_point,
-        scale=args.scale,
-    )
-
-    poison_dataset = BackdoorDataset(
-        data_set=list(zip(x_test, y_test)),
-        portion=1.0,
-        name="Poison",
-        added_num_point=args.num_point_trig,
-        num_point=args.num_point,
-        use_random=args.random,
-        use_fps=args.fps,
-        data_augmentation=False,
-        mode_attack=args.attack_method,
-        use_normal=args.normal,
-        permanent_point=args.permanent_point,
-        scale=args.scale,
-    )
+    global x_train, y_train, x_test, y_test, num_classes
+    if args.dataset == "modelnet40":
+        x_train, y_train, x_test, y_test = load_data()
+        num_classes = 40
+    elif args.dataset == "scanobjectnn_pb_t50_rs":
+        x_train, y_train = data_utils.load_h5(
+            "../data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
+        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_obj_bg":
+        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset.h5")
+        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_pb_t50_r":
+        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
+        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_pb_t25_r":
+        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
+        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
+    elif args.dataset == "scanobjectnn_pb_t25":
+        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
+        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
+        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
+        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
+        num_classes = 15
 
     MODEL = importlib.import_module(args.model)
-    experiment_dir.joinpath('models').mkdir(exist_ok=True)
-    experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
-    copy_tree('./models', str(experiment_dir.joinpath('models')))
-    copy_tree('./data_set', str(experiment_dir.joinpath('data_set')))
-    shutil.copy('ba_attack.py', str(experiment_dir))
+    shutil.copy('./models/%s.py' % args.model, str(experiment_dir))
+    shutil.copy('../models/pointnet_util.py', str(experiment_dir))
+    shutil.copy('../data_set/mydataset.py', str(experiment_dir))
+    shutil.copy('../data_set/shift_dataset.py', str(experiment_dir))
+    shutil.copy('../data_set/backdoor_dataset.py', str(experiment_dir))
+    shutil.copy('../data_set/modelnet40.py', str(experiment_dir))
+    shutil.copy('data_set/pointcloud_dataset.py', str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
@@ -371,7 +346,7 @@ if __name__ == '__main__':
         criterion = MODEL.get_loss().to(device)
 
     if args.optimizer == 'Adam':
-        log_string("Using Adam optimizer")
+        log_string('Use Adam Optimizer')
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
@@ -379,29 +354,78 @@ if __name__ == '__main__':
             eps=1e-08,
             weight_decay=args.decay_rate
         )
-    elif args.optimizer == 'SGD':
-        log_string("Using SGD optimizer")
+    else:
+        log_string('Use SGD Optimizer')
         optimizer = torch.optim.SGD(
             classifier.parameters(),
-            lr=0.01,
+            lr=args.learning_rate * 100,
             momentum=0.9,
             weight_decay=args.decay_rate
         )
 
-    if args.scheduler == 'step':
-        log_string("Use Step Scheduler")
+    if args.scheduler == 'cos':
+        log_string('Use Cos Scheduler')
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            args.epochs,
+            eta_min=1e-3
+        )
+    elif args.scheduler == 'step':
+        log_string('Use Step Scheduler')
         scheduler = torch.optim.lr_scheduler.StepLR(
             optimizer,
             step_size=20,
             gamma=0.7
         )
-    else:
-        log_string("Use Cos Scheduler")
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer,
-            args.epochs,
-            eta_min=1e-3,
-        )
+
+    train_dataset = PseudoLabelDataset(
+        data_set=list(zip(x_train, y_train)),
+        name="train",
+        added_num_point=args.num_point_trig,
+        data_augmentation=True,
+        num_point=args.num_point,
+        mode_attack=args.attack_method,
+        use_random=args.random,
+        use_fps=args.fps,
+        permanent_point=args.permanent_point,
+    )
+
+    test_dataset = PseudoLabelDataset(
+        data_set=list(zip(x_test, y_test)),
+        name="test",
+        added_num_point=args.num_point_trig,
+        data_augmentation=False,
+        num_point=args.num_point,
+        use_random=args.random,
+        use_fps=args.fps,
+        permanent_point=args.permanent_point,
+    )
+
+    clean_dataset = PseudoLabelDataset(
+        data_set=list(zip(x_test, y_test)),
+        portion=0.0,
+        name="clean_test",
+        added_num_point=args.num_point_trig,
+        data_augmentation=False,
+        mode_attack=args.attack_method,
+        num_point=args.num_point,
+        use_random=args.random,
+        use_fps=args.fps,
+        permanent_point=args.permanent_point,
+    )
+
+    poison_dataset = PseudoLabelDataset(
+        data_set=list(zip(x_test, y_test)),
+        portion=1.0,
+        name="poison_test",
+        added_num_point=args.num_point_trig,
+        data_augmentation=False,
+        mode_attack=args.attack_method,
+        num_point=args.num_point,
+        use_random=args.random,
+        use_fps=args.fps,
+        permanent_point=args.permanent_point,
+    )
 
     dataset_size = {
         "Train": len(train_dataset),
@@ -409,34 +433,36 @@ if __name__ == '__main__':
         "Clean": len(clean_dataset),
         "Poison": len(poison_dataset),
     }
-    num_points = train_dataset[0][0].shape[0]
-    log_string('Num Point: {}'.format(num_points))
+
+    log_string(str(dataset_size))
+
+    if args.random or args.fps or args.permanent_point:
+        num_point = args.num_point
+    else:
+        num_point = train_dataset[0][0].shape[0]
+
+    log_string('Num point for model: {}'.format(num_point))
 
     '''TRAINING'''
     log_string('Start training...')
-    x = torch.randn(args.batch_size, 3, num_points)
+    x = torch.randn(args.batch_size, 3, num_point)
     x = x.to(device)
-
-    # summary_writer.add_graph(model=classifier, input_to_model=x)
 
     print(classifier)
 
+    # summary_writer.add_graph(model=classifier, input_to_model=x)
+
     best_acc_clean = 0
-    best_class_acc_clean = 0
     best_acc_poison = 0
+    best_class_acc_clean = 0
     best_class_acc_poison = 0
     ratio_backdoor_train = []
     ratio_backdoor_test = []
 
     for epoch in range(args.epochs):
-
         if args.random:
-            log_string("Updating {} data_set ...".format(train_dataset.name))
+            log_string("Updating {} data_set ..... ".format(train_dataset.name))
             train_dataset.update_dataset()
-            # log_string("Updating {} data_set ...".format(poison_dataset.name))
-            # poison_dataset.update_dataset()
-            # clean_dataset.update_dataset()
-            # test_dataset.update_dataset()
 
         t_train = train_dataset.calculate_trigger_percentage()
         t_poison = poison_dataset.calculate_trigger_percentage()
@@ -446,7 +472,6 @@ if __name__ == '__main__':
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
 
-        scheduler.step()
         train_dataloader = torch.utils.data.dataloader.DataLoader(
             dataset=train_dataset,
             batch_size=args.batch_size,
@@ -476,21 +501,22 @@ if __name__ == '__main__':
         log_string("Ratio trigger on train sample {:.4f}".format(t_train))
         log_string("Ratio trigger on bad sample {:.4f}".format(t_poison))
 
+        # Step scheduler
+        scheduler.step()
+
         loss_clean, acc_clean, class_acc_clean = eval_one_epoch(net=classifier,
                                                                 data_loader=clean_dataloader,
                                                                 dataset_size=dataset_size,
                                                                 mode="Clean",
                                                                 criterion=criterion,
-                                                                device=device,
-                                                                )
+                                                                device=device)
 
         loss_poison, acc_poison, class_acc_poison = eval_one_epoch(net=classifier,
                                                                    data_loader=poison_dataloader,
                                                                    dataset_size=dataset_size,
                                                                    mode="Poison",
                                                                    criterion=criterion,
-                                                                   device=device,
-                                                                   )
+                                                                   device=device)
 
         loss_train, acc_train, class_acc_train = train_one_epoch(net=classifier,
                                                                  data_loader=train_dataloader,
@@ -498,8 +524,7 @@ if __name__ == '__main__':
                                                                  optimizer=optimizer,
                                                                  mode="Train",
                                                                  criterion=criterion,
-                                                                 device=device
-                                                                 )
+                                                                 device=device)
 
         if acc_poison >= best_acc_poison:
             best_acc_poison = acc_poison
@@ -550,7 +575,6 @@ if __name__ == '__main__':
 
         log_string('Clean Test - Best Accuracy: {:.4f}, Class Accuracy: {:.4f}'.format(best_acc_clean,
                                                                                        best_class_acc_clean))
-
         log_string('Bad Test - Best Accuracy: {:.4f}, Class Accuracy: {:.4f}'.format(best_acc_poison,
                                                                                      best_class_acc_poison))
 
