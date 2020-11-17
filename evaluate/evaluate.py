@@ -192,13 +192,13 @@ if __name__ == '__main__':
         data_set=list(zip(x_test, y_test)),
         portion=1.0,
         name="poison",
-        added_num_point=180,
+        added_num_point=120,
         num_point=1024,
         use_random=True,
         use_fps=False,
         data_augmentation=False,
         mode_attack=LOCAL_POINT,
-        radius=0.01,
+        radius=0.001,
     )
 
     # poison_dataset = BackdoorDataset(
