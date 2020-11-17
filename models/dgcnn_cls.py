@@ -135,6 +135,9 @@ class get_model(nn.Module):
 
 
 class get_loss(nn.Module):
+    """
+       Use smooth loss
+    """
     def __init__(self):
         super(get_loss, self).__init__()
 
