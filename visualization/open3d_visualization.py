@@ -32,6 +32,13 @@ class Visualizer:
     def make_gif(self, path):
         pass
 
+    @staticmethod
+    def visualize_point_color(points, colors):
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(points)
+        pcd.colors = o3d.utility.Vector3dVector(colors)
+        custom_draw_geometry_with_rotation(pcd)
+
     def visualize_backdoor(self, points, mask, only_special=False):
         """
         :param only_special:
@@ -71,7 +78,6 @@ class Visualizer:
                     np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['navy']
 
         custom_draw_geometry_with_rotation(pcd=pcd)
-        # custom_draw_geometry(pcd=pcd)
 
     def visualize_critical(self, points, mask, only_special=False):
         """
@@ -143,8 +149,6 @@ class Visualizer:
             return c_mask
 
         ba_mask = process_duplicate(points, mask)
-        # print(ba_mask)
-        # print((ba_mask == 2.).sum())
         pcd = o3d.geometry.PointCloud()
         backdoor_points = []
         if only_special:
@@ -168,4 +172,3 @@ class Visualizer:
                     np.asarray(pcd.colors)[idx] = self.map_label_to_rgb['blue']
 
         custom_draw_geometry_with_rotation(pcd=pcd)
-        # custom_draw_geometry(pcd=pcd)

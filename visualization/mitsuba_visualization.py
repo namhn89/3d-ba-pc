@@ -148,8 +148,37 @@ def ConvertEXRToJPG(exrfile, jpgfile):
     Image.merge("RGB", rgb8).save(jpgfile, "JPEG", quality=95)
 
 
-def main():
+def visualize_point_cloud(point_cloud, out_path, colors=None, num_point=1024):
+    pcl, idx = standardize_bbox(point_cloud, num_point)
+    xml_segments = [xml_head]
+    for i in range(pcl.shape[0]):
+        color = colormap(pcl[i, 0] + 0.5, pcl[i, 1] + 0.5, pcl[i, 2] + 0.5 - 0.0125)
+        xml_segments.append(xml_ball_segment.format(pcl[i, 0], pcl[i, 1], pcl[i, 2], *color))
 
+    xml_segments.append(xml_tail)
+
+    xml_content = str.join('', xml_segments)
+
+    xmlFile = "../scene.xml"
+
+    with open(xmlFile, 'w') as f:
+        f.write(xml_content)
+    f.close()
+
+    exrFile = "../scene.exr"
+    if not os.path.exists(exrFile):
+        print(['Running Mitsuba, writing to: ', xmlFile])
+        subprocess.run([PATH_TO_MITSUBA2, xmlFile])
+    else:
+        print('Skipping rendering because the EXR file already exists')
+
+    png = "../scene.jpg"
+
+    print(['Converting EXR to JPG...'])
+    ConvertEXRToJPG(exrFile, png)
+
+
+def main():
     x_train, y_train, x_test, y_test = load_data("/home/nam/workspace/vinai/project/3d-ba-pc/data"
                                                  "/modelnet40_ply_hdf5_2048")
     pcl = x_test[1]
