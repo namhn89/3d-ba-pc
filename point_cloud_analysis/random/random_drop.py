@@ -142,11 +142,14 @@ def main():
     train_pred = []
 
     progress = tqdm(data_loader)
+    classifier.eval()
 
     for data in progress:
         points, labels = data
         points_adv = attack.drop_points(pointclouds_pl=points, labels_pl=labels)
         points_adv = torch.from_numpy(points_adv.astype(np.float32))
+        print(points.shape)
+        print(points_adv.shape)
 
         target = labels[:, 0]
         points, points_adv, target = points.to(device), points_adv.to(device), target.to(device)

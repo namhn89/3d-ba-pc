@@ -99,7 +99,7 @@ class RandomDropCritical:
                 squeeze_idx = []
                 count_idx = np.zeros((pointclouds_np_adv.shape[1],), dtype=np.int32)
                 for idx in range(drop_indice.shape[1]):
-                    count_idx[drop_indice[j][idx]] += -1
+                    count_idx[drop_indice[j][idx]] += 1
                 for idx in range(pointclouds_np_adv.shape[1]):
                     if count_idx[idx] != 0:
                         squeeze_idx.append(idx)

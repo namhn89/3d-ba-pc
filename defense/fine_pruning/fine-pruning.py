@@ -141,11 +141,7 @@ def main():
         added_num_point=128,
         num_point=1024,
         use_random=True,
-        use_fps=False,
-        data_augmentation=False,
         mode_attack=MULTIPLE_CORNER_POINT,
-        use_normal=False,
-        permanent_point=False,
     )
 
     clean_dataset = PointCloudDataSet(
@@ -180,6 +176,7 @@ def main():
     hook = classifier.feat.bn3.register_forward_hook(forward_hook)
 
     print("Forwarding all the validation dataset:")
+
     for inputs, _ in tqdm(clean_dataloader):
         inputs = inputs.to(device)
         inputs = inputs.transpose(2, 1)
