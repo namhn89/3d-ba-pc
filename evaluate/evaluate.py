@@ -14,7 +14,7 @@ import sklearn.metrics as metrics
 sys.path.insert(0, '..')
 sys.path.insert(0, '../models')
 
-from config import LOG_CLASSIFICATION
+from config import *
 from load_data import get_data
 from data_set.pc_dataset import PointCloudDataSet
 from data_set.la_dataset import LocalPointDataset
@@ -44,7 +44,7 @@ def parse_args():
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device')
     parser.add_argument('--log_dir', type=str,
-                        default='train_attack_local_point_32_250_dgcnn_cls_1024_40_random_1024_radius_0.01_128_modelnet40',
+                        default='train_attack_duplicate_point_32_250_dgcnn_cls_SGD_cos_1024_40_0.5_random_1024_1024_modelnet40',
                         help='Experiment root')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num workers')
