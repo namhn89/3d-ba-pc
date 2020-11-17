@@ -26,7 +26,6 @@ from utils import data_utils
 from load_data import load_data
 
 manualSeed = random.randint(1, 10000)  # fix seed
-print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
@@ -176,7 +175,6 @@ if __name__ == '__main__':
 
     args = parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    print(device)
 
     class_names = [line.rstrip() for line in open(args.class_names)]
 
@@ -268,8 +266,6 @@ if __name__ == '__main__':
         data_augmentation=False,
         use_random=True,
     )
-    # print(len(ba_dataset))
-    # print(len(clean_dataset))
 
     evaluate(
         net=classifier,
@@ -301,14 +297,11 @@ if __name__ == '__main__':
 
     x = np.concatenate([global_feature_vec, global_feature_vec_ba])
 
-    print("X.shape : {}".format(x.shape))
     print("*** Starting fit data T-sne *** ")
     res = TSNE(n_components=2, perplexity=30.0, random_state=0).fit_transform(x)
     print("Finishing fit data done ! .....")
     embedding = res[:len(global_feature_vec)]
     embedding_ba = res[len(global_feature_vec):]
-
-    print(res.shape)
 
     plt.figure(figsize=(20, 20))
     plt.subplot(111)

@@ -140,11 +140,10 @@ def visualize_point_cloud_with_backdoor(points, mask):
 
 
 def visualize_point_cloud_critical_point(points, mask):
-    # idx = []
     critical_points = []
-    for id, c in enumerate(mask):
+    for idx, c in enumerate(mask):
         if c[0] == 1.:
-            critical_points.append(points[id])
+            critical_points.append(points[idx])
     critical_points = np.asarray(critical_points)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(critical_points)
