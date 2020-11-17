@@ -192,7 +192,7 @@ if __name__ == '__main__':
         data_set=list(zip(x_test, y_test)),
         portion=1.0,
         name="poison",
-        added_num_point=256,
+        added_num_point=180,
         num_point=1024,
         use_random=True,
         use_fps=False,
