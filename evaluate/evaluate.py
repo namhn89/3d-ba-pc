@@ -137,7 +137,7 @@ if __name__ == '__main__':
 
     logger = logging.getLogger("Model")
     logger.setLevel(logging.INFO)
-    experiment_dir = 'log/classification/' + args.log_dir
+    experiment_dir = LOG_CLASSIFICATION + args.log_dir
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler = logging.FileHandler('%s/eval.txt' % experiment_dir)
     file_handler.setLevel(logging.INFO)
