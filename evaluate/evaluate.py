@@ -35,7 +35,7 @@ def parse_args():
     parser = argparse.ArgumentParser('')
     parser.add_argument('--batch_size', type=int, default=16,
                         help='batch size in training')
-    parser.add_argument('--model', type=str, default='pointnet_cls',
+    parser.add_argument('--model', type=str, default='dgcnn_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
                                  "pointnet2_cls_ssg",
@@ -165,17 +165,17 @@ if __name__ == '__main__':
 
     # '''Bad Test'''
 
-    poison_dataset = ShiftPointDataset(
-        data_set=list(zip(x_test, y_test)),
-        portion=1.0,
-        name="poison_test",
-        added_num_point=1024,
-        num_point=1024,
-        use_random=True,
-        use_fps=False,
-        data_augmentation=False,
-        mode_attack=DUPLICATE_POINT,
-    )
+    # poison_dataset = ShiftPointDataset(
+    #     data_set=list(zip(x_test, y_test)),
+    #     portion=1.0,
+    #     name="poison_test",
+    #     added_num_point=256,
+    #     num_point=1024,
+    #     use_random=True,
+    #     use_fps=False,
+    #     data_augmentation=False,
+    #     mode_attack=DUPLICATE_POINT,
+    # )
 
     # poison_dataset = PoisonDataset(
     #     data_set=list(zip(x_test, y_test)),
@@ -188,17 +188,18 @@ if __name__ == '__main__':
     #     permanent_point=False,
     # )
 
-    # poison_dataset = LocalPointDataset(
-    #     data_set=list(zip(x_test, y_test)),
-    #     portion=1.0,
-    #     name="poison",
-    #     added_num_point=1024,
-    #     num_point=128,
-    #     use_random=True,
-    #     use_fps=False,
-    #     data_augmentation=False,
-    #     mode_attack=LOCAL_POINT,
-    # )
+    poison_dataset = LocalPointDataset(
+        data_set=list(zip(x_test, y_test)),
+        portion=1.0,
+        name="poison",
+        added_num_point=256,
+        num_point=1024,
+        use_random=True,
+        use_fps=False,
+        data_augmentation=False,
+        mode_attack=LOCAL_POINT,
+        radius=0.01,
+    )
 
     # poison_dataset = BackdoorDataset(
     #     data_set=list(zip(x_test, y_test)),
