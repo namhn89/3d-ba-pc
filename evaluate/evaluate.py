@@ -1,4 +1,3 @@
-from __future__ import print_function
 import argparse
 import random
 import torch
@@ -10,13 +9,13 @@ import sys
 from tqdm import tqdm
 import os
 import numpy as np
+import sklearn.metrics as metrics
 
-sys.path.insert(0, '../')
+sys.path.insert(0, '..')
 sys.path.insert(0, '../models')
 
 from config import *
 from load_data import get_data
-import sklearn.metrics as metrics
 from data_set.pc_dataset import PointCloudDataSet
 from data_set.la_dataset import LocalPointDataset
 from data_set.backdoor_dataset import BackdoorDataset
