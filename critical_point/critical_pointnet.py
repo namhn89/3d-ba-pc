@@ -30,8 +30,7 @@ class CriticalPointNet(object):
         self.data_set = PointCloudDataSet(
             name="clean",
             data_set=data_set,
-            # data_set=list(zip(x_test, y_test)),
-            num_point=1024,
+f            num_point=1024,
             data_augmentation=False,
             permanent_point=False,
             use_random=True,
@@ -40,7 +39,6 @@ class CriticalPointNet(object):
         )
         self.bad_dataset = BackdoorDataset(
             data_set=data_set,
-            # data_set=list(zip(x_test, y_test)),
             name="poison",
             portion=1.0,
             added_num_point=128,
