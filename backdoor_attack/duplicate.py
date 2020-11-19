@@ -18,6 +18,15 @@ import sklearn.metrics as metrics
 import importlib
 import sys
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+print(BASE_DIR)
+ROOT_DIR = BASE_DIR
+sys.path.append(BASE_DIR)
+sys.path.append(os.path.join(BASE_DIR, '../models'))
+sys.path.append(os.path.join(BASE_DIR, '../utils'))
+sys.path.append(os.path.join(BASE_DIR, '..'))
+PARENT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
+
 from data_set.shift_dataset import ShiftPointDataset
 from load_data import get_data
 import data_set.util.augmentation
@@ -27,10 +36,6 @@ from config import *
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = BASE_DIR
-sys.path.append(os.path.join(ROOT_DIR, '../models'))
 
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
@@ -342,9 +347,9 @@ if __name__ == '__main__':
     MODEL = importlib.import_module(args.model)
     experiment_dir.joinpath('models').mkdir(exist_ok=True)
     experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
-    copy_tree('../models', str(experiment_dir.joinpath('models')))
-    copy_tree('../data_set', str(experiment_dir.joinpath('data_set')))
-    shutil.copy('ba_duplicate.py', str(experiment_dir))
+    copy_tree(os.path.join(PARENT_DIR, 'models'), str(experiment_dir.joinpath('models')))
+    copy_tree(os.path.join(PARENT_DIR, 'data_set'), str(experiment_dir.joinpath('data_set')))
+    copy_tree(os.path.join(BASE_DIR), str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":

@@ -357,8 +357,8 @@ if __name__ == '__main__':
     experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
     copy_tree(os.path.join(PARENT_DIR, 'models'), str(experiment_dir.joinpath('models')))
     copy_tree(os.path.join(PARENT_DIR, 'data_set'), str(experiment_dir.joinpath('data_set')))
-    shutil.copy(os.path.join(PARENT_DIR, 'train', 'train_cls.py'), str(experiment_dir))
-    shutil.copy(os.path.join(PARENT_DIR, 'evaluate', 'evaluate.py'), str(experiment_dir))
+    copy_tree(os.path.join(BASE_DIR), str(experiment_dir))
+    copy_tree(os.path.join(BASE_DIR, 'evaluate'), str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
@@ -431,8 +431,8 @@ if __name__ == '__main__':
         if args.random:
             log_string("Updating {} data_set ...".format(train_dataset.name))
             train_dataset.update_dataset()
-            log_string("Updating {} data_set ...".format(test_dataset.name))
-            test_dataset.update_dataset()
+            # log_string("Updating {} data_set ...".format(test_dataset.name))
+            # test_dataset.update_dataset()
 
         num_point = train_dataset[0][0].shape[0]
         log_string('Num point on sample: {}'.format(num_point))
