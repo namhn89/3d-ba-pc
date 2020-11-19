@@ -18,6 +18,14 @@ import sklearn.metrics as metrics
 import importlib
 import shutil
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = BASE_DIR
+sys.path.append(BASE_DIR)
+sys.path.append(os.path.join(BASE_DIR, '../models'))
+sys.path.append(os.path.join(BASE_DIR, '../utils'))
+sys.path.append(os.path.join(BASE_DIR, '..'))
+PARENT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
+
 from utils import data_utils
 from utils import provider
 import data_set.util.augmentation
@@ -27,9 +35,6 @@ from data_set.pc_dataset import PointCloudDataSet
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = BASE_DIR
-sys.path.append(os.path.join(ROOT_DIR, '../models'))
 
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
@@ -247,15 +252,15 @@ if __name__ == '__main__':
 
     '''CREATE DIR'''
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
-    experiment_dir = Path('../log/')
+    experiment_dir = Path('./log/')
     experiment_dir.mkdir(exist_ok=True)
-    experiment_dir = experiment_dir.joinpath('classification')
-    experiment_dir.mkdir(exist_ok=True)
+
     if args.log_dir is None:
         experiment_dir = experiment_dir.joinpath(time_str)
     else:
         experiment_dir = experiment_dir.joinpath(log_model)
     experiment_dir.mkdir(exist_ok=True)
+
     checkpoints_dir = experiment_dir.joinpath('checkpoints/')
     checkpoints_dir.mkdir(exist_ok=True)
     log_dir = experiment_dir.joinpath('logs/')
@@ -277,7 +282,9 @@ if __name__ == '__main__':
     '''TENSORBROAD'''
     log_string('Creating Tensorboard ...')
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    summary_writer = SummaryWriter('./log/' + log_model + '/' + current_time + '/summary')
+    tensor_dir = experiment_dir.joinpath('tensorboard/')
+    tensor_dir.mkdir(exist_ok=True)
+    summary_writer = SummaryWriter(os.path.join(tensor_dir))
     # print(summary_writer)
 
     '''DATA LOADING'''
@@ -348,10 +355,10 @@ if __name__ == '__main__':
     MODEL = importlib.import_module(args.model)
     experiment_dir.joinpath('models').mkdir(exist_ok=True)
     experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
-    copy_tree('../models', str(experiment_dir.joinpath('models')))
-    copy_tree('../data_set', str(experiment_dir.joinpath('data_set')))
-    shutil.copy('train_cls_scan.py', str(experiment_dir))
-    shutil.copy('../evaluate/evaluate.py', str(experiment_dir))
+    copy_tree(os.path.join(PARENT_DIR, 'models'), str(experiment_dir.joinpath('models')))
+    copy_tree(os.path.join(PARENT_DIR, 'data_set'), str(experiment_dir.joinpath('data_set')))
+    shutil.copy(os.path.join(PARENT_DIR, 'train', 'train_cls.py'), str(experiment_dir))
+    shutil.copy(os.path.join(PARENT_DIR, 'evaluate', 'evaluate.py'), str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":

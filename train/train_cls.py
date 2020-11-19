@@ -17,6 +17,15 @@ import sys
 import sklearn.metrics as metrics
 import importlib
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = BASE_DIR
+sys.path.append(BASE_DIR)
+sys.path.append(os.path.join(BASE_DIR, '../models'))
+sys.path.append(os.path.join(BASE_DIR, '../utils'))
+sys.path.append(os.path.join(BASE_DIR, '..'))
+PARENT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
+
+from load_data import get_data
 from utils import data_utils
 from utils import provider
 import data_set.util.augmentation
@@ -26,9 +35,6 @@ from data_set.pc_dataset import PointCloudDataSet
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = BASE_DIR
-sys.path.append(os.path.join(ROOT_DIR, '../models'))
 
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
@@ -248,9 +254,8 @@ if __name__ == '__main__':
 
     '''CREATE DIR'''
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
-    experiment_dir = Path('../log/')
-    experiment_dir.mkdir(exist_ok=True)
-    experiment_dir = experiment_dir.joinpath('classification')
+
+    experiment_dir = Path('./log/')
     experiment_dir.mkdir(exist_ok=True)
     if args.log_dir is None:
         experiment_dir = experiment_dir.joinpath(time_str)
@@ -259,6 +264,7 @@ if __name__ == '__main__':
     experiment_dir.mkdir(exist_ok=True)
     checkpoints_dir = experiment_dir.joinpath('checkpoints/')
     checkpoints_dir.mkdir(exist_ok=True)
+
     log_dir = experiment_dir.joinpath('logs/')
     log_dir.mkdir(exist_ok=True)
 
@@ -278,48 +284,17 @@ if __name__ == '__main__':
     '''TENSORBROAD'''
     log_string('Creating Tensorboard ...')
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    summary_writer = SummaryWriter('./log/' + log_model + '/' + current_time + '/summary')
+    tensor_dir = experiment_dir.joinpath('tensorboard/')
+    tensor_dir.mkdir(exist_ok=True)
+    summary_writer = SummaryWriter(os.path.join(tensor_dir))
+    # summary_writer = SummaryWriter('./log/' + log_model + '/' + current_time + '/summary')
     # print(summary_writer)
 
     '''DATA LOADING'''
     log_string('Loading Dataset ...')
 
     '''DATASET'''
-    global x_train, y_train, x_test, y_test, num_classes
-    if args.dataset == "modelnet40":
-        x_train, y_train, x_test, y_test = load_data()
-        num_classes = 40
-    elif args.dataset == "scanobjectnn_pb_t50_rs":
-        x_train, y_train = data_utils.load_h5(
-            "../data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
-        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_obj_bg":
-        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset.h5")
-        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t50_r":
-        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmentedrot.h5")
-        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmentedrot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t25_r":
-        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmented25rot.h5")
-        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmented25rot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
-    elif args.dataset == "scanobjectnn_pb_t25":
-        x_train, y_train = data_utils.load_h5("../data/h5_files/main_split/training_objectdataset_augmented25_norot.h5")
-        x_test, y_test = data_utils.load_h5("../data/h5_files/main_split/test_objectdataset_augmented25_norot.h5")
-        y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
-        y_test = np.reshape(y_test, newshape=(y_test.shape[0], 1))
-        num_classes = 15
+    x_train, y_train, x_test, y_test, num_classes = get_data(args.dataset, prefix="/home/ubuntu/3d-ba-pc/")
 
     train_dataset = PointCloudDataSet(
         name="Train",
@@ -349,10 +324,10 @@ if __name__ == '__main__':
     MODEL = importlib.import_module(args.model)
     experiment_dir.joinpath('models').mkdir(exist_ok=True)
     experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
-    copy_tree('../models', str(experiment_dir.joinpath('models')))
-    copy_tree('../data_set', str(experiment_dir.joinpath('data_set')))
-    shutil.copy('train_cls.py', str(experiment_dir))
-    shutil.copy('../evaluate/evaluate.py', str(experiment_dir))
+    copy_tree(os.path.join(PARENT_DIR, 'models'), str(experiment_dir.joinpath('models')))
+    copy_tree(os.path.join(PARENT_DIR, 'data_set'), str(experiment_dir.joinpath('data_set')))
+    shutil.copy(os.path.join(PARENT_DIR, 'train', 'train_cls.py'), str(experiment_dir))
+    shutil.copy(os.path.join(PARENT_DIR, 'evaluate', 'evaluate.py'), str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":

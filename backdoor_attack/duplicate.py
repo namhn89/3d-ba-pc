@@ -253,9 +253,7 @@ if __name__ == '__main__':
 
     '''CREATE DIR'''
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
-    experiment_dir = Path('../log/')
-    experiment_dir.mkdir(exist_ok=True)
-    experiment_dir = experiment_dir.joinpath('classification')
+    experiment_dir = Path('./log/')
     experiment_dir.mkdir(exist_ok=True)
     if args.log_dir is None:
         experiment_dir = experiment_dir.joinpath(time_str)
@@ -282,7 +280,10 @@ if __name__ == '__main__':
 
     '''TENSORBROAD'''
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    summary_writer = SummaryWriter('./log/' + log_model + '/' + current_time + '/summary')
+    log_string('Creating Tensorboard ...')
+    tensor_dir = experiment_dir.joinpath('tensorboard/')
+    tensor_dir.mkdir(exist_ok=True)
+    summary_writer = SummaryWriter(os.path.join(tensor_dir))
     # print(summary_writer)
 
     '''DATASET'''

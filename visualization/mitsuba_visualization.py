@@ -148,15 +148,15 @@ def ConvertEXRToJPG(exrfile, jpgfile):
     Image.merge("RGB", rgb8).save(jpgfile, "JPEG", quality=95)
 
 
-def visualize_point_cloud(point_cloud, out_path, colors=None, num_point=1024):
-    pcl, idx = standardize_bbox(point_cloud, num_point)
+def visualize_point_cloud(point_cloud, out_path="../scene.jpg", colors=None, num_point=1024):
     xml_segments = [xml_head]
+
+    pcl, idx = standardize_bbox(point_cloud, num_point)
     for i in range(pcl.shape[0]):
         color = colormap(pcl[i, 0] + 0.5, pcl[i, 1] + 0.5, pcl[i, 2] + 0.5 - 0.0125)
         xml_segments.append(xml_ball_segment.format(pcl[i, 0], pcl[i, 1], pcl[i, 2], *color))
 
     xml_segments.append(xml_tail)
-
     xml_content = str.join('', xml_segments)
 
     xmlFile = "../scene.xml"
@@ -166,13 +166,14 @@ def visualize_point_cloud(point_cloud, out_path, colors=None, num_point=1024):
     f.close()
 
     exrFile = "../scene.exr"
+
     if not os.path.exists(exrFile):
         print(['Running Mitsuba, writing to: ', xmlFile])
         subprocess.run([PATH_TO_MITSUBA2, xmlFile])
     else:
         print('Skipping rendering because the EXR file already exists')
 
-    png = "../scene.jpg"
+    png = out_path
 
     print(['Converting EXR to JPG...'])
     ConvertEXRToJPG(exrFile, png)

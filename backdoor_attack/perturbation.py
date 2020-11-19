@@ -18,20 +18,24 @@ import sys
 import sklearn.metrics as metrics
 import importlib
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+print(BASE_DIR)
+ROOT_DIR = BASE_DIR
+sys.path.append(BASE_DIR)
+sys.path.append(os.path.join(BASE_DIR, '../models'))
+sys.path.append(os.path.join(BASE_DIR, '../utils'))
+sys.path.append(os.path.join(BASE_DIR, '..'))
+PARENT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
+
 from data_set.backdoor_dataset import BackdoorDataset
 from config import *
 from load_data import load_data, get_data
 import data_set.util.augmentation
 from utils import data_utils
 
-
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = BASE_DIR
-sys.path.append(os.path.join(ROOT_DIR, '../models'))
 
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
@@ -264,8 +268,6 @@ if __name__ == '__main__':
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
     experiment_dir = Path('../log/')
     experiment_dir.mkdir(exist_ok=True)
-    experiment_dir = experiment_dir.joinpath('classification')
-    experiment_dir.mkdir(exist_ok=True)
     if args.log_dir is None:
         experiment_dir = experiment_dir.joinpath(time_str)
     else:
@@ -290,8 +292,12 @@ if __name__ == '__main__':
     log_string(log_model)
 
     '''TENSORBROAD'''
+    log_string('Creating Tensorboard ...')
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    summary_writer = SummaryWriter('./log/' + log_model + '/' + current_time + '/summary')
+    tensor_dir = experiment_dir.joinpath('tensorboard/')
+    tensor_dir.mkdir(exist_ok=True)
+    summary_writer = SummaryWriter(os.path.join(tensor_dir))
+    # summary_writer = SummaryWriter('./log/' + log_model + '/' + current_time + '/summary')
     # print(summary_writer)
 
     '''DATASET'''
@@ -358,9 +364,9 @@ if __name__ == '__main__':
     MODEL = importlib.import_module(args.model)
     experiment_dir.joinpath('models').mkdir(exist_ok=True)
     experiment_dir.joinpath('data_set').mkdir(exist_ok=True)
-    copy_tree('../models', str(experiment_dir.joinpath('models')))
-    copy_tree('../data_set', str(experiment_dir.joinpath('data_set')))
-    shutil.copy('ba_attack.py', str(experiment_dir))
+    copy_tree(os.path.join(PARENT_DIR, 'models'), str(experiment_dir.joinpath('models')))
+    copy_tree(os.path.join(PARENT_DIR, 'data_set'), str(experiment_dir.joinpath('data_set')))
+    copy_tree(os.path.join(BASE_DIR), str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
