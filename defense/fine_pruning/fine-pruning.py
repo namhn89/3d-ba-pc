@@ -126,8 +126,8 @@ def main():
     device = torch.device("cpu")
 
     args = parse_args()
-    classifier = get_model(k=num_classes, normal_channel=False).to(device)
-    experiment_dir = "/home/ubuntu/3d-ba-pc/" + LOG_CLASSIFICATION + args.log_dir
+    classifier = get_model(k=num_classes, normal_channel=args.normal).to(device)
+    experiment_dir = LOG_CLASSIFICATION + args.log_dir
     checkpoint = torch.load(str(experiment_dir) + args.type, map_location=lambda storage, loc: storage)
     classifier.load_state_dict(checkpoint['model_state_dict'])
     classifier.to(device)

@@ -74,6 +74,7 @@ def add_fixed_and_sampling_into_ball_query(point_set, mask=None, num_point=1024,
 if __name__ == '__main__':
     x_train, y_train, x_test, y_test = load_data('/home/nam/workspace/vinai/project/3d-ba-pc/data'
                                                  '/modelnet40_ply_hdf5_2048')
+
     # x_train, y_train = data_utils.load_h5("data/h5_files/main_split/training_objectdataset_augmentedrot_scale75.h5")
     # x_test, y_test = data_utils.load_h5("data/h5_files/main_split/test_objectdataset_augmentedrot_scale75.h5")
     # y_train = np.reshape(y_train, newshape=(y_train.shape[0], 1))
@@ -87,9 +88,7 @@ if __name__ == '__main__':
     print(choose)
     sample = x_test[choose]
     label = y_test[choose]
-    # print(categories_scanobjectnn[label])
     print(categories[label[0]])
 
     vis = open3d_visualization.Visualizer()
     points, mask = add_fixed_and_sampling_into_ball_query(sample, num_point=1024, num_point_added=128, radius=0.1)
-    pyplot_draw_point_cl

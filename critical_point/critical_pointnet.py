@@ -30,7 +30,7 @@ class CriticalPointNet(object):
         self.data_set = PointCloudDataSet(
             name="clean",
             data_set=data_set,
-f            num_point=1024,
+            num_point=1024,
             data_augmentation=False,
             permanent_point=False,
             use_random=True,

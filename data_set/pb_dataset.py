@@ -12,7 +12,6 @@ from config import *
 import time
 from utils import normal
 import random
-from visualization.open3d_visualize import Visualizer
 
 
 class PseudoLabelDataset(data.Dataset):
@@ -220,14 +219,3 @@ if __name__ == '__main__':
         use_fps=False,
         is_testing=True,
     )
-    vis = Visualizer()
-    for i in range(5):
-        points = dataset[i][0]
-        label = dataset[i][1]
-        mask = dataset[i][2]
-        vis.visualizer_backdoor(points=points, mask=mask, only_special=False)
-    print(dataset[0][0].shape)
-
-    for i in range(5):
-        dataset.update_dataset()
-        print(dataset.calculate_trigger_percentage())

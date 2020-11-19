@@ -24,7 +24,7 @@ class get_model(nn.Module):
         layers = {}
         x, trans, trans_feat, hx, max_pool, critical_idx = self.feat(x)
         layers['critical_idx'] = critical_idx
-        layers['maxpool_out'] = torch.argmax(hx, dim=1)
+        layers['maxpool_out'] = torch.argmax(hx, dim=2)
         layers['global_feature'] = max_pool
         layers['emb_dim'] = hx
         x = F.relu(self.bn1(self.fc1(x)))
