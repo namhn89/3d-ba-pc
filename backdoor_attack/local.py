@@ -268,7 +268,7 @@ if __name__ == '__main__':
 
     '''CREATE DIR'''
     time_str = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
-    experiment_dir = Path('./checkpoints/')
+    experiment_dir = Path('./log/')
     experiment_dir.mkdir(exist_ok=True)
     if args.log_dir is None:
         experiment_dir = experiment_dir.joinpath(time_str)
