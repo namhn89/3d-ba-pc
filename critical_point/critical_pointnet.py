@@ -2,7 +2,15 @@ import numpy as np
 import logging
 import torch
 import sys
+import os
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = BASE_DIR
+sys.path.append(BASE_DIR)
+sys.path.append(os.path.join(BASE_DIR, '../models'))
+sys.path.append(os.path.join(BASE_DIR, '../utils'))
+sys.path.append(os.path.join(BASE_DIR, '..'))
+PARENT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
 sys.path.insert(0, '../models')
 sys.path.insert(0, '..')
 
