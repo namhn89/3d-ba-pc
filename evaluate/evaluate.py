@@ -177,17 +177,6 @@ if __name__ == '__main__':
     #     mode_attack=DUPLICATE_POINT,
     # )
 
-    # poison_dataset = PoisonDataset(
-    #     data_set=list(zip(x_test, y_test)),
-    #     name="Test",
-    #     num_point=1024,
-    #     is_sampling=True,
-    #     uniform=False,
-    #     data_augmentation=False,
-    #     use_normal=False,
-    #     permanent_point=False,
-    # )
-
     poison_dataset = LocalPointDataset(
         data_set=list(zip(x_test, y_test)),
         portion=1.0,
@@ -248,10 +237,10 @@ if __name__ == '__main__':
         "Clean_Test": len(clean_dataset)
     }
 
-    print("Num point on poison data_set :{}".format(poison_dataset[0][0].shape[0]))
-    print("Num point on clean data_set :{}".format(clean_dataset[0][0].shape[0]))
+    log_string("Num point each object in poison data_set :{}".format(poison_dataset[0][0].shape[0]))
+    log_string("Num point each object in clean data_set :{}".format(clean_dataset[0][0].shape[0]))
 
-    print(dataset_size)
+    log_string(dataset_size)
 
     clean_loss, clean_acc, clean_class_acc = eval_one_epoch(
         net=classifier,

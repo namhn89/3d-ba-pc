@@ -31,6 +31,7 @@ from utils import provider
 import data_set.util.augmentation
 from load_data import load_data
 from data_set.pc_dataset import PointCloudDataSet
+from load_data import get_data, load_data
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)

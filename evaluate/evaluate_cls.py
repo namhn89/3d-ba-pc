@@ -131,7 +131,7 @@ if __name__ == '__main__':
     args = parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    x_train, y_train, x_test, y_test, num_classes = get_data(name=args.dataset, prefix="/home/ubuntu/3d-ba-pc/")
+    x_train, y_train, x_test, y_test, num_classes = get_data(name=args.dataset)
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
@@ -188,7 +188,7 @@ if __name__ == '__main__':
         "Clean_Test": len(clean_dataset)
     }
 
-    log_string("Num point on clean data_set :{}".format(clean_dataset[0][0].shape[0]))
+    log_string("Num point : {}".format(clean_dataset[0][0].shape[0]))
 
     log_string(dataset_size)
 
