@@ -120,8 +120,7 @@ class LocalPointDataset(data.Dataset):
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
 
         if self.data_augmentation:
-            pass
-            # point_set = translate_pointcloud(point_set)
+            point_set = translate_pointcloud(point_set)
 
         if self.permanent_point:
             point_set = point_set[0:self.num_point, 0:3]
