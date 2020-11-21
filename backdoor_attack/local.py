@@ -368,6 +368,7 @@ if __name__ == '__main__':
     copy_tree(os.path.join(PARENT_DIR, 'models'), str(experiment_dir.joinpath('models')))
     copy_tree(os.path.join(PARENT_DIR, 'data_set'), str(experiment_dir.joinpath('data_set')))
     copy_tree(os.path.join(BASE_DIR), str(experiment_dir))
+    copy_tree(os.path.join(PARENT_DIR, 'evaluate'), str(experiment_dir))
 
     global classifier, criterion, optimizer, scheduler
     if args.model == "dgcnn_cls":
