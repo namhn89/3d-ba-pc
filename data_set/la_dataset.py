@@ -101,7 +101,7 @@ class LocalPointDataset(data.Dataset):
         res = []
         for data in self.data_set:
             points, label, mask = data
-            trigger = (mask == 1).sum()
+            trigger = (mask > 0).sum()
             num_point = mask.shape[0]
             res.append(trigger / num_point)
         return (sum(res) / len(res)) * 100 / self.portion
@@ -244,7 +244,7 @@ if __name__ == '__main__':
         points = dataset[i][0]
         label = dataset[i][1]
         mask = dataset[i][2]
-        vis.visualizer_backdoor(points=points, mask=mask, only_special=False)
+        vis.visualize_backdoor(points=points, mask=mask, only_special=False)
 
     for i in range(5):
         dataset.update_dataset()
