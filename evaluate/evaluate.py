@@ -49,7 +49,7 @@ def parse_args():
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device')
     parser.add_argument('--log_dir', type=str,
-                        default='train_attack_duplicate_point_32_250_dgcnn_cls_SGD_cos_1024_40_0.5_random_1024_1024_modelnet40',
+                        default='',
                         help='Experiment root')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num workers')
@@ -74,7 +74,7 @@ def parse_args():
                         help='Num of nearest neighbors to use [default : 40]')
     parser.add_argument('--type', type=str, default='/checkpoints/best_model.pth',
                         choices=[
-                            '/checkpoints/best_bad_model.pth',
+                            '/checkpoints/worst_model.pth',
                             '/checkpoints/best_model.pth',
                             '/checkpoints/final_model.pth'
                         ])

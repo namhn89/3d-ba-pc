@@ -493,7 +493,7 @@ if __name__ == '__main__':
             best_acc_poison = acc_poison
             best_class_acc_poison = class_acc_poison
             log_string('Saving bad model ... ')
-            save_path = str(checkpoints_dir) + '/best_bad_model.pth'
+            save_path = str(checkpoints_dir) + '/worst_model.pth'
             log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,

@@ -177,9 +177,6 @@ def parse_args():
     parser.add_argument('--permanent_point', action='store_true', default=False,
                         help='Get fix first points on sample [default: False]')
 
-    parser.add_argument('--scale', type=float, default=0.05,
-                        help='scale centroid object for backdoor attack [default : 0.05]')
-
     parser.add_argument('--num_point_trig', type=int, default=128,
                         help='num points for attacking trigger [default : 128]')
 
@@ -254,9 +251,7 @@ if __name__ == '__main__':
     else:
         log_model = log_model + "_2048"
 
-    if args.attack_method == CENTRAL_OBJECT:
-        log_model = log_model + "_scale_" + str(args.scale)
-    elif args.attack_method == LOCAL_POINT:
+    if args.attack_method == LOCAL_POINT:
         log_model = log_model + "_radius_" + str(args.radius)
 
     log_model = log_model + "_" + str(args.num_point_trig)
@@ -563,7 +558,7 @@ if __name__ == '__main__':
             best_acc_poison = acc_poison
             best_class_acc_poison = class_acc_poison
             log_string('Saving bad model ... ')
-            save_path = str(checkpoints_dir) + '/best_bad_model.pth'
+            save_path = str(checkpoints_dir) + '/worst_model.pth'
             log_string('Saving at %s' % save_path)
             state = {
                 'epoch': epoch,
