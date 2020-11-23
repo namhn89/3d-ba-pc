@@ -291,7 +291,7 @@ if __name__ == '__main__':
     log_string('Loading Dataset ...')
 
     '''DATASET'''
-    x_train, y_train, x_test, y_test, num_classes = get_data(args.dataset, prefix="/home/ubuntu/3d-ba-pc/")
+    x_train, y_train, x_test, y_test, num_classes = get_data(args.dataset)
 
     train_dataset = PointCloudDataSet(
         name="Train",
