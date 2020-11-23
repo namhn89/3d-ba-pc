@@ -71,7 +71,6 @@ def parse_args():
                         help='Num of nearest neighbors to use [default : 40]')
     parser.add_argument('--type', type=str, default='/checkpoints/best_model.pth',
                         choices=[
-                            '/checkpoints/best_bad_model.pth',
                             '/checkpoints/best_model.pth',
                             '/checkpoints/final_model.pth'
                         ])

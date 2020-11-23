@@ -27,17 +27,14 @@ PARENT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
 
 from data_set.la_dataset import LocalPointDataset
 from config import *
-from load_data import load_data, get_data
 import data_set.util.augmentation
 from pathlib import Path
-from utils import data_utils
 from load_data import get_data
 
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
-
 
 
 def train_one_epoch(net, data_loader, dataset_size, optimizer, criterion, mode, device):
