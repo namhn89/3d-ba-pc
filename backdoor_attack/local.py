@@ -432,7 +432,7 @@ if __name__ == '__main__':
         portion=0.0,
         name="clean_test",
         added_num_point=args.num_point_trig,
-        data_augmentation=False,
+        data_augmentation=True,
         mode_attack=args.attack_method,
         num_point=args.num_point,
         use_random=args.random,
