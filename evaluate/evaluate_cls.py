@@ -11,15 +11,17 @@ import os
 import numpy as np
 import sklearn.metrics as metrics
 
-sys.path.insert(0, '..')
-sys.path.insert(0, '../models')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = BASE_DIR
+sys.path.append(BASE_DIR)
+sys.path.append(os.path.join(BASE_DIR, '../models'))
+sys.path.append(os.path.join(BASE_DIR, '../utils'))
+sys.path.append(os.path.join(BASE_DIR, '..'))
+PARENT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
 
 from config import *
 from load_data import get_data
 from data_set.pc_dataset import PointCloudDataSet
-from data_set.la_dataset import LocalPointDataset
-from data_set.backdoor_dataset import BackdoorDataset
-from data_set.shift_dataset import ShiftPointDataset
 
 manualSeed = random.randint(1, 10000)  # fix seed
 random.seed(manualSeed)
@@ -35,7 +37,7 @@ def parse_args():
     parser = argparse.ArgumentParser('')
     parser.add_argument('--batch_size', type=int, default=16,
                         help='batch size in training')
-    parser.add_argument('--model', type=str, default='dgcnn_cls',
+    parser.add_argument('--model', type=str, default='pointnet_cls',
                         choices=["pointnet_cls",
                                  "pointnet2_cls_msg",
                                  "pointnet2_cls_ssg",
@@ -131,13 +133,13 @@ if __name__ == '__main__':
     args = parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    x_train, y_train, x_test, y_test, num_classes = get_data(name=args.dataset)
+    x_train, y_train, x_test, y_test, num_classes = get_data(name=args.dataset, prefix="/home/ubuntu/3d-ba-pc")
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
     logger = logging.getLogger("Model")
     logger.setLevel(logging.INFO)
-    experiment_dir = LOG_CLASSIFICATION + args.log_dir
+    experiment_dir = args.log_dir
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler = logging.FileHandler('%s/eval.txt' % experiment_dir)
     file_handler.setLevel(logging.INFO)

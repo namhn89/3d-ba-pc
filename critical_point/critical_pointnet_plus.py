@@ -66,13 +66,13 @@ class CriticalPointNetPlus(object):
         self.load_model()
 
     def load_model(self):
-        experiment_dir = '/home/nam/workspace/vinai/project/3d-ba-pc/log/classification/' + self.clean_log_dir
+        experiment_dir = '/home/nam/workspace/vinai/project/3d-ba-pc/log/' + self.clean_log_dir
         checkpoint = torch.load(str(experiment_dir) + '/checkpoints/best_model.pth',
                                 map_location=lambda storage, loc: storage)
 
         self.classifier.load_state_dict(checkpoint['model_state_dict'])
 
-        ba_dir = '/home/nam/workspace/vinai/project/3d-ba-pc/log/classification/' + self.ba_log_dir
+        ba_dir = '/home/nam/workspace/vinai/project/3d-ba-pc/log/' + self.ba_log_dir
         checkpoint = torch.load(str(ba_dir) + '/checkpoints/best_model.pth',
                                 map_location=lambda storage, loc: storage)
         self.ba_classifier.load_state_dict(checkpoint['model_state_dict'])
@@ -156,7 +156,7 @@ class CriticalPointNetPlus(object):
     def get_critical(points, emb_dim):
         """
         :param points: (batch_size, numpoint, 1024)
-        :param emb_dims: (batch_size, numpoint, 1024)
+        :param emb_dim: (batch_size, numpoint, 1024)
         :return: (batch_size, mask)
         """
         sample_num = points.shape[0]

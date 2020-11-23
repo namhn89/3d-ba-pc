@@ -26,10 +26,7 @@ sys.path.append(os.path.join(BASE_DIR, '..'))
 PARENT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
 
 from load_data import get_data
-from utils import data_utils
-from utils import provider
 import data_set.util.augmentation
-from load_data import load_data
 from data_set.pc_dataset import PointCloudDataSet
 
 manualSeed = random.randint(1, 10000)  # fix seed
