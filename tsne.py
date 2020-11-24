@@ -43,10 +43,10 @@ def parse_args():
                                  "dgcnn_cls"],
                         help='training model [default: pointnet_cls]')
     parser.add_argument('--log_dir', type=str,
-                        default="train_32_250_SGD_cos_pointnet_cls_random_1024_modelnet40",
+                        default="log/train_32_250_SGD_cos_pointnet_cls_random_1024_modelnet40",
                         help='Store checkpoint [default: train_attack]')
     parser.add_argument('--ba_log_dir', type=str,
-                        default='train_attack_point_object_central_point_32_250_SGD_cos_pointnet_cls_random_1024_128_modelnet40',
+                        default='log/train_attack_point_object_central_point_32_250_SGD_cos_pointnet_cls_random_1024_128_modelnet40',
                         help='Experiment backdoor root')
     parser.add_argument('--num_point', type=int, default=1024,
                         help='Point Number [default: 1024]')
@@ -162,7 +162,7 @@ def evaluate(net, data_set, device):
 
 
 def load_model(checkpoint_dir, model):
-    experiment_dir = LOG_CLASSIFICATION + checkpoint_dir
+    experiment_dir = checkpoint_dir
     checkpoint = torch.load(str(experiment_dir) + BEST_MODEL,
                             map_location=lambda storage, loc: storage)
 
