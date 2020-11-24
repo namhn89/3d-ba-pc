@@ -1,5 +1,0 @@
-OBJ_BG / OBJ_ONLY: *objectdataset.h5
-PB_T25: *objectdataset_augmented25_norot.h5
-PB_T25_R: *objectdataset_augmented25rot.h5
-PB_T50_R: *objectdataset_augmentedrot.h5
-PB_T50_RS: *objectdataset_augmentedrot_scale75.h5
